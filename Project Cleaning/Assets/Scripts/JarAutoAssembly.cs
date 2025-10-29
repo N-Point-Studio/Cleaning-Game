@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
+public enum JarPieceType
+{
+    Bottom = 0,
+    Middle = 1,
+    Top = 2
+}
+
 public class JarAutoAssembly : MonoBehaviour
 {
     [Header("Assembly Settings")]
