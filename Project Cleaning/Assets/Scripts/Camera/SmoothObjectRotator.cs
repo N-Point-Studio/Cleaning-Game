@@ -129,14 +129,14 @@ public class SmoothObjectRotator : MonoBehaviour
             if (limitVerticalRotation)
             {
                 targetVerticalRotation = Mathf.Clamp(
-                    targetVerticalRotation + verticalDelta, // Fixed: + for natural direction (drag down = rotate down)
+                    targetVerticalRotation - verticalDelta, // Back to - for natural direction
                     minVerticalAngle,
                     maxVerticalAngle
                 );
             }
             else
             {
-                targetVerticalRotation += verticalDelta; // Fixed: + for natural direction (drag down = rotate down)
+                targetVerticalRotation -= verticalDelta; // Back to - for natural direction
             }
 
             Debug.Log($"Smooth rotation - Mouse delta: ({mouseX:F1}, {mouseY:F1}), Target: H={targetHorizontalRotation:F1}°, V={targetVerticalRotation:F1}°");
