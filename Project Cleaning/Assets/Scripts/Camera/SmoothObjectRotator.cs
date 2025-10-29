@@ -35,6 +35,7 @@ public class SmoothObjectRotator : MonoBehaviour
 
     // Initial state
     private Quaternion initialRotation;
+    private Vector3 fixedPosition; // Keep object at fixed position during rotation
     private bool rotationStarted = false;
 
     void Update()
@@ -62,8 +63,9 @@ public class SmoothObjectRotator : MonoBehaviour
             Debug.Log($"Started smooth rotation for: {targetObject.name}");
         }
 
-        // Store initial rotation
+        // Store initial rotation AND position
         initialRotation = targetObject.rotation;
+        fixedPosition = targetObject.position; // Lock position during rotation
 
         // Reset rotation values
         currentHorizontalRotation = 0f;
@@ -172,6 +174,9 @@ public class SmoothObjectRotator : MonoBehaviour
 
         // Combine with initial rotation for natural feel
         rotatingObject.rotation = initialRotation * horizontalRotation * verticalRotation;
+
+        // CRITICAL: Keep object at fixed position during rotation
+        rotatingObject.position = fixedPosition;
     }
 
     /// <summary>

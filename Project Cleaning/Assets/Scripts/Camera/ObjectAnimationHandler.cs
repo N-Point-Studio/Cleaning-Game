@@ -80,9 +80,10 @@ public class ObjectAnimationHandler : MonoBehaviour
                 .SetEase(moveToCloseUpEase)
         );
 
-        // Scale up for better visibility
+        // Keep original scale (no scaling during inspection)
+        // Note: scaleMultiplier is ignored to maintain object's original size
         animationSequence.Join(
-            targetObject.DOScale(originalState.scale * scaleMultiplier, animationDuration)
+            targetObject.DOScale(originalState.scale, animationDuration)
                 .SetEase(moveToCloseUpEase)
         );
 

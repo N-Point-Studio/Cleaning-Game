@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 /// <summary>
 /// Handles object selection via mouse clicks for close-up inspection
@@ -58,23 +59,35 @@ public class ObjectSelectionHandler : MonoBehaviour
     /// </summary>
     public void TrySelectObjectAtMousePosition()
     {
-        if (playerCamera == null) return;
+        if (playerCamera == null)
+        {
+            Debug.LogError("ObjectSelectionHandler: playerCamera is null!");
+            return;
+        }
 
         Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        Debug.Log($"Raycast from: {ray.origin} direction: {ray.direction}");
+        Debug.Log($"Layer mask: {selectableLayerMask} (binary: {Convert.ToString(selectableLayerMask, 2)})");
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, selectableLayerMask))
         {
             Transform hitObject = hit.transform;
+            Debug.Log($"Raycast hit object: {hitObject.name} on layer {hitObject.gameObject.layer}");
 
             // Check if object can be selected
             if (CanSelectObject(hitObject))
             {
+                Debug.Log($"Object {hitObject.name} can be selected - proceeding with selection");
                 SelectObject(hitObject);
             }
             else
             {
                 Debug.Log($"Cannot select object: {hitObject.name}");
             }
+        }
+        else
+        {
+            Debug.Log("Raycast did not hit any objects in the selectable layer mask");
         }
     }
 
@@ -95,12 +108,12 @@ public class ObjectSelectionHandler : MonoBehaviour
         if (!targetObject.gameObject.activeInHierarchy)
             return false;
 
-        // Don't select jar pieces for close-up - they have their own assembly system
+        // Jar pieces can be inspected at any time (before, during, or after assembly)
         var jarComponent = targetObject.GetComponent<JarAutoAssembly>();
-        if (jarComponent != null && !jarComponent.isAssembled)
+        if (jarComponent != null)
         {
-            Debug.Log($"Jar piece {jarComponent.pieceType} is in assembly mode - not bringing to close-up");
-            return false;
+            Debug.Log($"Jar piece {jarComponent.pieceType} can be inspected (assembled: {jarComponent.isAssembled})");
+            // No restriction - jar pieces can always be inspected
         }
 
         // If we require inspectable component, check for it

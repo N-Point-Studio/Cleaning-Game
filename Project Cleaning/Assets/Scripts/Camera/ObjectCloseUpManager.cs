@@ -67,14 +67,32 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     void SetupComponents()
     {
+        // Ensure components are properly initialized
+        if (selectionHandler == null || animationHandler == null || smoothRotator == null)
+        {
+            Debug.LogError("ObjectCloseUpManager: Required components are missing! Re-initializing...");
+            InitializeComponents();
+        }
+
         // Configure selection handler
-        selectionHandler.Setup(clickableObjects, this);
+        if (selectionHandler != null)
+        {
+            selectionHandler.Setup(clickableObjects, this);
+            Debug.Log($"Selection handler configured with layer mask: {clickableObjects}");
+        }
 
         // Configure animation handler
-        animationHandler.Setup(distanceFromCamera, positionOffset, objectScale, animationSpeed);
+        if (animationHandler != null)
+        {
+            animationHandler.Setup(distanceFromCamera, positionOffset, objectScale, animationSpeed);
+            Debug.Log("Animation handler configured");
+        }
 
         // Configure smooth rotator
-        // smoothRotator.Setup(); // No setup needed for smooth rotator
+        if (smoothRotator != null)
+        {
+            Debug.Log("Smooth rotator ready");
+        }
     }
 
     /// <summary>
@@ -91,23 +109,18 @@ public class ObjectCloseUpManager : MonoBehaviour
         // Handle mouse input based on current state
         if (Input.GetMouseButtonDown(0))
         {
+            Debug.Log($"Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
+
             if (hasObjectInCloseUp)
             {
-                // For jar pieces, only allow rotation if they're NOT being assembled
-                if (IsJarPieceBeingAssembled(currentCloseUpObject))
-                {
-                    Debug.Log("Jar piece assembly mode - rotation disabled during assembly");
-                    // Don't start rotation for jar pieces that are being assembled
-                }
-                else
-                {
-                    Debug.Log("Click and hold to rotate object");
-                    // Start rotation for objects that can be rotated
-                    smoothRotator.StartRotating(currentCloseUpObject);
-                }
+                Debug.Log("Object in close-up - starting rotation");
+                // All objects in close-up can be rotated for inspection
+                // Jar pieces can still be assembled via drag when needed
+                smoothRotator.StartRotating(currentCloseUpObject);
             }
             else
             {
+                Debug.Log("No object in close-up - trying to select object...");
                 // No object in close-up - try to select one (but jar pieces will be filtered out)
                 selectionHandler.TrySelectObjectAtMousePosition();
             }
@@ -127,21 +140,28 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     public void BringObjectToCloseUp(Transform targetObject)
     {
-        if (hasObjectInCloseUp) return;
+        // If there's already an object in close-up, switch to the new one
+        if (hasObjectInCloseUp)
+        {
+            Debug.Log($"Switching from {currentCloseUpObject.name} to {targetObject.name}");
+            SwitchToNewObject(targetObject);
+            return;
+        }
 
         currentCloseUpObject = targetObject;
         hasObjectInCloseUp = true;
 
         Debug.Log($"Bringing {targetObject.name} to close-up view");
 
-        // Check if it's a jar piece being assembled
-        if (IsJarPieceBeingAssembled(targetObject))
+        // Check if it's a jar piece
+        var jarComponent = targetObject.GetComponent<JarAutoAssembly>();
+        if (jarComponent != null)
         {
-            Debug.Log("JAR PIECE - Click and hold to rotate, release and drag to assemble");
+            Debug.Log($"JAR PIECE ({jarComponent.pieceType}) - Click to rotate, drag to assemble (assembled: {jarComponent.isAssembled})");
         }
         else
         {
-            Debug.Log("OBJECT READY - Click and hold to rotate");
+            Debug.Log("OBJECT READY - Click to rotate and inspect");
         }
 
         // Start animation
@@ -157,8 +177,16 @@ public class ObjectCloseUpManager : MonoBehaviour
 
         Debug.Log($"Returning {currentCloseUpObject.name} from close-up view");
 
-        // Stop smooth rotation
-        smoothRotator.StopRotating();
+        // Stop smooth rotation FIRST
+        if (smoothRotator != null)
+        {
+            smoothRotator.StopRotating();
+            Debug.Log("Stopped rotation for object returning from close-up");
+        }
+
+        // Notify inspectable component that inspection is ending
+        var inspectable = currentCloseUpObject.GetComponent<IInspectable>();
+        inspectable?.OnInspectionEnd();
 
         // Start return animation
         animationHandler.AnimateFromCloseUp(currentCloseUpObject, OnReturnAnimationComplete);
@@ -170,6 +198,13 @@ public class ObjectCloseUpManager : MonoBehaviour
     void OnCloseUpAnimationComplete()
     {
         Debug.Log("Close-up animation completed - object ready for interaction");
+
+        // Auto-start rotation for single-click inspection
+        if (currentCloseUpObject != null)
+        {
+            Debug.Log("Auto-starting rotation for single-click inspection");
+            smoothRotator.StartRotating(currentCloseUpObject);
+        }
     }
 
     /// <summary>
@@ -191,6 +226,42 @@ public class ObjectCloseUpManager : MonoBehaviour
         return cam.transform.position +
                cam.transform.forward * distanceFromCamera +
                positionOffset;
+    }
+
+    /// <summary>
+    /// Switch from current object to a new object for inspection
+    /// </summary>
+    private void SwitchToNewObject(Transform newObject)
+    {
+        if (currentCloseUpObject == null) return;
+
+        Debug.Log($"Switching inspection from {currentCloseUpObject.name} to {newObject.name}");
+
+        // Stop rotation on current object
+        if (smoothRotator != null)
+        {
+            smoothRotator.StopRotating();
+            Debug.Log("Stopped rotation on previous object");
+        }
+
+        // End inspection on current object
+        var currentInspectable = currentCloseUpObject.GetComponent<IInspectable>();
+        currentInspectable?.OnInspectionEnd();
+
+        // Return current object to original position immediately (no animation)
+        animationHandler.AnimateFromCloseUp(currentCloseUpObject, () => {
+            // After current object returns, bring new object to close-up
+            Debug.Log($"Previous object returned, now bringing {newObject.name} to close-up");
+            currentCloseUpObject = newObject;
+            hasObjectInCloseUp = true;
+
+            // Start inspection on new object
+            var newInspectable = newObject.GetComponent<IInspectable>();
+            newInspectable?.OnInspectionStart();
+
+            // Animate new object to close-up
+            animationHandler.AnimateToCloseUp(newObject, OnCloseUpAnimationComplete);
+        });
     }
 
     /// <summary>

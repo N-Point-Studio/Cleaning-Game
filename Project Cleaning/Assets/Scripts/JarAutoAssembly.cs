@@ -29,7 +29,12 @@ public class JarAutoAssembly : MonoBehaviour
     [Header("Movement")]
     public float dragSpeed = 8f;
 
+    [Header("Input Settings")]
+    public float holdTimeForDrag = 2f; // Time to hold before drag starts
+
     private bool isDragging = false;
+    private bool isHoldingForDrag = false;
+    private float holdStartTime = 0f;
     private Camera mainCamera;
     private Vector3 targetPosition;
     private Vector3 originalPosition;
@@ -54,16 +59,30 @@ public class JarAutoAssembly : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (!isAssembled)
+        if (isAssembled)
         {
-            isDragging = true;
-            Debug.Log($"Started dragging {pieceType}");
+            // Assembled pieces can only be inspected
+            Debug.Log($"Assembled piece {pieceType} clicked - triggering inspection");
+            TryInspection();
+            return;
         }
+
+        // For unassembled pieces: Start hold timer
+        isHoldingForDrag = true;
+        holdStartTime = Time.time;
+        Debug.Log($"Started hold timer for {pieceType} - hold for {holdTimeForDrag}s to drag, release quickly to inspect");
+
+        // IMPORTANT: Prevent auto-inspection during hold timer
+        // The inspection system should NOT automatically trigger until we decide
     }
 
     void OnMouseDrag()
     {
-        if (!isDragging || mainCamera == null || isAssembled) return;
+        // Handle dragging in two cases:
+        // 1. Already in drag mode (dragging active)
+        // 2. Holding for drag (will become active when timer completes)
+        if (isAssembled || mainCamera == null) return;
+        if (!isDragging && !isHoldingForDrag) return;
 
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         Plane dragPlane = new Plane(Vector3.up, new Vector3(0, transform.position.y, 0));
@@ -73,24 +92,125 @@ public class JarAutoAssembly : MonoBehaviour
         {
             Vector3 worldPoint = ray.GetPoint(distance);
             targetPosition = worldPoint;
+
+            if (isDragging)
+            {
+                Debug.Log($"Dragging {pieceType} to position: {worldPoint:F2}");
+            }
         }
     }
 
     void OnMouseUp()
     {
-        if (!isAssembled)
+        if (isHoldingForDrag)
         {
+            // Check if it was a short click (< holdTimeForDrag) or long hold
+            float holdDuration = Time.time - holdStartTime;
+            isHoldingForDrag = false;
+
+            if (holdDuration < holdTimeForDrag && !isDragging)
+            {
+                // Short click = Inspection
+                Debug.Log($"Short click detected ({holdDuration:F1}s) - triggering inspection");
+                TryInspection();
+            }
+            else if (isDragging)
+            {
+                // Long hold = Assembly attempt
+                Debug.Log($"Long hold completed ({holdDuration:F1}s) - trying assembly");
+                isDragging = false;
+                TryAssemble();
+            }
+        }
+        else if (isDragging)
+        {
+            // Mouse up during drag - try assembly
             isDragging = false;
             TryAssemble();
         }
     }
 
+    /// <summary>
+    /// Cancel hold operation (called when mouse exits collider during hold)
+    /// </summary>
+    void OnMouseExit()
+    {
+        if (isHoldingForDrag && !isDragging)
+        {
+            Debug.Log($"Mouse exited {pieceType} during hold - canceling timer");
+            isHoldingForDrag = false;
+        }
+    }
+
+    /// <summary>
+    /// Try to bring this piece to close-up for inspection
+    /// </summary>
+    void TryInspection()
+    {
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null)
+        {
+            Debug.Log($"Jar piece {pieceType} - bringing to close-up for inspection (assembled: {isAssembled})");
+
+            var inspectable = GetComponent<IInspectable>();
+            if (inspectable != null)
+            {
+                inspectable.OnInspectionStart();
+                closeUpManager.BringObjectToCloseUp(transform);
+            }
+        }
+    }
+
     void Update()
     {
+        // Check if hold timer has reached the threshold for starting drag
+        if (isHoldingForDrag && !isDragging && !isAssembled)
+        {
+            float holdDuration = Time.time - holdStartTime;
+
+            // Visual feedback for debugging
+            if (holdDuration >= holdTimeForDrag)
+            {
+                // Time threshold reached - start dragging
+                Debug.Log($"🔥 HOLD TIME REACHED ({holdDuration:F1}s) - STARTING DRAG MODE for {pieceType} 🔥");
+                StartDragMode();
+            }
+            else
+            {
+                // Show countdown every 0.5 seconds
+                if (Mathf.FloorToInt(holdDuration * 2) != Mathf.FloorToInt((holdDuration - Time.deltaTime) * 2))
+                {
+                    float remaining = holdTimeForDrag - holdDuration;
+                    Debug.Log($"⏱️ Holding {pieceType} - {remaining:F1}s remaining for drag mode");
+                }
+            }
+        }
+
+        // Handle drag movement
         if (isDragging && !isAssembled)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * dragSpeed);
         }
+    }
+
+    /// <summary>
+    /// Start drag mode after hold threshold is reached
+    /// </summary>
+    void StartDragMode()
+    {
+        isHoldingForDrag = false; // Stop holding timer
+        isDragging = true;
+        targetPosition = transform.position; // Start from current position
+
+        // Exit any current inspection mode
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null && closeUpManager.HasObjectInCloseUp && closeUpManager.CurrentCloseUpObject == transform)
+        {
+            Debug.Log($"Exiting inspection mode to start dragging {pieceType}");
+            closeUpManager.ExitCloseUp();
+        }
+
+        Debug.Log($"Drag mode started for {pieceType} - now drag mouse to move piece for assembly");
     }
 
     void TryAssemble()
