@@ -122,7 +122,7 @@ public class SmoothObjectRotator : MonoBehaviour
         if (Mathf.Abs(mouseX) > 0.1f || Mathf.Abs(mouseY) > 0.1f)
         {
             // Calculate rotation deltas - try positive for natural rotation
-            float horizontalDelta = mouseX * rotationSensitivity * Time.deltaTime; // Positive: left drag = left rotation
+            float horizontalDelta = -mouseX * rotationSensitivity * Time.deltaTime;
             float verticalDelta = mouseY * rotationSensitivity * Time.deltaTime; // Positive: up drag = up rotation
 
             // Update target rotation
@@ -131,14 +131,14 @@ public class SmoothObjectRotator : MonoBehaviour
             if (limitVerticalRotation)
             {
                 targetVerticalRotation = Mathf.Clamp(
-                    targetVerticalRotation - verticalDelta, // Back to - for natural direction
+                    targetVerticalRotation + verticalDelta,
                     minVerticalAngle,
                     maxVerticalAngle
                 );
             }
             else
             {
-                targetVerticalRotation -= verticalDelta; // Back to - for natural direction
+                targetVerticalRotation += verticalDelta;
             }
 
             Debug.Log($"Smooth rotation - Mouse delta: ({mouseX:F1}, {mouseY:F1}), Target: H={targetHorizontalRotation:F1}°, V={targetVerticalRotation:F1}°");

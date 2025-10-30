@@ -32,6 +32,11 @@ public class JarAutoAssembly : MonoBehaviour
     [Header("Input Settings")]
     public float holdTimeForDrag = 2f; // Time to hold before drag starts
 
+    [Header("Assembled Object Settings")]
+    [SerializeField] private Transform assembledJarRoot;
+    [SerializeField] private Collider assembledJarCollider;
+    [SerializeField] private bool disablePieceCollidersOnCompletion = true;
+
     private bool isDragging = false;
     private bool isHoldingForDrag = false;
     private float holdStartTime = 0f;
@@ -40,12 +45,34 @@ public class JarAutoAssembly : MonoBehaviour
     private Vector3 originalPosition;
     private static List<JarAutoAssembly> allPieces = new List<JarAutoAssembly>();
     private static int assembledCount = 0;
+    private static bool jarFullyAssembled = false;
+
+    private Collider pieceCollider;
+    private Transform originalParent;
+    private bool initialAssembledColliderState;
 
     void Start()
     {
         originalPosition = transform.position;
         targetPosition = transform.position;
         mainCamera = Camera.main;
+        pieceCollider = GetComponent<Collider>();
+        originalParent = transform.parent;
+
+        if (assembledJarRoot != null && assembledJarCollider == null)
+        {
+            assembledJarCollider = assembledJarRoot.GetComponent<Collider>();
+        }
+
+        if (assembledJarCollider != null)
+        {
+            initialAssembledColliderState = assembledJarCollider.enabled;
+
+            if (!jarFullyAssembled)
+            {
+                assembledJarCollider.enabled = false;
+            }
+        }
 
         // Register this piece
         if (!allPieces.Contains(this))
@@ -157,6 +184,12 @@ public class JarAutoAssembly : MonoBehaviour
     /// </summary>
     void TryInspection()
     {
+        if (assembledJarRoot != null && allPieces.Count > 0 && assembledCount >= allPieces.Count)
+        {
+            TryInspectAssembledJar();
+            return;
+        }
+
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager != null)
         {
@@ -169,6 +202,33 @@ public class JarAutoAssembly : MonoBehaviour
                 closeUpManager.BringObjectToCloseUp(transform);
             }
         }
+    }
+
+    void TryInspectAssembledJar()
+    {
+        if (assembledJarRoot == null)
+        {
+            Debug.LogWarning($"Jar is assembled but no assembledJarRoot assigned for {pieceType}");
+            return;
+        }
+
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager == null) return;
+
+        var inspectable = assembledJarRoot.GetComponent<IInspectable>();
+        if (inspectable != null)
+        {
+            if (!inspectable.CanBeInspected())
+            {
+                Debug.Log($"Assembled jar already being inspected – skipping duplicate call");
+            }
+            else
+            {
+                inspectable.OnInspectionStart();
+            }
+        }
+
+        closeUpManager.BringObjectToCloseUp(assembledJarRoot);
     }
 
     void Update()
@@ -224,7 +284,7 @@ public class JarAutoAssembly : MonoBehaviour
             {
                 // If THIS object is in inspection, exit it to start dragging
                 Debug.Log($"Exiting inspection mode to start dragging {pieceType}");
-                closeUpManager.ExitCloseUp();
+                closeUpManager.ExitCloseUp(true);
             }
             else if (closeUpManager.HasObjectInCloseUp)
             {
@@ -371,10 +431,20 @@ public class JarAutoAssembly : MonoBehaviour
 
     void CheckJarCompletion()
     {
-        Debug.Log($"Progress: {assembledCount}/3 pieces assembled");
+        Debug.Log($"Progress: {assembledCount}/{allPieces.Count} pieces assembled");
 
-        if (assembledCount >= 3)
+        if (!jarFullyAssembled && allPieces.Count > 0 && assembledCount >= allPieces.Count)
         {
+            jarFullyAssembled = true;
+
+            foreach (JarAutoAssembly piece in allPieces)
+            {
+                if (piece != null)
+                {
+                    piece.HandleJarFullyAssembledState();
+                }
+            }
+
             StartCoroutine(CelebrationSequence());
         }
     }
@@ -398,6 +468,24 @@ public class JarAutoAssembly : MonoBehaviour
         // No rotation - jar stays in perfect final position
     }
 
+    void HandleJarFullyAssembledState()
+    {
+        if (assembledJarRoot != null)
+        {
+            transform.SetParent(assembledJarRoot, true);
+        }
+
+        if (disablePieceCollidersOnCompletion && pieceCollider != null)
+        {
+            pieceCollider.enabled = false;
+        }
+
+        if (assembledJarCollider != null)
+        {
+            assembledJarCollider.enabled = true;
+        }
+    }
+
     void ReturnToOriginalPosition()
     {
         transform.DOMove(originalPosition, 0.5f).SetEase(Ease.OutQuad);
@@ -413,8 +501,20 @@ public class JarAutoAssembly : MonoBehaviour
             piece.isDragging = false;
             piece.transform.position = piece.originalPosition;
             piece.transform.rotation = Quaternion.identity;
+            piece.transform.SetParent(piece.originalParent, true);
+
+            if (piece.disablePieceCollidersOnCompletion && piece.pieceCollider != null)
+            {
+                piece.pieceCollider.enabled = true;
+            }
+
+            if (piece.assembledJarCollider != null)
+            {
+                piece.assembledJarCollider.enabled = piece.initialAssembledColliderState;
+            }
         }
         assembledCount = 0;
+        jarFullyAssembled = false;
         Debug.Log("Assembly reset!");
     }
 

@@ -171,7 +171,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// <summary>
     /// Return object to its original position
     /// </summary>
-    public void ExitCloseUp()
+    public void ExitCloseUp(bool instant = false)
     {
         if (!hasObjectInCloseUp || currentCloseUpObject == null) return;
 
@@ -188,8 +188,15 @@ public class ObjectCloseUpManager : MonoBehaviour
         var inspectable = currentCloseUpObject.GetComponent<IInspectable>();
         inspectable?.OnInspectionEnd();
 
-        // Start return animation
-        animationHandler.AnimateFromCloseUp(currentCloseUpObject, OnReturnAnimationComplete);
+        if (instant)
+        {
+            animationHandler.ReturnToOriginalInstant(currentCloseUpObject, OnReturnAnimationComplete);
+        }
+        else
+        {
+            // Start return animation
+            animationHandler.AnimateFromCloseUp(currentCloseUpObject, OnReturnAnimationComplete);
+        }
     }
 
     /// <summary>

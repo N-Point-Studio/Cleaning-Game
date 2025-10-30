@@ -151,6 +151,26 @@ public class ObjectAnimationHandler : MonoBehaviour
     }
 
     /// <summary>
+    /// Immediately return the object to its stored original state
+    /// </summary>
+    public void ReturnToOriginalInstant(Transform targetObject, Action onComplete = null)
+    {
+        if (targetObject == null) return;
+
+        if (currentAnimatingObject == targetObject)
+        {
+            currentAnimatingObject = null;
+        }
+
+        targetObject.SetParent(originalState.parent);
+        targetObject.position = originalState.position;
+        targetObject.rotation = Quaternion.Euler(originalState.rotation);
+        targetObject.localScale = originalState.scale;
+
+        onComplete?.Invoke();
+    }
+
+    /// <summary>
     /// Store the object's original transform state
     /// </summary>
     void StoreOriginalState(Transform targetObject)
