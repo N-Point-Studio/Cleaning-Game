@@ -9,18 +9,29 @@ public class VoxelGenerator : MonoBehaviour
     Vector3[] vertices;
     int[] triangles;
 
+    // [Header("Generation Settings")]
+    public enum Mode { Terrain, Torus, ImportedMesh }
+    public Mode generationMode = Mode.Terrain;
+
+    [Header("Terrain Settings")]
     public int xSize = 20;
     public int zSize = 20;
+    public float terrainNoiseScale = 0.3f;
+    public float terrainHeight = 2f;
 
     [Header("Torus Settings")]
     public float R = 3f; // Main radius
     public float r = 1f; // Tube radius
-    public int segMain = 30; // Main circle segments
-    public int segTube = 20; // Tube circle segments
+    public int segMain = 30;
+    public int segTube = 20;
+
+    [Header("Imported Mesh Settings")]
+    public MeshFilter importedMeshFilter; // Drag your FBX/OBJ here
 
     [Header("Destruction Settings")]
-    public float destroyRadius = 1f;
-    public Camera playerCamera; // Assign your camera here
+    public float digRadius = 1f;
+    public float digStrength = 0.5f; // How much to move vertices
+    public Camera playerCamera; // Assign main camera here
 
     private MeshCollider meshCollider;
 
@@ -30,42 +41,54 @@ public class VoxelGenerator : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh;
         meshCollider = GetComponent<MeshCollider>();
 
-        CreateTorus(R, r, segMain, segTube); // Or call CreateShape() for terrain
+        switch (generationMode)
+        {
+            case Mode.Terrain:
+                CreateTerrain();
+                break;
+            case Mode.Torus:
+                CreateTorus(R, r, segMain, segTube);
+                break;
+            case Mode.ImportedMesh:
+                if (importedMeshFilter != null)
+                    ConvertImportedMesh(importedMeshFilter.mesh);
+                else
+                    Debug.LogError("No imported mesh assigned!");
+                break;
+        }
+
         UpdateCollider();
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
             Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                DigMesh(hit.point, destroyRadius);
+                DigVertices(hit.point, digRadius, digStrength);
             }
         }
     }
 
     // ---------------- Terrain ----------------
-    void CreateShape()
+    void CreateTerrain()
     {
         vertices = new Vector3[(xSize + 1) * (zSize + 1)];
-
         for (int i = 0, z = 0; z <= zSize; z++)
         {
             for (int x = 0; x <= xSize; x++)
             {
-                float y = Mathf.PerlinNoise(x * .3f, z * .3f) * 2f;
+                float y = Mathf.PerlinNoise(x * terrainNoiseScale, z * terrainNoiseScale) * terrainHeight;
                 vertices[i] = new Vector3(x, y, z);
                 i++;
             }
         }
 
         triangles = new int[xSize * zSize * 6];
-
         int vert = 0;
         int tris = 0;
-
         for (int z = 0; z < zSize; z++)
         {
             for (int x = 0; x < xSize; x++)
@@ -114,7 +137,7 @@ public class VoxelGenerator : MonoBehaviour
                 int current = i * (segTube + 1) + j;
                 int next = (i + 1) * (segTube + 1) + j;
 
-                // Correct winding order
+                // Correct outward winding
                 triangles[tris++] = current;
                 triangles[tris++] = current + 1;
                 triangles[tris++] = next;
@@ -126,36 +149,31 @@ public class VoxelGenerator : MonoBehaviour
         }
 
         UpdateMesh();
-        UpdateCollider();
     }
 
-    // ---------------- Dig Mesh ----------------
-    void DigMesh(Vector3 point, float radius)
+    // ---------------- Convert Imported Mesh ----------------
+    void ConvertImportedMesh(Mesh importedMesh)
     {
-        List<int> newTriangles = new List<int>();
+        vertices = importedMesh.vertices;
+        triangles = importedMesh.triangles;
+        UpdateMesh();
+    }
 
-        for (int i = 0; i < triangles.Length; i += 3)
+    // ---------------- Dig Vertices Smoothly ----------------
+    void DigVertices(Vector3 point, float radius, float strength)
+    {
+        for (int i = 0; i < vertices.Length; i++)
         {
-            int i0 = triangles[i];
-            int i1 = triangles[i + 1];
-            int i2 = triangles[i + 2];
+            Vector3 worldVertex = transform.TransformPoint(vertices[i]);
+            float distance = Vector3.Distance(worldVertex, point);
 
-            Vector3 v0 = transform.TransformPoint(vertices[i0]);
-            Vector3 v1 = transform.TransformPoint(vertices[i1]);
-            Vector3 v2 = transform.TransformPoint(vertices[i2]);
-
-            // Keep triangle only if all vertices are outside radius
-            if ((v0 - point).magnitude > radius &&
-                (v1 - point).magnitude > radius &&
-                (v2 - point).magnitude > radius)
+            if (distance < radius)
             {
-                newTriangles.Add(i0);
-                newTriangles.Add(i1);
-                newTriangles.Add(i2);
+                float falloff = 1 - (distance / radius); // smooth
+                vertices[i] += Vector3.down * strength * falloff;
             }
         }
 
-        triangles = newTriangles.ToArray();
         UpdateMesh();
         UpdateCollider();
     }
@@ -178,7 +196,6 @@ public class VoxelGenerator : MonoBehaviour
         }
     }
 
-    // ---------------- Gizmos ----------------
     void OnDrawGizmos()
     {
         if (vertices == null) return;
