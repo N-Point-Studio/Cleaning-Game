@@ -2155,6 +2155,7 @@ GameObject:
   m_Component:
   - component: {fileID: 274343507}
   - component: {fileID: 274343508}
+  - component: {fileID: 274343509}
   m_Layer: 0
   m_Name: Surface (1)
   m_TagString: Tool_Surface
@@ -2198,6 +2199,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5597532, y: 2.6967125, z: 0.19579047}
   m_Center: {x: -0.0013423115, y: 2.4293962, z: -0.0068449974}
+--- !u!114 &274343509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274343506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb6b1ce26854f4f9d89b43c05152ae3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  removableTag: Dirts
 --- !u!1 &327516138 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3944056764170195254, guid: ccdff3fc1d706414fbf3331e7659bdef,
