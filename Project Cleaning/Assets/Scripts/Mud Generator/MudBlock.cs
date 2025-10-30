@@ -21,7 +21,7 @@ public class MudBlock : MonoBehaviour
         for (int x = 0; x <= resolution; x++)
             for (int y = 0; y <= resolution; y++)
                 for (int z = 0; z <= resolution; z++)
-                    density[x, y, z] = 1f; // full mud
+                    density[x, y, z] = 1f;
 
         GenerateMesh();
     }
