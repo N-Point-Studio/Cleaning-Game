@@ -146,7 +146,8 @@ public class JarAutoAssembly : MonoBehaviour
             Debug.Log($"Mouse exited {pieceType} during hold - canceling timer");
             isHoldingForDrag = false;
 
-            // Resume any paused rotation since we're canceling the drag operation
+            // Hide outline and resume any paused rotation since we're canceling the drag operation
+            HideInspectedObjectOutline();
             ResumeInspectionRotation();
         }
     }
@@ -199,6 +200,9 @@ public class JarAutoAssembly : MonoBehaviour
         if (isDragging && !isAssembled)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * dragSpeed);
+
+            // Check proximity to inspected objects for outline feedback
+            CheckOutlineProximity();
         }
     }
 
@@ -240,7 +244,8 @@ public class JarAutoAssembly : MonoBehaviour
 
         Debug.Log($"{pieceType} distance to correct position: {distanceToCorrectPos:F2}");
 
-        // Resume rotation on any inspected object after drag operation
+        // Hide any outline that might be showing and resume rotation
+        HideInspectedObjectOutline();
         ResumeInspectionRotation();
 
         if (distanceToCorrectPos < snapDistance)
@@ -255,6 +260,27 @@ public class JarAutoAssembly : MonoBehaviour
     }
 
     /// <summary>
+    /// Hide outline on inspected object when drag ends
+    /// </summary>
+    void HideInspectedObjectOutline()
+    {
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp)
+            return;
+
+        Transform inspectedObject = closeUpManager.CurrentCloseUpObject;
+        if (inspectedObject == null || inspectedObject == transform)
+            return;
+
+        InspectableJar inspectableJar = inspectedObject.GetComponent<InspectableJar>();
+        if (inspectableJar != null && inspectableJar.IsShowingOutline())
+        {
+            inspectableJar.HideOutline();
+            Debug.Log($"Hidden outline on inspected object - {pieceType} drag ended");
+        }
+    }
+
+    /// <summary>
     /// Resume rotation on any object currently in inspection mode
     /// </summary>
     void ResumeInspectionRotation()
@@ -264,6 +290,46 @@ public class JarAutoAssembly : MonoBehaviour
         {
             Debug.Log($"Resuming rotation on inspected object after {pieceType} drag ended");
             closeUpManager.ResumeRotation();
+        }
+    }
+
+    /// <summary>
+    /// Check proximity to inspected objects and show/hide outline accordingly
+    /// </summary>
+    void CheckOutlineProximity()
+    {
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp)
+            return;
+
+        Transform inspectedObject = closeUpManager.CurrentCloseUpObject;
+        if (inspectedObject == null || inspectedObject == transform)
+            return;
+
+        // Get InspectableJar component from inspected object
+        InspectableJar inspectableJar = inspectedObject.GetComponent<InspectableJar>();
+        if (inspectableJar == null)
+            return;
+
+        // Calculate distance between dragged object and inspected object
+        float distance = Vector3.Distance(transform.position, inspectedObject.position);
+
+        // Show/hide outline based on proximity
+        if (distance <= inspectableJar.outlineActivationDistance)
+        {
+            if (!inspectableJar.IsShowingOutline())
+            {
+                inspectableJar.ShowOutline();
+                Debug.Log($"🎯 {pieceType} near inspected object - showing outline (distance: {distance:F1})");
+            }
+        }
+        else
+        {
+            if (inspectableJar.IsShowingOutline())
+            {
+                inspectableJar.HideOutline();
+                Debug.Log($"📤 {pieceType} moved away from inspected object - hiding outline (distance: {distance:F1})");
+            }
         }
     }
 

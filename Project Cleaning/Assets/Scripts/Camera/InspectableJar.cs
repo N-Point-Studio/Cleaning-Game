@@ -14,11 +14,16 @@ public class InspectableJar : MonoBehaviour, IInspectable
     public Color inspectionColor = Color.cyan;
     public Material inspectionMaterial;         // Optional special material during inspection
 
+    [Header("Outline System")]
+    public float outlineActivationDistance = 3f; // Distance to activate outline
+
     // Private fields
     private Renderer objectRenderer;
     private Material originalMaterial;
+    private Material[] originalMaterials;  // Store all original materials
     private Color originalColor;
     private bool isCurrentlyInspected = false;
+    private bool isShowingOutline = false;
 
     void Start()
     {
@@ -26,6 +31,7 @@ public class InspectableJar : MonoBehaviour, IInspectable
         if (objectRenderer != null)
         {
             originalMaterial = objectRenderer.material;
+            originalMaterials = objectRenderer.materials;  // Store all materials
             originalColor = objectRenderer.material.color;
         }
     }
@@ -44,9 +50,15 @@ public class InspectableJar : MonoBehaviour, IInspectable
 
     public void OnInspectionStart()
     {
-        isCurrentlyInspected = true;
+        // Prevent multiple calls to OnInspectionStart
+        if (isCurrentlyInspected)
+        {
+            Debug.Log($"OnInspectionStart already called for {gameObject.name} - skipping duplicate call");
+            return;
+        }
 
-        Debug.Log($"Started inspecting jar: {gameObject.name}");
+        isCurrentlyInspected = true;
+        Debug.Log($"🔍 Started inspecting jar: {gameObject.name}");
 
         // Enable highlight effect
         if (highlightEffect != null)
@@ -54,12 +66,20 @@ public class InspectableJar : MonoBehaviour, IInspectable
             highlightEffect.SetActive(true);
         }
 
-        // Change material or color during inspection
+        // Set up materials for inspection - preserve dual material setup
         if (objectRenderer != null)
         {
             if (inspectionMaterial != null)
             {
-                objectRenderer.material = inspectionMaterial;
+                // Create array with both materials: main texture + outline
+                Material[] inspectionMaterials = new Material[2];
+                inspectionMaterials[0] = originalMaterials[0];  // Keep original main material
+
+                // DON'T add the outline material yet - only add it when needed
+                // For now, just use the original material
+                inspectionMaterials[1] = originalMaterials[0]; // Placeholder - same as main material
+                objectRenderer.materials = inspectionMaterials;
+                Debug.Log($"🎯 Initial materials: Element 0: {inspectionMaterials[0].name}, Element 1: {inspectionMaterials[1].name}");
             }
             else
             {
@@ -77,16 +97,26 @@ public class InspectableJar : MonoBehaviour, IInspectable
 
         Debug.Log($"Stopped inspecting jar: {gameObject.name}");
 
+        // Hide outline if it was showing
+        if (isShowingOutline)
+        {
+            HideOutline();
+        }
+
         // Disable highlight effect
         if (highlightEffect != null)
         {
             highlightEffect.SetActive(false);
         }
 
-        // Restore original material/color
+        // Restore original materials
         if (objectRenderer != null)
         {
-            if (originalMaterial != null)
+            if (originalMaterials != null && originalMaterials.Length > 0)
+            {
+                objectRenderer.materials = originalMaterials;
+            }
+            else if (originalMaterial != null)
             {
                 objectRenderer.material = originalMaterial;
             }
@@ -146,6 +176,68 @@ public class InspectableJar : MonoBehaviour, IInspectable
     public bool IsBeingInspected()
     {
         return isCurrentlyInspected;
+    }
+
+    /// <summary>
+    /// Show outline when another object is being dragged nearby
+    /// </summary>
+    public void ShowOutline()
+    {
+        if (isShowingOutline || !isCurrentlyInspected || objectRenderer == null || inspectionMaterial == null)
+            return;
+
+        isShowingOutline = true;
+
+        // NOW replace Element 1 with the actual outline material
+        Material[] materials = objectRenderer.materials;
+        if (materials.Length > 1)
+        {
+            // Create a copy of the outline material and make it visible
+            Material outlineMaterialCopy = new Material(inspectionMaterial);
+            if (outlineMaterialCopy.HasProperty("_Outline_Color"))
+            {
+                Color outlineColor = outlineMaterialCopy.GetColor("_Outline_Color");
+                outlineColor.a = 1f; // Make outline visible
+                outlineMaterialCopy.SetColor("_Outline_Color", outlineColor);
+            }
+
+            materials[1] = outlineMaterialCopy;  // Replace Element 1 with visible outline
+            objectRenderer.materials = materials;
+        }
+
+        Debug.Log($"🔴 Showing outline on inspected {gameObject.name} - drag target detected");
+    }
+
+    /// <summary>
+    /// Hide outline when drag object moves away or drag ends
+    /// </summary>
+    public void HideOutline()
+    {
+        if (!isShowingOutline)
+            return;
+
+        isShowingOutline = false;
+
+        // Replace Element 1 with the original material (no outline)
+        if (objectRenderer != null && originalMaterials != null && originalMaterials.Length > 0)
+        {
+            Material[] materials = objectRenderer.materials;
+            if (materials.Length > 1)
+            {
+                materials[1] = originalMaterials[0];  // Replace with original material (no outline)
+                objectRenderer.materials = materials;
+            }
+        }
+
+        Debug.Log($"⚪ Hiding outline on {gameObject.name} - drag target moved away");
+    }
+
+    /// <summary>
+    /// Check if outline is currently being shown
+    /// </summary>
+    public bool IsShowingOutline()
+    {
+        return isShowingOutline;
     }
 
     void OnDrawGizmosSelected()
