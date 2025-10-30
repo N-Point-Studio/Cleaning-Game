@@ -128,6 +128,12 @@ public class JarAutoAssembly : MonoBehaviour
             isDragging = false;
             TryAssemble();
         }
+
+        // IMPORTANT: If we were dragging and now stopped, resume any paused rotation
+        if (!isDragging && !isHoldingForDrag)
+        {
+            ResumeInspectionRotation();
+        }
     }
 
     /// <summary>
@@ -139,6 +145,9 @@ public class JarAutoAssembly : MonoBehaviour
         {
             Debug.Log($"Mouse exited {pieceType} during hold - canceling timer");
             isHoldingForDrag = false;
+
+            // Resume any paused rotation since we're canceling the drag operation
+            ResumeInspectionRotation();
         }
     }
 
@@ -202,12 +211,23 @@ public class JarAutoAssembly : MonoBehaviour
         isDragging = true;
         targetPosition = transform.position; // Start from current position
 
-        // Exit any current inspection mode
+        // IMPORTANT: Pause rotation on ANY object currently in inspection
+        // This prevents the inspected object from rotating while we drag another object
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
-        if (closeUpManager != null && closeUpManager.HasObjectInCloseUp && closeUpManager.CurrentCloseUpObject == transform)
+        if (closeUpManager != null)
         {
-            Debug.Log($"Exiting inspection mode to start dragging {pieceType}");
-            closeUpManager.ExitCloseUp();
+            if (closeUpManager.HasObjectInCloseUp && closeUpManager.CurrentCloseUpObject == transform)
+            {
+                // If THIS object is in inspection, exit it to start dragging
+                Debug.Log($"Exiting inspection mode to start dragging {pieceType}");
+                closeUpManager.ExitCloseUp();
+            }
+            else if (closeUpManager.HasObjectInCloseUp)
+            {
+                // If ANOTHER object is in inspection, pause its rotation but keep it in inspection
+                Debug.Log($"Pausing rotation on inspected object while dragging {pieceType}");
+                closeUpManager.PauseRotation();
+            }
         }
 
         Debug.Log($"Drag mode started for {pieceType} - now drag mouse to move piece for assembly");
@@ -220,6 +240,9 @@ public class JarAutoAssembly : MonoBehaviour
 
         Debug.Log($"{pieceType} distance to correct position: {distanceToCorrectPos:F2}");
 
+        // Resume rotation on any inspected object after drag operation
+        ResumeInspectionRotation();
+
         if (distanceToCorrectPos < snapDistance)
         {
             AssembleToCorrectPosition();
@@ -228,6 +251,19 @@ public class JarAutoAssembly : MonoBehaviour
         {
             Debug.Log($"{pieceType} too far - returning to original position");
             ReturnToOriginalPosition();
+        }
+    }
+
+    /// <summary>
+    /// Resume rotation on any object currently in inspection mode
+    /// </summary>
+    void ResumeInspectionRotation()
+    {
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null && closeUpManager.HasObjectInCloseUp)
+        {
+            Debug.Log($"Resuming rotation on inspected object after {pieceType} drag ended");
+            closeUpManager.ResumeRotation();
         }
     }
 

@@ -170,6 +170,7 @@ MonoBehaviour:
   pieceType: 2
   isAssembled: 0
   dragSpeed: 8
+  holdTimeForDrag: 2
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -702,59 +703,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.018137977, y: 0.018137973, z: 0.021173175}
   m_Center: {x: 0, y: 2.2332698e-19, z: 0.00050288753}
---- !u!1 &1660339508
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1660339510}
-  - component: {fileID: 1660339511}
-  m_Layer: 0
-  m_Name: Inspection
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1660339510
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1660339508}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.36868614, y: 1.7269892, z: 5.7422156}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1660339511
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1660339508}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93054b959175b449984f7fd1df201666, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rotationSensitivity: 3
-  rotationSmoothing: 8
-  invertX: 0
-  invertY: 0
-  limitVerticalRotation: 0
-  minVerticalAngle: -45
-  maxVerticalAngle: 45
-  mouseSensitivityMultiplier: 1
-  useRawInput: 1
 --- !u!1 &1929387414 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4589105191529738743, guid: 1a820fbe621334ccb81cd621ae4fa5fe,
@@ -803,6 +751,7 @@ MonoBehaviour:
   pieceType: 0
   isAssembled: 0
   dragSpeed: 8
+  holdTimeForDrag: 2
 --- !u!1 &2047542849 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7058014102034482736, guid: 1a820fbe621334ccb81cd621ae4fa5fe,
@@ -851,6 +800,7 @@ MonoBehaviour:
   pieceType: 1
   isAssembled: 0
   dragSpeed: 8
+  holdTimeForDrag: 2
 --- !u!1 &2089096257
 GameObject:
   m_ObjectHideFlags: 0
@@ -895,7 +845,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5be22c6d552d4ffb906e93120ddeac7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distanceFromCamera: 2
+  distanceFromCamera: 5
   positionOffset: {x: 0, y: 0, z: 0}
   objectScale: 1
   animationSpeed: 1
@@ -915,4 +865,3 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 465959138}
   - {fileID: 2089096259}
-  - {fileID: 1660339510}

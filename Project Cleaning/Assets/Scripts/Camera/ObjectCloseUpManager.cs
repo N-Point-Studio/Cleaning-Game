@@ -265,6 +265,30 @@ public class ObjectCloseUpManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Pause rotation on currently inspected object (without exiting inspection)
+    /// </summary>
+    public void PauseRotation()
+    {
+        if (smoothRotator != null && smoothRotator.IsRotating)
+        {
+            smoothRotator.StopRotating();
+            Debug.Log("Paused rotation on inspected object");
+        }
+    }
+
+    /// <summary>
+    /// Resume rotation on currently inspected object
+    /// </summary>
+    public void ResumeRotation()
+    {
+        if (hasObjectInCloseUp && currentCloseUpObject != null && smoothRotator != null)
+        {
+            smoothRotator.StartRotating(currentCloseUpObject);
+            Debug.Log("Resumed rotation on inspected object");
+        }
+    }
+
+    /// <summary>
     /// Update close-up settings at runtime
     /// </summary>
     public void UpdateCloseUpSettings(float distance, Vector3 offset, float scale)
