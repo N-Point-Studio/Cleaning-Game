@@ -1,0 +1,65 @@
+using System;
+using UnityEngine;
+
+public class Clean : MonoBehaviour
+{
+    [SerializeField] private Camera _camera;
+
+    [SerializeField] private Texture2D _dirtMaskBase;
+    [SerializeField] private Texture2D _brush;
+
+    [SerializeField] private Material _material;
+
+    private Texture2D _templateDirtMask;
+
+    private void Start()
+    {
+        CreateTexture();
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            if (Physics.Raycast(_camera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit))
+            {
+                Vector2 textureCoord = hit.textureCoord;
+
+                int pixelX = (int)(textureCoord.x * _templateDirtMask.width);
+                int pixelY = (int)(textureCoord.y * _templateDirtMask.height);
+                for (int x = 0; x < _brush.width; x++)
+                {
+                    for (int y = 0; y < _brush.height; y++)
+                    {
+                        int px = pixelX + x;
+                        int py = pixelY + y;
+
+                        if (px >= 0 && px < _templateDirtMask.width && py >= 0 && py < _templateDirtMask.height)
+                        {
+                            Color pixelDirt = _brush.GetPixel(x, y);
+                            Color pixelDirtMask = _templateDirtMask.GetPixel(px, py);
+
+                            _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
+                        }
+                    }
+                }
+
+
+                _templateDirtMask.Apply();
+            }
+        }
+    }
+    private void CreateTexture()
+    {
+        _templateDirtMask = new Texture2D(_dirtMaskBase.width, _dirtMaskBase.height);
+        _templateDirtMask.SetPixels(_dirtMaskBase.GetPixels());
+        _templateDirtMask.Apply();
+
+        // Force instance so each object can have its own mask
+        var renderer = GetComponent<Renderer>();
+        _material = renderer.material;
+
+        _material.SetTexture("_DirtMask", _templateDirtMask);
+    }
+
+}
