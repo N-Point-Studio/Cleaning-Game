@@ -23,8 +23,6 @@ public class ChiselTool : ToolBase
     private void Update()
     {
         if (targetObject == null) return;
-
-        // Smooth return ke posisi & rotasi awal
         if (isReturning)
         {
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
@@ -38,14 +36,11 @@ public class ChiselTool : ToolBase
                 targetObject = null;
             }
         }
-
-        // Selalu arahkan tipPoint ke lookTarget jika tersedia
         if (lookTarget != null && tipPoint != null)
         {
             Vector3 dir = lookTarget.position - tipPoint.position;
             if (dir.sqrMagnitude > 0f)
             {
-                // Buat rotasi targetObject sehingga tipPoint.forward mengarah ke lookTarget
                 Quaternion lookRot = Quaternion.FromToRotation(tipPoint.forward, dir.normalized) * targetObject.rotation;
                 targetObject.rotation = Quaternion.Slerp(targetObject.rotation, lookRot, Time.deltaTime * moveSmoothness);
             }
@@ -100,7 +95,6 @@ public class ChiselTool : ToolBase
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(tipPoint.position, tipPoint.position + tipPoint.forward * gizmoLineLength);
 
-        // Garis ke lookTarget
         if (lookTarget != null)
         {
             Gizmos.color = Color.cyan;
