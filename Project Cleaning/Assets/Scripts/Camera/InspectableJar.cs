@@ -9,6 +9,14 @@ public class InspectableJar : MonoBehaviour, IInspectable
     public float inspectionScale = 1.5f;       // How much bigger when inspecting
     public bool canBeInspected = true;
 
+    [Header("Size-Aware Inspection")]
+    [Tooltip("Use different inspection scale for assembled jar vs individual pieces")]
+    public bool useContextualScale = true;
+    [Tooltip("Scale for individual jar pieces")]
+    public float pieceInspectionScale = 1.5f;
+    [Tooltip("Scale for assembled jar (typically smaller since jar is larger)")]
+    public float assembledJarInspectionScale = 1.0f;
+
     [Header("Visual Feedback")]
     public GameObject highlightEffect;
     public Color inspectionColor = Color.cyan;
@@ -45,7 +53,37 @@ public class InspectableJar : MonoBehaviour, IInspectable
 
     public float GetIdealInspectionScale()
     {
+        if (useContextualScale)
+        {
+            // Check if this is an assembled jar
+            if (IsAssembledJar())
+            {
+                return assembledJarInspectionScale;
+            }
+            else
+            {
+                return pieceInspectionScale;
+            }
+        }
+
         return inspectionScale;
+    }
+
+    /// <summary>
+    /// Check if this object is an assembled jar
+    /// </summary>
+    private bool IsAssembledJar()
+    {
+        // Check if this transform is referenced as an assembled jar root by any jar pieces
+        JarAutoAssembly[] allJarPieces = FindObjectsOfType<JarAutoAssembly>();
+        foreach (var piece in allJarPieces)
+        {
+            if (piece.IsAssembledJarRoot(transform))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void OnInspectionStart()

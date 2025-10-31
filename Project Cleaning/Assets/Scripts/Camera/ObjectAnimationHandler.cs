@@ -66,8 +66,8 @@ public class ObjectAnimationHandler : MonoBehaviour
         // Store original state
         StoreOriginalState(targetObject);
 
-        // Calculate close-up position
-        Vector3 closeUpPosition = CalculateCloseUpPosition();
+        // Calculate close-up position using the manager's method that supports dynamic distance
+        Vector3 closeUpPosition = CalculateCloseUpPosition(targetObject);
 
         Debug.Log($"Animating {targetObject.name} to close-up position: {closeUpPosition}");
 
@@ -187,8 +187,16 @@ public class ObjectAnimationHandler : MonoBehaviour
     /// <summary>
     /// Calculate where the object should appear for close-up
     /// </summary>
-    Vector3 CalculateCloseUpPosition()
+    Vector3 CalculateCloseUpPosition(Transform targetObject = null)
     {
+        // Try to get position from ObjectCloseUpManager for dynamic distance calculation
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null)
+        {
+            return closeUpManager.GetCloseUpPosition(targetObject);
+        }
+
+        // Fallback to basic calculation
         Camera cam = Camera.main;
         return cam.transform.position +
                cam.transform.forward * distanceFromCamera +

@@ -89,6 +89,15 @@ public class SmoothObjectRotator : MonoBehaviour
     }
 
     /// <summary>
+    /// Update the fixed position for rotation (prevents position drift)
+    /// </summary>
+    public void UpdateFixedPosition(Vector3 newPosition)
+    {
+        fixedPosition = newPosition;
+        Debug.Log($"Updated fixed rotation position to: {newPosition}");
+    }
+
+    /// <summary>
     /// Handle smooth rotation input
     /// </summary>
     void HandleSmoothRotation()
@@ -141,7 +150,6 @@ public class SmoothObjectRotator : MonoBehaviour
                 targetVerticalRotation += verticalDelta;
             }
 
-            Debug.Log($"Smooth rotation - Mouse delta: ({mouseX:F1}, {mouseY:F1}), Target: H={targetHorizontalRotation:F1}°, V={targetVerticalRotation:F1}°");
         }
 
         // Update last mouse position

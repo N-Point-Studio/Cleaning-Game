@@ -13,6 +13,26 @@ public class ObjectCloseUpManager : MonoBehaviour
     public float objectScale = 1.0f;
     public float animationSpeed = 1f;
 
+    [Header("Dynamic Distance Settings")]
+    [Tooltip("Automatically adjust distance based on object size")]
+    public bool useDynamicDistance = true;
+    [Tooltip("Minimum distance multiplier for very small objects")]
+    public float minDistanceMultiplier = 1.5f;
+    [Tooltip("Maximum distance multiplier for very large objects")]
+    public float maxDistanceMultiplier = 4f;
+    [Tooltip("Base size reference for distance calculation")]
+    public float baseSizeReference = 1f;
+
+    [Header("Assembled Jar Override Settings")]
+    [Tooltip("Use different settings specifically for assembled jar")]
+    public bool useAssembledJarOverride = true;
+    [Tooltip("Fixed distance for assembled jar (overrides dynamic calculation)")]
+    public float assembledJarDistance = 3.5f;
+    [Tooltip("Position offset specifically for assembled jar")]
+    public Vector3 assembledJarOffset = Vector3.zero;
+    [Tooltip("Scale for assembled jar")]
+    public float assembledJarScale = 1.0f;
+
     [Header("Object Selection")]
     public LayerMask clickableObjects = -1;
     public KeyCode exitCloseUpKey = KeyCode.Escape;
@@ -109,19 +129,31 @@ public class ObjectCloseUpManager : MonoBehaviour
         // Handle mouse input based on current state
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log($"Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
+            Debug.Log($"🖱️ Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
 
             if (hasObjectInCloseUp)
             {
-                Debug.Log("Object in close-up - starting rotation");
-                // All objects in close-up can be rotated for inspection
-                // Jar pieces can still be assembled via drag when needed
-                smoothRotator.StartRotating(currentCloseUpObject);
+                Debug.Log("🔄 Object in close-up - requesting rotation start");
+
+                if (ShouldAllowRotation(currentCloseUpObject))
+                {
+                    // Update the rotator's fixed position before starting rotation
+                    UpdateRotatorFixedPosition(currentCloseUpObject);
+                    smoothRotator.StartRotating(currentCloseUpObject);
+                }
+                else
+                {
+                    Debug.Log("🚫 Rotation blocked: individual piece after completion");
+                }
             }
             else
             {
-                Debug.Log("No object in close-up - trying to select object...");
-                // No object in close-up - try to select one (but jar pieces will be filtered out)
+                Debug.Log("🎯 No object in close-up - trying to select object...");
+
+                // Debug: Check what objects are under the mouse before trying selection
+                DebugObjectsUnderMouse();
+
+                // No object in close-up - try to select one
                 selectionHandler.TrySelectObjectAtMousePosition();
             }
         }
@@ -140,32 +172,84 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     public void BringObjectToCloseUp(Transform targetObject)
     {
+        Debug.Log($"🎯 BringObjectToCloseUp called with: {targetObject?.name ?? "null"}");
+        Debug.Log($"    Current hasObjectInCloseUp: {hasObjectInCloseUp}");
+        Debug.Log($"    Current object: {currentCloseUpObject?.name ?? "null"}");
+
+        if (targetObject == null)
+        {
+            Debug.LogError("❌ BringObjectToCloseUp: targetObject is null!");
+            return;
+        }
+
         // If there's already an object in close-up, switch to the new one
         if (hasObjectInCloseUp)
         {
-            Debug.Log($"Switching from {currentCloseUpObject.name} to {targetObject.name}");
+            Debug.Log($"🔄 Switching from {currentCloseUpObject?.name ?? "null"} to {targetObject.name}");
             SwitchToNewObject(targetObject);
             return;
         }
 
-        currentCloseUpObject = targetObject;
-        hasObjectInCloseUp = true;
+        Debug.Log($"🆕 No object in close-up, bringing {targetObject.name} directly");
+        SetCurrentObject(targetObject);
 
-        Debug.Log($"Bringing {targetObject.name} to close-up view");
+        // Start animation
+        Debug.Log($"🎬 Starting animation for {targetObject.name}");
+        animationHandler.AnimateToCloseUp(targetObject, OnCloseUpAnimationComplete);
+    }
+
+    public void SetCurrentObject(Transform targetObject)
+    {
+        Debug.Log($"🔄 SetCurrentObject called with: {targetObject?.name ?? "null"}");
+        Debug.Log($"    Previous object: {currentCloseUpObject?.name ?? "null"}");
+
+        currentCloseUpObject = targetObject;
+        hasObjectInCloseUp = targetObject != null;
+
+        if (targetObject == null)
+        {
+            Debug.Log("✅ Current object set to null, HasObjectInCloseUp = false");
+            return;
+        }
+
+        Debug.Log($"✅ Bringing {targetObject.name} to close-up view");
+        Debug.Log($"    HasObjectInCloseUp = {hasObjectInCloseUp}");
 
         // Check if it's a jar piece
         var jarComponent = targetObject.GetComponent<JarAutoAssembly>();
         if (jarComponent != null)
         {
-            Debug.Log($"JAR PIECE ({jarComponent.pieceType}) - Click to rotate, drag to assemble (assembled: {jarComponent.isAssembled})");
+            Debug.Log($"🏺 JAR PIECE ({jarComponent.pieceType}) - Click to rotate, drag to assemble (assembled: {jarComponent.isAssembled})");
+
+            // Check if this is an assembled jar root
+            if (jarComponent.IsAssembledJarRoot(targetObject))
+            {
+                Debug.Log($"👑 This jar piece IS the assembled jar root");
+            }
+            else
+            {
+                Debug.Log($"🧩 This is an individual jar piece, not the assembled root");
+            }
         }
         else
         {
-            Debug.Log("OBJECT READY - Click to rotate and inspect");
+            Debug.Log("🎯 OBJECT READY - Click to rotate and inspect (no JarAutoAssembly component)");
+
+            // Check if this is recognized as an assembled jar by other pieces
+            bool isRecognizedAsAssembledJar = IsAssembledJar(targetObject);
+            Debug.Log($"    Recognized as assembled jar by other pieces: {isRecognizedAsAssembledJar}");
+        }
+    }
+
+    public void ClearCurrentObject()
+    {
+        if (hasObjectInCloseUp)
+        {
+            Debug.Log($"Clearing current close-up object: {currentCloseUpObject?.name ?? "null"}");
         }
 
-        // Start animation
-        animationHandler.AnimateToCloseUp(targetObject, OnCloseUpAnimationComplete);
+        currentCloseUpObject = null;
+        hasObjectInCloseUp = false;
     }
 
     /// <summary>
@@ -210,7 +294,31 @@ public class ObjectCloseUpManager : MonoBehaviour
         if (currentCloseUpObject != null)
         {
             Debug.Log("Auto-starting rotation for single-click inspection");
-            smoothRotator.StartRotating(currentCloseUpObject);
+
+            bool shouldRotate = ShouldAllowRotation(currentCloseUpObject);
+            if (shouldRotate)
+            {
+                // Update the rotator's fixed position to the current inspection position
+                // This prevents position drift during rotation
+                UpdateRotatorFixedPosition(currentCloseUpObject);
+                smoothRotator.StartRotating(currentCloseUpObject);
+            }
+            else
+            {
+                Debug.Log("Auto rotation skipped: individual piece after completion");
+            }
+
+            JarAutoAssembly jarPiece = currentCloseUpObject.GetComponent<JarAutoAssembly>();
+            if (jarPiece != null)
+            {
+                Vector3 basePosition = jarPiece.GetBaseCorrectWorldPosition();
+                Quaternion baseRotation = jarPiece.GetBaseCorrectWorldRotation();
+
+                Vector3 offset = currentCloseUpObject.position - basePosition;
+                Quaternion rotationOffset = currentCloseUpObject.rotation * Quaternion.Inverse(baseRotation);
+
+                jarPiece.CacheInspectionOffsets(offset, rotationOffset);
+            }
         }
     }
 
@@ -229,10 +337,96 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     public Vector3 GetCloseUpPosition()
     {
+        return GetCloseUpPosition(currentCloseUpObject);
+    }
+
+    /// <summary>
+    /// Get the position where a specific object should appear for close-up
+    /// </summary>
+    public Vector3 GetCloseUpPosition(Transform targetObject)
+    {
         Camera cam = Camera.main;
+        float distance = distanceFromCamera;
+        Vector3 offset = positionOffset;
+
+        if (targetObject != null)
+        {
+            // Check if this is an assembled jar and use override settings
+            if (useAssembledJarOverride && IsAssembledJar(targetObject))
+            {
+                distance = assembledJarDistance;
+                offset = assembledJarOffset;
+                // Debug.Log($"Using assembled jar settings - distance: {distance}, offset: {offset}");
+            }
+            // Use dynamic distance calculation for individual pieces
+            else if (useDynamicDistance)
+            {
+                distance = CalculateDynamicDistance(targetObject);
+            }
+        }
+
         return cam.transform.position +
-               cam.transform.forward * distanceFromCamera +
-               positionOffset;
+               cam.transform.forward * distance +
+               offset;
+    }
+
+    /// <summary>
+    /// Calculate appropriate distance based on object size
+    /// </summary>
+    private float CalculateDynamicDistance(Transform targetObject)
+    {
+        if (targetObject == null) return distanceFromCamera;
+
+        // Get object bounds
+        Bounds objectBounds = GetObjectBounds(targetObject);
+        float objectSize = Mathf.Max(objectBounds.size.x, objectBounds.size.y, objectBounds.size.z);
+
+        // Calculate distance multiplier based on size
+        float sizeRatio = objectSize / baseSizeReference;
+        float distanceMultiplier = Mathf.Clamp(sizeRatio, minDistanceMultiplier, maxDistanceMultiplier);
+
+        return distanceFromCamera * distanceMultiplier;
+    }
+
+    /// <summary>
+    /// Get combined bounds of object and all its children
+    /// </summary>
+    private Bounds GetObjectBounds(Transform targetObject)
+    {
+        Renderer[] renderers = targetObject.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+        {
+            // Fallback to collider bounds if no renderers
+            Collider collider = targetObject.GetComponent<Collider>();
+            return collider != null ? collider.bounds : new Bounds(targetObject.position, Vector3.one);
+        }
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+        {
+            bounds.Encapsulate(renderers[i].bounds);
+        }
+        return bounds;
+    }
+
+    /// <summary>
+    /// Check if the target object is an assembled jar
+    /// </summary>
+    private bool IsAssembledJar(Transform targetObject)
+    {
+        if (targetObject == null) return false;
+
+        // Check if this transform is referenced as an assembled jar root
+        JarAutoAssembly[] allJarPieces = FindObjectsOfType<JarAutoAssembly>();
+        foreach (var piece in allJarPieces)
+        {
+            if (piece.IsAssembledJarRoot(targetObject))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -284,6 +478,63 @@ public class ObjectCloseUpManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Update the rotator's fixed position to prevent position drift during rotation
+    /// </summary>
+    private void UpdateRotatorFixedPosition(Transform targetObject)
+    {
+        if (targetObject == null || smoothRotator == null) return;
+
+        // Update the fixed position to the current object position
+        // This ensures rotation happens around the inspection position, not the original position
+        smoothRotator.UpdateFixedPosition(targetObject.position);
+        Debug.Log($"Updated rotator fixed position for {targetObject.name} at {targetObject.position}");
+    }
+
+    public bool IsRotatingIndividualPiece()
+    {
+        if (!hasObjectInCloseUp || currentCloseUpObject == null)
+            return false;
+
+        var jarComponent = currentCloseUpObject.GetComponent<JarAutoAssembly>();
+        if (jarComponent == null)
+            return false;
+
+        return !jarComponent.IsAssembledJarRoot(currentCloseUpObject);
+    }
+
+    bool ShouldAllowRotation(Transform target)
+    {
+        if (target == null)
+            return false;
+
+        // If jar is not fully assembled, allow rotation of any object
+        if (!JarAutoAssembly.IsJarFullyAssembled)
+        {
+            return true;
+        }
+
+        // Jar is fully assembled - check what type of object we're trying to rotate
+        var jarComponent = target.GetComponent<JarAutoAssembly>();
+
+        if (jarComponent != null)
+        {
+            // This target has JarAutoAssembly component (it's a jar piece)
+            // Only allow rotation if it's the assembled jar root
+            bool isAssembledRoot = jarComponent.IsAssembledJarRoot(target);
+            Debug.Log($"Jar piece rotation check: {target.name}, IsAssembledRoot: {isAssembledRoot}");
+            return isAssembledRoot;
+        }
+        else
+        {
+            // This target doesn't have JarAutoAssembly component
+            // Check if any jar pieces recognize this as their assembled jar root
+            bool isRecognizedAsAssembledJar = IsAssembledJar(target);
+            Debug.Log($"Non-jar-piece rotation check: {target.name}, IsRecognizedAsAssembledJar: {isRecognizedAsAssembledJar}");
+            return isRecognizedAsAssembledJar;
+        }
+    }
+
+    /// <summary>
     /// Resume rotation on currently inspected object
     /// </summary>
     public void ResumeRotation()
@@ -328,6 +579,59 @@ public class ObjectCloseUpManager : MonoBehaviour
     // Public properties
     public bool HasObjectInCloseUp => hasObjectInCloseUp;
     public Transform CurrentCloseUpObject => currentCloseUpObject;
+
+    /// <summary>
+    /// Debug method to check what objects are under the mouse cursor
+    /// </summary>
+    void DebugObjectsUnderMouse()
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return;
+
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        Debug.Log($"🔍 DEBUGGING OBJECTS UNDER MOUSE:");
+        Debug.Log($"    Mouse Position: {Input.mousePosition}");
+        Debug.Log($"    Ray: {ray.origin} -> {ray.direction}");
+
+        // Test with all layers first
+        RaycastHit[] allHits = Physics.RaycastAll(ray, Mathf.Infinity);
+        Debug.Log($"    Total objects hit (all layers): {allHits.Length}");
+
+        if (allHits.Length == 0)
+        {
+            Debug.Log($"❌ NO OBJECTS HIT BY RAYCAST - Check object colliders and positions");
+            return;
+        }
+
+        foreach (RaycastHit hit in allHits)
+        {
+            GameObject hitObj = hit.transform.gameObject;
+            JarAutoAssembly jarComponent = hitObj.GetComponent<JarAutoAssembly>();
+            bool hasJarComponent = jarComponent != null;
+            bool isAssembled = hasJarComponent && jarComponent.isAssembled;
+
+            Debug.Log($"    Hit: {hitObj.name} (Layer: {hitObj.layer}, JarComponent: {hasJarComponent}, Assembled: {isAssembled})");
+
+            if (hasJarComponent)
+            {
+                Debug.Log($"      -> Jar piece type: {jarComponent.pieceType}");
+                Debug.Log($"      -> Position: {hitObj.transform.position}");
+                Debug.Log($"      -> Collider enabled: {hitObj.GetComponent<Collider>()?.enabled}");
+            }
+        }
+
+        // Test with clickable layer mask
+        Debug.Log($"    Clickable layer mask: {clickableObjects} (binary: {System.Convert.ToString(clickableObjects, 2)})");
+
+        if (Physics.Raycast(ray, out RaycastHit clickableHit, Mathf.Infinity, clickableObjects))
+        {
+            Debug.Log($"✅ Clickable object hit: {clickableHit.transform.name}");
+        }
+        else
+        {
+            Debug.Log($"❌ No clickable objects hit with current layer mask");
+        }
+    }
 
     void OnDrawGizmosSelected()
     {

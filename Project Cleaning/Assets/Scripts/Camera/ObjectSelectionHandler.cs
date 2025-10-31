@@ -108,6 +108,14 @@ public class ObjectSelectionHandler : MonoBehaviour
         if (!targetObject.gameObject.activeInHierarchy)
             return false;
 
+        // Check if this is an assembled jar root - if so, handle it specially without close-up
+        if (IsAssembledJarRoot(targetObject))
+        {
+            Debug.Log($"Assembled jar detected - enabling rotation in place without close-up");
+            HandleAssembledJarClick(targetObject);
+            return false; // Prevent normal close-up selection
+        }
+
         // Jar pieces can be inspected at any time (before, during, or after assembly)
         var jarComponent = targetObject.GetComponent<JarAutoAssembly>();
         if (jarComponent != null)
@@ -213,6 +221,102 @@ public class ObjectSelectionHandler : MonoBehaviour
 
             Vector3 rayDirection = (mouseWorldPos - playerCamera.transform.position).normalized;
             Gizmos.DrawRay(playerCamera.transform.position, rayDirection * 10f);
+        }
+    }
+
+    /// <summary>
+    /// Check if a target object is an assembled jar root
+    /// </summary>
+    bool IsAssembledJarRoot(Transform targetObject)
+    {
+        // Check if any jar piece recognizes this as their assembled jar root
+        JarAutoAssembly[] allJarPieces = FindObjectsOfType<JarAutoAssembly>();
+        foreach (var piece in allJarPieces)
+        {
+            if (piece.IsAssembledJarRoot(targetObject))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Handle assembled jar click without close-up animation
+    /// </summary>
+    void HandleAssembledJarClick(Transform assembledJarRoot)
+    {
+        Debug.Log($"🎯 Assembled jar clicked - enabling rotation in place");
+
+        // Get the ObjectCloseUpManager to manually set up rotation-only mode
+        if (closeUpManager != null)
+        {
+            // Manually set the assembled jar as current object without animation
+            closeUpManager.SetCurrentObject(assembledJarRoot);
+            Debug.Log($"✅ Set assembled jar as current object for rotation (no movement)");
+        }
+
+        // Start rotation immediately without any position changes
+        var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
+        if (smoothRotator != null)
+        {
+            // CRITICAL: Store the current position before starting rotation
+            Vector3 currentPos = assembledJarRoot.position;
+            Debug.Log($"🔒 Locking jar position at: {currentPos}");
+
+            // First update the fixed position to current position
+            smoothRotator.UpdateFixedPosition(currentPos);
+
+            // Then start rotation (this will also set fixedPosition internally)
+            smoothRotator.StartRotating(assembledJarRoot);
+
+            // Double-check: Force position lock after starting rotation
+            assembledJarRoot.position = currentPos;
+
+            Debug.Log($"🔄 Started rotation for assembled jar - position locked at {currentPos}");
+        }
+
+        Debug.Log($"✅ Assembled jar ready for rotation - position absolutely locked");
+    }
+
+    /// <summary>
+    /// Debug method to test raycast at current mouse position
+    /// </summary>
+    [ContextMenu("Test Raycast at Mouse")]
+    public void TestRaycastAtMouse()
+    {
+        if (playerCamera == null)
+        {
+            Debug.LogError("No camera found for raycast test!");
+            return;
+        }
+
+        Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        Debug.Log($"🔍 RAYCAST TEST:");
+        Debug.Log($"    Mouse Position: {Input.mousePosition}");
+        Debug.Log($"    Ray Origin: {ray.origin}");
+        Debug.Log($"    Ray Direction: {ray.direction}");
+        Debug.Log($"    Layer Mask: {selectableLayerMask} (binary: {System.Convert.ToString(selectableLayerMask, 2)})");
+
+        // Test raycast with infinite distance and all layers
+        RaycastHit[] allHits = Physics.RaycastAll(ray, Mathf.Infinity);
+        Debug.Log($"    Total objects hit (all layers): {allHits.Length}");
+
+        foreach (RaycastHit hit in allHits)
+        {
+            int layerMask = 1 << hit.transform.gameObject.layer;
+            bool inSelectable = (selectableLayerMask & layerMask) != 0;
+            Debug.Log($"    Hit: {hit.transform.name} on layer {hit.transform.gameObject.layer} (selectable: {inSelectable})");
+        }
+
+        // Test with selectable layer mask
+        if (Physics.Raycast(ray, out RaycastHit selectableHit, Mathf.Infinity, selectableLayerMask))
+        {
+            Debug.Log($"✅ Selectable raycast hit: {selectableHit.transform.name}");
+        }
+        else
+        {
+            Debug.Log($"❌ No selectable objects hit with current layer mask");
         }
     }
 }
