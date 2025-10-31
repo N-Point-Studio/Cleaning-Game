@@ -490,18 +490,6 @@ public class ObjectCloseUpManager : MonoBehaviour
         Debug.Log($"Updated rotator fixed position for {targetObject.name} at {targetObject.position}");
     }
 
-    public bool IsRotatingIndividualPiece()
-    {
-        if (!hasObjectInCloseUp || currentCloseUpObject == null)
-            return false;
-
-        var jarComponent = currentCloseUpObject.GetComponent<JarAutoAssembly>();
-        if (jarComponent == null)
-            return false;
-
-        return !jarComponent.IsAssembledJarRoot(currentCloseUpObject);
-    }
-
     bool ShouldAllowRotation(Transform target)
     {
         if (target == null)
@@ -546,17 +534,14 @@ public class ObjectCloseUpManager : MonoBehaviour
         }
     }
 
+    
+
     /// <summary>
     /// Update close-up settings at runtime
     /// </summary>
-    public void UpdateCloseUpSettings(float distance, Vector3 offset, float scale)
-    {
-        distanceFromCamera = distance;
-        positionOffset = offset;
-        objectScale = scale;
+    
 
-        animationHandler?.UpdateSettings(distance, offset, scale);
-    }
+    
 
     /// <summary>
     /// Check if the target object is a jar piece that's currently being assembled

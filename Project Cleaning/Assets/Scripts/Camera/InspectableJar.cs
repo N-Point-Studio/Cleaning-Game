@@ -200,13 +200,7 @@ public class InspectableJar : MonoBehaviour, IInspectable
         canBeInspected = inspectable;
     }
 
-    /// <summary>
-    /// Set the scale used during inspection
-    /// </summary>
-    public void SetInspectionScale(float scale)
-    {
-        inspectionScale = Mathf.Max(0.1f, scale);
-    }
+    
 
     /// <summary>
     /// Check if this jar is currently being inspected

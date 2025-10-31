@@ -812,12 +812,12 @@ public class JarAutoAssembly : MonoBehaviour
         inspectionRotationOffset = rotationOffset;
     }
 
-    public Vector3 GetAssemblyOffset()
+    private Vector3 GetAssemblyOffset()
     {
         return inspectionOffset;
     }
 
-    public Quaternion GetAssemblyRotationOffset()
+    private Quaternion GetAssemblyRotationOffset()
     {
         return inspectionRotationOffset == Quaternion.identity ? Quaternion.identity : inspectionRotationOffset;
     }

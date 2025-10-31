@@ -44,15 +44,7 @@ public class ObjectAnimationHandler : MonoBehaviour
         Debug.Log("Object animation handler initialized");
     }
 
-    /// <summary>
-    /// Update animation settings at runtime
-    /// </summary>
-    public void UpdateSettings(float distance, Vector3 offset, float scale)
-    {
-        distanceFromCamera = distance;
-        positionOffset = offset;
-        scaleMultiplier = scale;
-    }
+    
 
     /// <summary>
     /// Animate object to close-up position
@@ -215,49 +207,7 @@ public class ObjectAnimationHandler : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Stop only rotation animations while keeping position/scale animations
-    /// </summary>
-    public void StopRotationAnimations()
-    {
-        if (currentAnimatingObject != null)
-        {
-            // Kill only rotation tweens, keep position and scale
-            currentAnimatingObject.DOKill(false);
-            DOTween.Kill(currentAnimatingObject, false);
-
-            Debug.Log($"Stopped rotation animations for {currentAnimatingObject.name}");
-        }
-    }
-
-    /// <summary>
-    /// Enable manual rotation mode - stops conflicting animations
-    /// </summary>
-    public void EnableManualRotation(Transform targetObject)
-    {
-        if (targetObject != null)
-        {
-            // Kill any rotation tweens on this object
-            targetObject.DOKill(false);
-            Debug.Log($"Enabled manual rotation for {targetObject.name}");
-        }
-    }
-
-    /// <summary>
-    /// Set animation duration at runtime
-    /// </summary>
-    public void SetAnimationDuration(float duration)
-    {
-        animationDuration = Mathf.Max(0.1f, duration);
-    }
-
-    /// <summary>
-    /// Set scale multiplier for close-up view
-    /// </summary>
-    public void SetScaleMultiplier(float multiplier)
-    {
-        scaleMultiplier = Mathf.Max(0.1f, multiplier);
-    }
+    
 
     // Public properties
     public bool IsAnimating => currentAnimatingObject != null;

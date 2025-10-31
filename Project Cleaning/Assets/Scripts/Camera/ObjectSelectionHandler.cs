@@ -153,59 +153,10 @@ public class ObjectSelectionHandler : MonoBehaviour
         closeUpManager.BringObjectToCloseUp(targetObject);
     }
 
-    /// <summary>
-    /// Enable or disable object selection
-    /// </summary>
-    public void SetSelectionEnabled(bool enabled)
-    {
-        enableSelection = enabled;
-    }
+    
 
-    /// <summary>
-    /// Update the selectable layer mask
-    /// </summary>
-    public void SetSelectableLayerMask(LayerMask layerMask)
-    {
-        selectableLayerMask = layerMask;
-    }
-
-    /// <summary>
-    /// Set whether inspectable component is required
-    /// </summary>
-    public void SetRequireInspectableComponent(bool require)
-    {
-        requireInspectableComponent = require;
-    }
-
-    /// <summary>
-    /// Get the object currently under the mouse cursor
-    /// </summary>
-    public Transform GetObjectUnderMouse()
-    {
-        if (playerCamera == null) return null;
-
-        Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, selectableLayerMask))
-        {
-            return hit.transform;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Check if there's a selectable object under the mouse
-    /// </summary>
-    public bool IsSelectableObjectUnderMouse()
-    {
-        Transform objectUnderMouse = GetObjectUnderMouse();
-        return objectUnderMouse != null && CanSelectObject(objectUnderMouse);
-    }
-
-    // Public properties
-    public bool SelectionEnabled => enableSelection;
-    public LayerMask SelectableLayerMask => selectableLayerMask;
+    private bool SelectionEnabled => enableSelection;
+    private LayerMask SelectableLayerMask => selectableLayerMask;
 
     void OnDrawGizmosSelected()
     {

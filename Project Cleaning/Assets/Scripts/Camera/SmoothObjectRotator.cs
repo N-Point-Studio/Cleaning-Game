@@ -187,44 +187,13 @@ public class SmoothObjectRotator : MonoBehaviour
         rotatingObject.position = fixedPosition;
     }
 
-    /// <summary>
-    /// Reset rotation to initial state smoothly
-    /// </summary>
-    public void ResetRotationSmooth()
-    {
-        if (rotatingObject != null)
-        {
-            rotatingObject.DORotateQuaternion(initialRotation, 0.5f).SetEase(Ease.OutQuad);
-
-            // Reset internal values
-            targetHorizontalRotation = 0f;
-            targetVerticalRotation = 0f;
-            currentHorizontalRotation = 0f;
-            currentVerticalRotation = 0f;
-        }
-    }
-
-    /// <summary>
-    /// Set rotation sensitivity at runtime
-    /// </summary>
-    public void SetRotationSensitivity(float sensitivity)
-    {
-        rotationSensitivity = Mathf.Max(10f, sensitivity);
-    }
-
-    /// <summary>
-    /// Set rotation smoothing at runtime
-    /// </summary>
-    public void SetRotationSmoothing(float smoothing)
-    {
-        rotationSmoothing = Mathf.Max(1f, smoothing);
-    }
+    
 
     // Public properties
     public bool IsRotating => isRotating;
-    public Transform RotatingObject => rotatingObject;
-    public Vector2 CurrentRotation => new Vector2(currentHorizontalRotation, currentVerticalRotation);
-    public Vector2 TargetRotation => new Vector2(targetHorizontalRotation, targetVerticalRotation);
+    private Transform RotatingObject => rotatingObject;
+    private Vector2 CurrentRotation => new Vector2(currentHorizontalRotation, currentVerticalRotation);
+    private Vector2 TargetRotation => new Vector2(targetHorizontalRotation, targetVerticalRotation);
 
     void OnDrawGizmosSelected()
     {
