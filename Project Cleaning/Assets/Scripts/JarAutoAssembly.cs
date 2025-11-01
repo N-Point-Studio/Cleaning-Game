@@ -57,6 +57,7 @@ public class JarAutoAssembly : MonoBehaviour
     private static List<JarAutoAssembly> allPieces = new List<JarAutoAssembly>();
     private static bool jarFullyAssembled = false;
     private static bool staticsInitialized = false;
+    private static GameObject currentPartialAssemblyParent = null;
 
     public static bool IsJarFullyAssembled => jarFullyAssembled;
 
@@ -153,6 +154,12 @@ public class JarAutoAssembly : MonoBehaviour
     void OnDestroy()
     {
         allPieces.Remove(this);
+
+        // Clean up temporary parent if this was the last piece being used
+        if (allPieces.Count == 0)
+        {
+            CleanupTemporaryAssemblyParent();
+        }
     }
 
     void OnMouseDown()
@@ -165,8 +172,22 @@ public class JarAutoAssembly : MonoBehaviour
 
         if (isAssembled)
         {
-            // Assembled pieces can only be inspected
-            Debug.Log($"Assembled piece {pieceType} clicked - triggering inspection");
+            // Check if this is part of a partial assembly (multiple pieces assembled)
+            List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
+
+            if (assembledPieces.Count > 1 && assembledPieces.Count < allPieces.Count)
+            {
+                Debug.Log($"🔗 Assembled piece {pieceType} clicked - part of partial assembly with {assembledPieces.Count} pieces");
+            }
+            else if (assembledPieces.Count == allPieces.Count)
+            {
+                Debug.Log($"🏺 Fully assembled jar piece {pieceType} clicked");
+            }
+            else
+            {
+                Debug.Log($"🧩 Single assembled piece {pieceType} clicked");
+            }
+
             TryInspection();
             return;
         }
@@ -263,20 +284,163 @@ public class JarAutoAssembly : MonoBehaviour
     }
 
     /// <summary>
+    /// Get all pieces that are currently assembled together
+    /// </summary>
+    List<JarAutoAssembly> GetAssembledPieces()
+    {
+        List<JarAutoAssembly> assembled = new List<JarAutoAssembly>();
+
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece != null && piece.isAssembled)
+            {
+                assembled.Add(piece);
+            }
+        }
+
+        return assembled;
+    }
+
+    /// <summary>
+    /// Set up rotation for partially assembled jar pieces as a group
+    /// </summary>
+    void SetupPartialAssemblyRotation(List<JarAutoAssembly> assembledPieces, ObjectCloseUpManager closeUpManager)
+    {
+        Debug.Log($"🔗 Setting up partial assembly rotation for {assembledPieces.Count} pieces");
+
+        // Create a temporary parent object for just the assembled pieces
+        GameObject tempParent = CreateTemporaryAssemblyParent(assembledPieces);
+        if (tempParent != null)
+        {
+            // Start inspection on all assembled pieces for visual feedback
+            foreach (JarAutoAssembly piece in assembledPieces)
+            {
+                var inspectable = piece.GetComponent<IInspectable>();
+                if (inspectable != null)
+                {
+                    inspectable.OnInspectionStart();
+                }
+            }
+
+            // Set up rotation-only mode for the partial assembly using temp parent
+            closeUpManager.SetCurrentObject(tempParent.transform);
+
+            // Enable rotation at current position
+            var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
+            if (smoothRotator != null)
+            {
+                smoothRotator.UpdateFixedPosition(tempParent.transform.position);
+                smoothRotator.StartRotating(tempParent.transform);
+                Debug.Log($"🔄 Started partial assembly rotation at position: {tempParent.transform.position}");
+            }
+
+            Debug.Log($"✅ Partial assembly ({assembledPieces.Count} pieces) ready for group rotation");
+            Debug.Log($"🔒 Unassembled pieces will remain independent");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Failed to create temporary parent - falling back to individual piece inspection");
+
+            // Fallback to normal individual piece inspection
+            var inspectable = GetComponent<IInspectable>();
+            if (inspectable != null)
+            {
+                inspectable.OnInspectionStart();
+                closeUpManager.BringObjectToCloseUp(transform);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Create a temporary parent object that contains only the assembled pieces
+    /// This allows partial assembly rotation without affecting unassembled pieces
+    /// </summary>
+    GameObject CreateTemporaryAssemblyParent(List<JarAutoAssembly> assembledPieces)
+    {
+        // Clean up any existing temporary parent
+        CleanupTemporaryAssemblyParent();
+
+        if (assembledPieces.Count == 0)
+            return null;
+
+        // Calculate center position of assembled pieces
+        Vector3 centerPosition = Vector3.zero;
+        foreach (JarAutoAssembly piece in assembledPieces)
+        {
+            centerPosition += piece.transform.position;
+        }
+        centerPosition /= assembledPieces.Count;
+
+        // Create temporary parent object
+        currentPartialAssemblyParent = new GameObject("PartialAssemblyParent");
+        currentPartialAssemblyParent.transform.position = centerPosition;
+
+        // Store original parents and re-parent assembled pieces to temp parent
+        foreach (JarAutoAssembly piece in assembledPieces)
+        {
+            piece.transform.SetParent(currentPartialAssemblyParent.transform, true);
+        }
+
+        Debug.Log($"🏗️ Created temporary parent for {assembledPieces.Count} assembled pieces at {centerPosition}");
+        return currentPartialAssemblyParent;
+    }
+
+    /// <summary>
+    /// Clean up temporary assembly parent and restore original hierarchy
+    /// </summary>
+    static void CleanupTemporaryAssemblyParent()
+    {
+        if (currentPartialAssemblyParent != null)
+        {
+            // Restore all children to their original parents
+            for (int i = currentPartialAssemblyParent.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = currentPartialAssemblyParent.transform.GetChild(i);
+                JarAutoAssembly piece = child.GetComponent<JarAutoAssembly>();
+                if (piece != null)
+                {
+                    child.SetParent(piece.originalParent, true);
+                }
+            }
+
+            // Destroy the temporary parent
+            if (Application.isPlaying)
+                Object.Destroy(currentPartialAssemblyParent);
+            else
+                Object.DestroyImmediate(currentPartialAssemblyParent);
+
+            currentPartialAssemblyParent = null;
+            Debug.Log($"🗑️ Cleaned up temporary assembly parent");
+        }
+    }
+
+    /// <summary>
     /// Try to bring this piece to close-up for inspection
+    /// If this piece is part of a partial assembly, rotate the whole assembled group
     /// </summary>
     void TryInspection()
     {
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager != null && !jarFullyAssembled)
         {
-            Debug.Log($"Jar piece {pieceType} - bringing to close-up for inspection (assembled: {isAssembled})");
+            // Check if this piece is part of a partial assembly (multiple pieces assembled together)
+            List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
 
-            var inspectable = GetComponent<IInspectable>();
-            if (inspectable != null)
+            if (assembledPieces.Count > 1 && isAssembled)
             {
-                inspectable.OnInspectionStart();
-                closeUpManager.BringObjectToCloseUp(transform);
+                Debug.Log($"🔗 Partial assembly detected! {assembledPieces.Count} pieces assembled together");
+                SetupPartialAssemblyRotation(assembledPieces, closeUpManager);
+            }
+            else
+            {
+                Debug.Log($"Jar piece {pieceType} - bringing to close-up for inspection (assembled: {isAssembled})");
+
+                var inspectable = GetComponent<IInspectable>();
+                if (inspectable != null)
+                {
+                    inspectable.OnInspectionStart();
+                    closeUpManager.BringObjectToCloseUp(transform);
+                }
             }
         }
     }
@@ -297,6 +461,14 @@ public class JarAutoAssembly : MonoBehaviour
             assembledJarCollider.enabled = true;
         }
 
+        // Start inspection on assembled jar to enable visual feedback
+        var assembledInspectable = assembledJarRoot.GetComponent<IInspectable>();
+        if (assembledInspectable != null)
+        {
+            assembledInspectable.OnInspectionStart();
+            Debug.Log($"✅ Started inspection on assembled jar: {assembledJarRoot.name}");
+        }
+
         // Get the ObjectCloseUpManager to manually set up rotation-only mode
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager != null)
@@ -313,10 +485,10 @@ public class JarAutoAssembly : MonoBehaviour
             // Update rotator to use current position (no movement)
             smoothRotator.UpdateFixedPosition(assembledJarRoot.position);
             smoothRotator.StartRotating(assembledJarRoot);
-            Debug.Log($"🔄 Started rotation for assembled jar at current position");
+            Debug.Log($"🔄 Started rotation for assembled jar at current position: {assembledJarRoot.position}");
         }
 
-        Debug.Log($"✅ Assembled jar ready for rotation - no position changes");
+        Debug.Log($"✅ Assembled jar ready for rotation - pieces stay in assembled positions");
     }
 
     void Update()
@@ -351,6 +523,17 @@ public class JarAutoAssembly : MonoBehaviour
 
             // Check proximity to inspected objects for outline feedback
             CheckOutlineProximity();
+        }
+
+        // Clean up temporary parent if it's no longer being used for rotation
+        if (currentPartialAssemblyParent != null)
+        {
+            ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+            if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp ||
+                closeUpManager.CurrentCloseUpObject != currentPartialAssemblyParent.transform)
+            {
+                CleanupTemporaryAssemblyParent();
+            }
         }
     }
 
@@ -906,6 +1089,9 @@ public class JarAutoAssembly : MonoBehaviour
         if (jarFullyAssembled || allPieces.Count == 0 || assembledPieces < allPieces.Count)
             return;
 
+        // Clean up any partial assembly parent before completing
+        CleanupTemporaryAssemblyParent();
+
         jarFullyAssembled = true;
 
         HandleAllPiecesOnCompletion();
@@ -998,10 +1184,10 @@ public class JarAutoAssembly : MonoBehaviour
                 Debug.LogWarning($"⚠️ No assembled jar collider found for {assembledJarRoot.name}");
             }
 
-            // Now bring the assembled jar to close-up
+            // Now set up the assembled jar for rotation-only inspection
             if (closeUpManager != null)
             {
-                Debug.Log($"🎯 BRINGING ASSEMBLED JAR ROOT to close-up for inspection: {assembledJarRoot.name}");
+                Debug.Log($"🎯 SETTING UP ASSEMBLED JAR for rotation-only inspection: {assembledJarRoot.name}");
 
                 // Start inspection on assembled jar
                 var assembledInspectable = assembledJarRoot.GetComponent<IInspectable>();
@@ -1011,12 +1197,23 @@ public class JarAutoAssembly : MonoBehaviour
                     Debug.Log($"✅ Started inspection on assembled jar: {assembledJarRoot.name}");
                 }
 
-                // FIXED: Don't call BringObjectToCloseUp as it moves the assembled jar and all pieces
-                // Just keep pieces in their current inspection positions
-                Debug.Log($"🔒 KEEPING ALL PIECES IN CURRENT INSPECTION POSITIONS");
-                Debug.Log($"    - Not moving assembled jar to avoid position changes");
-                Debug.Log($"    - Pieces remain exactly where they are assembled");
-                Debug.Log($"    - Rotation will work on assembled jar in current position");
+                // CRITICAL FIX: Set up rotation-only mode without moving the assembled jar
+                // This prevents the pieces from being moved from their assembly positions
+                closeUpManager.SetCurrentObject(assembledJarRoot);
+
+                // Enable rotation immediately at current position
+                var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
+                if (smoothRotator != null)
+                {
+                    smoothRotator.UpdateFixedPosition(assembledJarRoot.position);
+                    smoothRotator.StartRotating(assembledJarRoot);
+                    Debug.Log($"🔄 Started rotation for assembled jar at current position: {assembledJarRoot.position}");
+                }
+
+                Debug.Log($"🔒 ASSEMBLED JAR READY FOR ROTATION-ONLY MODE");
+                Debug.Log($"    - No position changes applied to assembled jar");
+                Debug.Log($"    - All pieces remain exactly where they were assembled");
+                Debug.Log($"    - Rotation enabled immediately without animation");
             }
             else
             {
@@ -1055,6 +1252,9 @@ public class JarAutoAssembly : MonoBehaviour
         {
             closeUpManager.PauseRotation();
         }
+
+        // Clean up any partial assembly parent when jar is fully assembled
+        CleanupTemporaryAssemblyParent();
 
         // FIXED: Don't re-parent pieces during completion to avoid position changes
         // Keep pieces exactly where they are assembled in inspection mode
@@ -1144,6 +1344,9 @@ public class JarAutoAssembly : MonoBehaviour
     [ContextMenu("Reset Assembly")]
     public void ResetAssembly()
     {
+        // Clean up any temporary assembly parent
+        CleanupTemporaryAssemblyParent();
+
         foreach (JarAutoAssembly piece in allPieces)
         {
             piece.isAssembled = false;
