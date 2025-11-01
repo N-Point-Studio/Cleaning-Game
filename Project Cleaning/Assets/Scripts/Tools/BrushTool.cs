@@ -1,12 +1,13 @@
 using UnityEngine;
 
-public class ChiselTool : ToolBase
+public class BrushTool : ToolBase
 {
-    [Header("Chisel References")]
-    [SerializeField] private Transform tipPoint;     // Ujung alat
-    [SerializeField] private Transform lookTarget;   // Titik yang ingin dihadapi
+    [Header("Brush References")]
+    [SerializeField] private Transform tipPoint;
+    [SerializeField] private Transform lookTarget;
 
     [SerializeField] private float gizmosRange = 10;
+
     private void Update()
     {
         if (targetObject == null) return;
@@ -28,7 +29,7 @@ public class ChiselTool : ToolBase
                 targetObject = null;
             }
 
-            return;
+            return; // hentikan proses lain di frame ini
         }
     }
 
@@ -64,7 +65,7 @@ public class ChiselTool : ToolBase
 
     public override void OnToolTap(Vector2 screenPos)
     {
-        Debug.Log("⛏️ Chisel clicked!");
+        Debug.Log("🧹 Brush clicked!");
     }
 
     private void OnDrawGizmos()

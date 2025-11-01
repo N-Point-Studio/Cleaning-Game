@@ -49,13 +49,37 @@ public class Clean : MonoBehaviour
             }
         }
     }
+
+    public void CleanAt(Vector2 textureCoord, Texture2D brush)
+    {
+        int pixelX = (int)(textureCoord.x * _templateDirtMask.width);
+        int pixelY = (int)(textureCoord.y * _templateDirtMask.height);
+
+        for (int x = 0; x < brush.width; x++)
+        {
+            for (int y = 0; y < brush.height; y++)
+            {
+                int px = pixelX + x;
+                int py = pixelY + y;
+
+                if (px >= 0 && px < _templateDirtMask.width && py >= 0 && py < _templateDirtMask.height)
+                {
+                    Color pixelDirt = brush.GetPixel(x, y);
+                    Color pixelDirtMask = _templateDirtMask.GetPixel(px, py);
+
+                    _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
+                }
+            }
+        }
+
+        _templateDirtMask.Apply();
+    }
+
     private void CreateTexture()
     {
         _templateDirtMask = new Texture2D(_dirtMaskBase.width, _dirtMaskBase.height);
         _templateDirtMask.SetPixels(_dirtMaskBase.GetPixels());
         _templateDirtMask.Apply();
-
-        // Force instance so each object can have its own mask
         var renderer = GetComponent<Renderer>();
         _material = renderer.material;
 
