@@ -9,11 +9,13 @@ public class ChiselTool : ToolBase
     [SerializeField] private float gizmosRange = 10;
     private void Update()
     {
+
         if (targetObject == null) return;
 
         // --- Handle Return ke posisi awal ---
         if (isReturning)
         {
+            Debug.Log("Chisel returning");
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
 
             bool posClose = Vector3.Distance(targetObject.position, initialPosition) < 0.01f;

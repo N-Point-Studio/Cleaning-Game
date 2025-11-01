@@ -2514,7 +2514,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f09820dc9aba74b729e9b1dfd881c2fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeTool: {fileID: 6069696683473551297}
 --- !u!4 &351041018
 Transform:
   m_ObjectHideFlags: 0
@@ -7594,6 +7593,8 @@ MonoBehaviour:
     m_Bits: 64
   tipPoint: {fileID: 1803318420}
   lookTarget: {fileID: 1446947041}
+  gizmosRange: 5
+  rotateSmoothness: 10
 --- !u!114 &3976173342559765336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7617,7 +7618,7 @@ PrefabInstance:
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 17.17786
+      value: 17.170012
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
@@ -7627,27 +7628,27 @@ PrefabInstance:
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -11.812286
+      value: -11.808995
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.6822352
+      value: 0.7397549
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.6205567
+      value: 0.6728765
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.28599393
+      value: -0.000032847278
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.2601384
+      value: 0.00002972758
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
@@ -7657,7 +7658,7 @@ PrefabInstance:
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 45.487
+      value: -0.005
       objectReference: {fileID: 0}
     - target: {fileID: 5786036916434514462, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
@@ -7669,6 +7670,11 @@ PrefabInstance:
       propertyPath: lookTarget
       value: 
       objectReference: {fileID: 1446947041}
+    - target: {fileID: 5884551172855048939, guid: 869c48dbd26e5404780ce4e01e034e2e,
+        type: 3}
+      propertyPath: gizmosRange
+      value: 4.21
+      objectReference: {fileID: 0}
     - target: {fileID: 5884551172855048939, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: tapLayer.m_Bits
@@ -7689,18 +7695,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 869c48dbd26e5404780ce4e01e034e2e, type: 3}
---- !u!114 &6069696683473551297 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5884551172855048939, guid: 869c48dbd26e5404780ce4e01e034e2e,
-    type: 3}
-  m_PrefabInstance: {fileID: 5819634593943154924}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11838562c750e430183e8bf5f6e1714d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

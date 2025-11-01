@@ -6,13 +6,13 @@ public class BrushTool : ToolBase
     [SerializeField] private Transform tipPoint;
     [SerializeField] private Transform lookTarget;
 
-    [SerializeField] private float gizmosRange = 10;
+    [SerializeField] private float gizmosRange = 10f;
+    [SerializeField] private float rotateSmoothness = 10f;
 
     private void Update()
     {
         if (targetObject == null) return;
 
-        // --- Handle Return ke posisi awal ---
         if (isReturning)
         {
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
@@ -29,8 +29,22 @@ public class BrushTool : ToolBase
                 targetObject = null;
             }
 
-            return; // hentikan proses lain di frame ini
+            return;
         }
+
+        if (isDragging && lookTarget != null && tipPoint != null)
+        {
+            Vector3 dir = (lookTarget.position - tipPoint.position).normalized;
+            Vector3 localTip = tipPoint.localPosition;
+            Quaternion targetRot = Quaternion.FromToRotation(tipPoint.forward, dir) * targetObject.rotation;
+
+            targetObject.rotation = Quaternion.Slerp(
+                targetObject.rotation,
+                targetRot,
+                Time.deltaTime * rotateSmoothness
+            );
+        }
+
     }
 
     public override void OnToolDragStart(Vector2 screenPos)
@@ -65,22 +79,21 @@ public class BrushTool : ToolBase
 
     public override void OnToolTap(Vector2 screenPos)
     {
-        Debug.Log("🧹 Brush clicked!");
+        Debug.Log("Brush clicked");
     }
 
     private void OnDrawGizmos()
     {
         if (tipPoint == null) return;
-
         Vector3 forwardDir = tipPoint.forward * gizmosRange;
         Gizmos.color = Color.green;
         Gizmos.DrawLine(tipPoint.position, tipPoint.position + forwardDir);
 
-        if (lookTarget != null)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(tipPoint.position, lookTarget.position);
-            Gizmos.DrawSphere(lookTarget.position, 0.015f);
-        }
+        // if (lookTarget != null)
+        // {
+        //     Gizmos.color = Color.cyan;
+        //     Gizmos.DrawLine(tipPoint.position, lookTarget.position);
+        //     Gizmos.DrawSphere(lookTarget.position, 0.015f);
+        // }
     }
 }
