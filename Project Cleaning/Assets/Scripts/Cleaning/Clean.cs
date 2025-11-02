@@ -12,7 +12,7 @@ public class Clean : MonoBehaviour
 
     private Texture2D _templateDirtMask;
 
-    private void Start()
+    private void Awake()
     {
         CreateTexture();
     }
