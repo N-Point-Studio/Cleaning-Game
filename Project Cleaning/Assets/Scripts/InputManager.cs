@@ -20,14 +20,26 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject); // Optional: persists across scenes
+        DontDestroyOnLoad(gameObject);
 
         mainCamera = Camera.main;
         inputSystem = new InputSystem();
         inputSystem.Input.SetCallbacks(this);
     }
 
-    private bool isClickedOn
+    void Update()
+    {
+        float threshold = 10f;
+        Debug.Log("CURRENTPOS: " + curScreenPos);
+        if (curScreenPos.x <= threshold || curScreenPos.y <= threshold)
+        {
+            curScreenPos = Vector3.zero;
+            isInteracting = false;
+        }
+    }
+
+
+    public bool isClickedOn
     {
         get
         {
@@ -61,7 +73,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         {
             Debug.Log("Press canceled");
             curScreenPos = Vector3.zero;
-            TouchUsed(false);
+            isInteracting = false;
         }
     }
 

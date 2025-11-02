@@ -6,6 +6,7 @@ public class BrushTool : ToolBase
 
     private void Update()
     {
+        // --- 1. Detect first touch on this brush ---
         if (!TouchManager.Instance.isInteracting)
         {
             Ray ray = mainCamera.ScreenPointToRay(TouchManager.Instance.curScreenPos);
@@ -16,21 +17,25 @@ public class BrushTool : ToolBase
                     Debug.Log("Brush selected!");
                     TouchManager.Instance.TouchUsed(true);
 
+                    // Start dragging
                     OnToolDragStart(TouchManager.Instance.curScreenPos);
                 }
             }
         }
         else if (isDragging)
         {
+            // --- 2. Handle dragging motion ---
             OnToolDragging(TouchManager.Instance.curScreenPos);
         }
 
+        // --- 3. Handle release / touch cancel ---
         if (!TouchManager.Instance.isInteracting && isDragging)
         {
             Debug.Log("Brush drag end!");
             OnToolDragEnd(TouchManager.Instance.curScreenPos);
         }
 
+        // --- 4. Return & rotation logic ---
         if (isReturning)
         {
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
@@ -55,7 +60,7 @@ public class BrushTool : ToolBase
 
         if (isDragging && tipPoint != null)
         {
-            HandleSurfaceDetection();
+            // HandleSurfaceDetection();
         }
     }
 
@@ -75,7 +80,7 @@ public class BrushTool : ToolBase
             if (!hit.collider.CompareTag("Dirts")) return;
 
             Debug.Log($"Detected Dirts: {hit.collider.name}");
-            Vector3 targetPos = hit.point - tipPoint.forward * 0.02f;
+            Vector3 targetPos = hit.point - tipPoint.forward;
             targetObject.position = Vector3.Lerp(targetObject.position, targetPos, Time.deltaTime * movementSmoothness);
 
             smoothedNormal = smoothedNormal == Vector3.zero ? hit.normal : Vector3.Lerp(smoothedNormal, hit.normal, Time.deltaTime * normalDamping);
