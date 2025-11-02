@@ -638,6 +638,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8805328364423729964}
+    - targetCorrespondingSourceObject: {fileID: 2224935718410154813, guid: b3f88687c96cd4ab0966413591cd7b0c,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8805328364423729966}
     - targetCorrespondingSourceObject: {fileID: 508219072212268746, guid: b3f88687c96cd4ab0966413591cd7b0c,
         type: 3}
       insertIndex: -1
@@ -702,6 +706,10 @@ MonoBehaviour:
   middlePosition: {x: -0.13, y: 0.516, z: 0.099}
   topPosition: {x: 0.285, y: 1.617, z: -0.177}
   correctRotation: {x: -89.98, y: 0, z: 0}
+  finalBottomPosition: {x: -0.0399, y: 4.12828, z: -1.46515}
+  finalMiddlePosition: {x: 0, y: 2.97428, z: -1.45318}
+  finalTopPosition: {x: 0.415, y: 4.07528, z: -1.72915}
+  finalRotation: {x: -89.98, y: 0, z: 0}
   pieceType: 1
   isAssembled: 0
   dragSpeed: 8
@@ -772,6 +780,10 @@ MonoBehaviour:
   middlePosition: {x: -0.13, y: 0.516, z: 0.099}
   topPosition: {x: 0.285, y: 1.617, z: -0.177}
   correctRotation: {x: -89.98, y: 0, z: 0}
+  finalBottomPosition: {x: -0.0399, y: 4.12828, z: -1.46515}
+  finalMiddlePosition: {x: 0, y: 2.97428, z: -1.45318}
+  finalTopPosition: {x: 0.415, y: 4.07528, z: -1.72915}
+  finalRotation: {x: -89.98, y: 0, z: 0}
   pieceType: 0
   isAssembled: 0
   dragSpeed: 8
@@ -842,7 +854,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -869,6 +881,19 @@ MonoBehaviour:
   inspectionColor: {r: 0, g: 1, b: 1, a: 1}
   inspectionMaterial: {fileID: 0}
   outlineActivationDistance: 3
+--- !u!114 &8805328364423729966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8805328364423729963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b46505a2c2534c8f80c5c4042f7a945, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugLogs: 1
 --- !u!114 &9004092861999398218
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -890,6 +915,10 @@ MonoBehaviour:
   middlePosition: {x: -0.13, y: 0.516, z: 0.099}
   topPosition: {x: 0.285, y: 1.617, z: -0.177}
   correctRotation: {x: -89.98, y: 0, z: 0}
+  finalBottomPosition: {x: -0.0399, y: 4.12828, z: -1.46515}
+  finalMiddlePosition: {x: 0, y: 2.97428, z: -1.45318}
+  finalTopPosition: {x: 0.415, y: 4.07528, z: -1.72915}
+  finalRotation: {x: -89.98, y: 0, z: 0}
   pieceType: 2
   isAssembled: 0
   dragSpeed: 8

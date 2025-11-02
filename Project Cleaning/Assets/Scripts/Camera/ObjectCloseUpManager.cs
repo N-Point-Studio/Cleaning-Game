@@ -45,6 +45,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     // Current state
     private Transform currentCloseUpObject;
     private bool hasObjectInCloseUp = false;
+    private bool isObjectTransitioning = false; // Prevents rotation input while tweens are running
 
     // Components will auto-initialize if not assigned
     public SmoothObjectRotator SmoothRotator => smoothRotator;
@@ -135,6 +136,12 @@ public class ObjectCloseUpManager : MonoBehaviour
             {
                 Debug.Log("🔄 Object in close-up - requesting rotation start");
 
+                if (isObjectTransitioning)
+                {
+                    Debug.Log("⏳ Close-up transition still running - deferring rotation start");
+                    return;
+                }
+
                 if (ShouldAllowRotation(currentCloseUpObject))
                 {
                     // Update the rotator's fixed position before starting rotation
@@ -185,6 +192,12 @@ public class ObjectCloseUpManager : MonoBehaviour
         // If there's already an object in close-up, switch to the new one
         if (hasObjectInCloseUp)
         {
+            if (currentCloseUpObject == targetObject)
+            {
+                Debug.Log($"🔁 {targetObject.name} is already the active close-up object - ignoring duplicate request");
+                return;
+            }
+
             Debug.Log($"🔄 Switching from {currentCloseUpObject?.name ?? "null"} to {targetObject.name}");
             SwitchToNewObject(targetObject);
             return;
@@ -195,6 +208,7 @@ public class ObjectCloseUpManager : MonoBehaviour
 
         // Start animation
         Debug.Log($"🎬 Starting animation for {targetObject.name}");
+        isObjectTransitioning = true;
         animationHandler.AnimateToCloseUp(targetObject, OnCloseUpAnimationComplete);
     }
 
@@ -296,11 +310,13 @@ public class ObjectCloseUpManager : MonoBehaviour
 
         if (instant)
         {
+            isObjectTransitioning = true;
             animationHandler.ReturnToOriginalInstant(currentCloseUpObject, OnReturnAnimationComplete);
         }
         else
         {
             // Start return animation
+            isObjectTransitioning = true;
             animationHandler.AnimateFromCloseUp(currentCloseUpObject, OnReturnAnimationComplete);
         }
     }
@@ -311,6 +327,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     void OnCloseUpAnimationComplete()
     {
         Debug.Log("Close-up animation completed - object ready for interaction");
+        isObjectTransitioning = false;
 
         // Auto-start rotation for single-click inspection
         if (currentCloseUpObject != null)
@@ -351,6 +368,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     {
         currentCloseUpObject = null;
         hasObjectInCloseUp = false;
+        isObjectTransitioning = false;
         Debug.Log("Object returned to original position");
     }
 
@@ -472,6 +490,7 @@ public class ObjectCloseUpManager : MonoBehaviour
         currentInspectable?.OnInspectionEnd();
 
         // Return current object to original position immediately (no animation)
+        isObjectTransitioning = true;
         animationHandler.AnimateFromCloseUp(currentCloseUpObject, () => {
             // After current object returns, bring new object to close-up
             Debug.Log($"Previous object returned, now bringing {newObject.name} to close-up");
@@ -483,6 +502,7 @@ public class ObjectCloseUpManager : MonoBehaviour
             newInspectable?.OnInspectionStart();
 
             // Animate new object to close-up
+            isObjectTransitioning = true;
             animationHandler.AnimateToCloseUp(newObject, OnCloseUpAnimationComplete);
         });
     }

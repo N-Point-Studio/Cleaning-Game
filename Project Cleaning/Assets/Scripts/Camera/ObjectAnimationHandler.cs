@@ -92,7 +92,11 @@ public class ObjectAnimationHandler : MonoBehaviour
         });
 
         // Call completion callback
-        animationSequence.OnComplete(() => onComplete?.Invoke());
+        animationSequence.OnComplete(() =>
+        {
+            currentAnimatingObject = null;
+            onComplete?.Invoke();
+        });
     }
 
     /// <summary>
