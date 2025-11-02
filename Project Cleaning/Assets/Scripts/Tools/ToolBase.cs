@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(ToolInputReader))]
 public abstract class ToolBase : MonoBehaviour
 {
-    protected Camera mainCamera;
+    [SerializeField] protected Camera mainCamera;
     protected ToolInputReader inputHandler;
     protected bool isDragging;
 

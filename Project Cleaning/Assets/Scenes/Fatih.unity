@@ -3849,7 +3849,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!64 &1087569365
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3931,7 +3931,7 @@ Transform:
   m_GameObject: {fileID: 1087569363}
   serializedVersion: 2
   m_LocalRotation: {x: -0.55433977, y: -0.4389846, z: -0.43898466, w: 0.5543397}
-  m_LocalPosition: {x: -0.79225373, y: 12.01, z: -14.511347}
+  m_LocalPosition: {x: 0, y: 7.14, z: -9.2}
   m_LocalScale: {x: 499.99997, y: 499.99994, z: 499.99997}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3946,11 +3946,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1087569363}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daf2c689d604d449fbea983c91549d83, type: 3}
+  m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetRenderer: {fileID: 1087569366}
-  maskProperty: _DirtMask
+  _camera: {fileID: 330585545}
+  _dirtMaskBase: {fileID: 2800000, guid: 193319ce7e18e484e927b97f3b9a64c5, type: 3}
+  _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
 --- !u!1 &1108699609 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8651218748760849051, guid: ccdff3fc1d706414fbf3331e7659bdef,
@@ -4605,7 +4606,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1446947038
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4752,9 +4753,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _camera: {fileID: 330585545}
+  _camera: {fileID: 0}
   _dirtMaskBase: {fileID: 2800000, guid: 193319ce7e18e484e927b97f3b9a64c5, type: 3}
-  _brush: {fileID: 2800000, guid: b0c5258eca94a426d947d8153a2bf65e, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
 --- !u!65 &1495351922
 BoxCollider:
@@ -6245,9 +6245,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _camera: {fileID: 330585545}
+  _camera: {fileID: 0}
   _dirtMaskBase: {fileID: 2800000, guid: 193319ce7e18e484e927b97f3b9a64c5, type: 3}
-  _brush: {fileID: 2800000, guid: b0c5258eca94a426d947d8153a2bf65e, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
 --- !u!64 &1681949627
 MeshCollider:
@@ -6735,6 +6734,8 @@ MonoBehaviour:
   toolType: 0
   removableTag: Dirts
   brush: {fileID: 2800000, guid: b0c5258eca94a426d947d8153a2bf65e, type: 3}
+  tipPointPos: {fileID: 1803318420}
+  rayDistance: 10
 --- !u!65 &1879027438
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6754,8 +6755,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.7152052, y: 0.6634767, z: 0.45133352}
-  m_Center: {x: -0.0013422966, y: 2.6571627, z: -0.09017444}
+  m_Size: {x: 2.7152052, y: 1.7262664, z: 0.45133564}
+  m_Center: {x: -0.001336811, y: 3.1885693, z: -0.09017463}
 --- !u!1001 &1882187207
 PrefabInstance:
   m_ObjectHideFlags: 0

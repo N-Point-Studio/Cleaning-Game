@@ -6,20 +6,19 @@ public class BrushTool : ToolBase
     [SerializeField] private Transform tipPoint;
     [SerializeField] private Transform lookTarget;
 
+    [Header("Brush Settings")]
     [SerializeField] private float gizmosRange = 10f;
-    [SerializeField] private float rotateSmoothness = 20f; // max rotation speed (degrees/sec)
+    [SerializeField] private float rotateSmoothness = 20f;
     [SerializeField] private float movementSmoothness = 10f;
-    [SerializeField] private float positionThreshold = 0.001f; // minimal perubahan posisi
-    [SerializeField] private float normalDamping = 10f; // smoothing faktor normal permukaan
+    [SerializeField] private float positionThreshold = 0.001f;
+    [SerializeField] private float normalDamping = 10f;
 
     private Vector3 smoothedNormal = Vector3.zero;
 
     private void Update()
     {
         if (targetObject == null) return;
-        // Debug.Log("Position: " + targetObject.position);
 
-        // --- Handle return to initial position ---
         if (isReturning)
         {
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
@@ -31,85 +30,53 @@ public class BrushTool : ToolBase
             {
                 targetObject.position = initialPosition;
                 targetObject.rotation = initialRotation;
-                isReturning = false;
-                isDragging = false;
-                targetObject = null;
+                ResetDrag();
             }
 
             return;
         }
 
-        // --- Drag rotation (lookTarget) ---
         if (isDragging && lookTarget != null && tipPoint != null)
         {
-            Vector3 dir = (lookTarget.position - tipPoint.position).normalized;
-            Quaternion targetRot = Quaternion.FromToRotation(tipPoint.forward, dir) * targetObject.rotation;
-
-            targetObject.rotation = Quaternion.Slerp(
-                targetObject.rotation,
-                targetRot,
-                Time.deltaTime * rotateSmoothness
-            );
+            RotateTowardsLookTarget();
         }
 
-        // --- Nempel ke permukaan objek bertag "Dirts" ---
         if (isDragging && tipPoint != null)
         {
-            Ray ray = new Ray(tipPoint.position, tipPoint.forward);
+            HandleSurfaceDetection();
+        }
+    }
 
-            if (Physics.Raycast(ray, out RaycastHit hit, gizmosRange))
-            {
-                if (hit.collider.CompareTag("Dirts"))
-                {
-                    // Debug: lihat apa yang dideteksi
-                    Debug.Log($"Detected Dirts: {hit.collider.name}");
+    private void RotateTowardsLookTarget()
+    {
+        Vector3 dir = (lookTarget.position - tipPoint.position).normalized;
+        Quaternion targetRot = Quaternion.FromToRotation(tipPoint.forward, dir) * targetObject.rotation;
+        targetObject.rotation = Quaternion.Slerp(targetObject.rotation, targetRot, Time.deltaTime * rotateSmoothness);
+    }
 
-                    // --- Posisikan brush agar nempel di permukaan ---
-                    Vector3 targetPos = hit.point - tipPoint.forward * 0.02f;
+    private void HandleSurfaceDetection()
+    {
+        Ray ray = new Ray(tipPoint.position, tipPoint.forward);
 
-                    // if (Vector3.Distance(targetObject.position, targetPos) > positionThreshold)
-                    // {
-                    //     Debug.Log($"Distance " + (Vector3.Distance(targetObject.position, targetPos)) + "with " + (targetPos));
-                    //     targetObject.position = Vector3.MoveTowards(
-                    //         targetObject.position,
-                    //         targetPos,
-                    //         movementSmoothness * Time.deltaTime
-                    //     );
-                    // }
+        if (Physics.Raycast(ray, out RaycastHit hit, gizmosRange))
+        {
+            if (!hit.collider.CompareTag("Dirts")) return;
 
-                    // Vector3 targetPos = hit.point - tipPoint.forward * 0.02f; // offset kecil biar ga tembus
-                    targetObject.position = Vector3.Lerp(
-                        targetObject.position,
-                        targetPos,
-                        Time.deltaTime * moveSmoothness
-                    );
+            Debug.Log($"Detected Dirts: {hit.collider.name}");
+            Vector3 targetPos = hit.point - tipPoint.forward * 0.02f;
+            targetObject.position = Vector3.Lerp(targetObject.position, targetPos, Time.deltaTime * movementSmoothness);
 
-                    // if (Vector3.Distance(targetObject.position, targetPos) > positionThreshold)
-                    // {
-                    //     // t = 1 → langsung nempel; t kecil → lebih halus
-                    //     float t = 0.1f; // bisa disesuaikan
-                    //     targetObject.position = Vector3.Lerp(targetObject.position, targetPos, t);
-                    // }
+            smoothedNormal = smoothedNormal == Vector3.zero ? hit.normal : Vector3.Lerp(smoothedNormal, hit.normal, Time.deltaTime * normalDamping);
 
-                    // --- Smoothing normal permukaan ---
-                    if (smoothedNormal == Vector3.zero) smoothedNormal = hit.normal;
-                    smoothedNormal = Vector3.Lerp(smoothedNormal, hit.normal, Time.deltaTime * normalDamping);
-
-                    // --- Rotasi brush sesuai normal permukaan ---
-                    Quaternion surfaceRot = Quaternion.LookRotation(-smoothedNormal, Vector3.up);
-                    targetObject.rotation = Quaternion.RotateTowards(
-                        targetObject.rotation,
-                        surfaceRot,
-                        rotateSmoothness * Time.deltaTime
-                    );
-                }
-            }
+            Quaternion surfaceRot = Quaternion.LookRotation(-smoothedNormal, Vector3.up);
+            targetObject.rotation = Quaternion.RotateTowards(targetObject.rotation, surfaceRot, rotateSmoothness * Time.deltaTime);
         }
     }
 
     public override void OnToolDragStart(Vector2 screenPos)
     {
-        if (isReturning) { return; }
+        if (isReturning) return;
+
         if (Physics.Raycast(mainCamera.ScreenPointToRay(screenPos), out RaycastHit hit, Mathf.Infinity, draggableLayer))
         {
             targetObject = hit.transform;
@@ -124,17 +91,15 @@ public class BrushTool : ToolBase
 
     public override void OnToolDragging(Vector2 screenPos)
     {
-        if (isReturning) { return; }
-        if (!isDragging || targetObject == null) return;
+        if (isReturning || !isDragging || targetObject == null) return;
 
         Vector3 targetPos = GetWorldPoint(screenPos, dragDistance) + dragOffset;
-        MoveTarget(targetPos, moveSmoothness);
+        MoveTarget(targetPos, movementSmoothness);
     }
 
     public override void OnToolDragEnd(Vector2 screenPos)
     {
-        if (isReturning) { return; }
-        if (!isDragging || targetObject == null) return;
+        if (isReturning || !isDragging || targetObject == null) return;
 
         isDragging = false;
         isReturning = true;
@@ -142,15 +107,26 @@ public class BrushTool : ToolBase
 
     public override void OnToolTap(Vector2 screenPos)
     {
-        if (isReturning) { return; }
+        if (isReturning) return;
         Debug.Log("Brush clicked");
     }
 
-    // private void OnDrawGizmos()
-    // {
-    //     if (tipPoint == null) return;
-    //     Vector3 forwardDir = tipPoint.forward * gizmosRange;
-    //     Gizmos.color = Color.green;
-    //     Gizmos.DrawLine(tipPoint.position, tipPoint.position + forwardDir);
-    // }
+    private void ResetDrag()
+    {
+        isReturning = false;
+        isDragging = false;
+        targetObject = null;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (tipPoint == null) return;
+
+        Vector3 direction = mainCamera.transform.forward;
+        Vector3 endPoint = tipPoint.position + direction * gizmosRange;
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(tipPoint.position, endPoint);
+        Gizmos.DrawSphere(endPoint, 0.05f);
+    }
 }
