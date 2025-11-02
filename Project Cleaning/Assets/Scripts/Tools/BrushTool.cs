@@ -2,22 +2,34 @@ using UnityEngine;
 
 public class BrushTool : ToolBase
 {
-    [Header("Brush References")]
-    [SerializeField] private Transform tipPoint;
-    [SerializeField] private Transform lookTarget;
-
-    [Header("Brush Settings")]
-    [SerializeField] private float gizmosRange = 10f;
-    [SerializeField] private float rotateSmoothness = 20f;
-    [SerializeField] private float movementSmoothness = 10f;
-    [SerializeField] private float positionThreshold = 0.001f;
-    [SerializeField] private float normalDamping = 10f;
-
     private Vector3 smoothedNormal = Vector3.zero;
 
     private void Update()
     {
-        if (targetObject == null) return;
+        if (!TouchManager.Instance.isInteracting)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(TouchManager.Instance.curScreenPos);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                if (hit.transform == this.transform)
+                {
+                    Debug.Log("Brush selected!");
+                    TouchManager.Instance.TouchUsed(true);
+
+                    OnToolDragStart(TouchManager.Instance.curScreenPos);
+                }
+            }
+        }
+        else if (isDragging)
+        {
+            OnToolDragging(TouchManager.Instance.curScreenPos);
+        }
+
+        if (!TouchManager.Instance.isInteracting && isDragging)
+        {
+            Debug.Log("Brush drag end!");
+            OnToolDragEnd(TouchManager.Instance.curScreenPos);
+        }
 
         if (isReturning)
         {
@@ -82,8 +94,8 @@ public class BrushTool : ToolBase
             targetObject = hit.transform;
             initialPosition = targetObject.position;
             initialRotation = targetObject.rotation;
-
             dragOffset = targetObject.position - hit.point;
+
             isDragging = true;
             isReturning = false;
         }
@@ -103,6 +115,7 @@ public class BrushTool : ToolBase
 
         isDragging = false;
         isReturning = true;
+        TouchManager.Instance.TouchUsed(false);
     }
 
     public override void OnToolTap(Vector2 screenPos)

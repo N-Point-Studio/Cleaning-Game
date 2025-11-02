@@ -93,27 +93,18 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
             ""id"": ""a34bc4b4-d97b-43b0-98d5-4cddf118c1c8"",
             ""actions"": [
                 {
-                    ""name"": ""Tap"",
+                    ""name"": ""Press"",
                     ""type"": ""Button"",
-                    ""id"": ""db3d7fdf-f106-4d01-987f-8299f7848ad0"",
+                    ""id"": ""6ce2c6d8-6bac-4971-aa3d-108cc1090216"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": ""Tap"",
+                    ""interactions"": ""Press"",
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Hold"",
-                    ""type"": ""Button"",
-                    ""id"": ""7040d0d6-ff2d-49e4-85f4-ed4789ec0156"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": ""Hold"",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Drag"",
+                    ""name"": ""ScreenPos"",
                     ""type"": ""Value"",
-                    ""id"": ""45f34590-7713-478b-bf63-bfefc26dae9e"",
+                    ""id"": ""e5d173bf-af78-4f58-b5d6-9b2cc51fb459"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -123,67 +114,45 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
             ""bindings"": [
                 {
                     ""name"": """",
-                    ""id"": ""f52433a0-a6ee-455c-a2cb-cbe423d113d5"",
+                    ""id"": ""c3946c43-f78f-4619-a3b4-0c35a45e831c"",
                     ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Tap"",
+                    ""action"": ""Press"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""94a20c6d-7d64-4f93-aea2-6e72fddd2678"",
+                    ""id"": ""daff05c7-3c90-47d9-b64d-ffaa6e84629a"",
                     ""path"": ""<Touchscreen>/Press"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Tap"",
+                    ""action"": ""Press"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""85d908a4-3256-4be3-978e-8517209a2109"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Hold"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""62b30da9-328b-43cf-afce-e1e1838a3e1d"",
-                    ""path"": ""<Touchscreen>/Press"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Hold"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""02260c4b-3182-43d5-9e87-7098e076e93a"",
+                    ""id"": ""b34285f5-8d5c-4d8b-80d1-9c96cf37374f"",
                     ""path"": ""<Mouse>/position"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drag"",
+                    ""action"": ""ScreenPos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""a2a80e7d-c756-4b6f-afae-a1258fda283a"",
+                    ""id"": ""d22f8ef8-bc15-4927-a03f-5b973d0145b4"",
                     ""path"": ""<Touchscreen>/position"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drag"",
+                    ""action"": ""ScreenPos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -194,9 +163,8 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
 }");
         // Input
         m_Input = asset.FindActionMap("Input", throwIfNotFound: true);
-        m_Input_Tap = m_Input.FindAction("Tap", throwIfNotFound: true);
-        m_Input_Hold = m_Input.FindAction("Hold", throwIfNotFound: true);
-        m_Input_Drag = m_Input.FindAction("Drag", throwIfNotFound: true);
+        m_Input_Press = m_Input.FindAction("Press", throwIfNotFound: true);
+        m_Input_ScreenPos = m_Input.FindAction("ScreenPos", throwIfNotFound: true);
     }
 
     ~@InputSystem()
@@ -277,9 +245,8 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
     // Input
     private readonly InputActionMap m_Input;
     private List<IInputActions> m_InputActionsCallbackInterfaces = new List<IInputActions>();
-    private readonly InputAction m_Input_Tap;
-    private readonly InputAction m_Input_Hold;
-    private readonly InputAction m_Input_Drag;
+    private readonly InputAction m_Input_Press;
+    private readonly InputAction m_Input_ScreenPos;
     /// <summary>
     /// Provides access to input actions defined in input action map "Input".
     /// </summary>
@@ -292,17 +259,13 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         /// </summary>
         public InputActions(@InputSystem wrapper) { m_Wrapper = wrapper; }
         /// <summary>
-        /// Provides access to the underlying input action "Input/Tap".
+        /// Provides access to the underlying input action "Input/Press".
         /// </summary>
-        public InputAction @Tap => m_Wrapper.m_Input_Tap;
+        public InputAction @Press => m_Wrapper.m_Input_Press;
         /// <summary>
-        /// Provides access to the underlying input action "Input/Hold".
+        /// Provides access to the underlying input action "Input/ScreenPos".
         /// </summary>
-        public InputAction @Hold => m_Wrapper.m_Input_Hold;
-        /// <summary>
-        /// Provides access to the underlying input action "Input/Drag".
-        /// </summary>
-        public InputAction @Drag => m_Wrapper.m_Input_Drag;
+        public InputAction @ScreenPos => m_Wrapper.m_Input_ScreenPos;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -329,15 +292,12 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_InputActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_InputActionsCallbackInterfaces.Add(instance);
-            @Tap.started += instance.OnTap;
-            @Tap.performed += instance.OnTap;
-            @Tap.canceled += instance.OnTap;
-            @Hold.started += instance.OnHold;
-            @Hold.performed += instance.OnHold;
-            @Hold.canceled += instance.OnHold;
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
+            @Press.started += instance.OnPress;
+            @Press.performed += instance.OnPress;
+            @Press.canceled += instance.OnPress;
+            @ScreenPos.started += instance.OnScreenPos;
+            @ScreenPos.performed += instance.OnScreenPos;
+            @ScreenPos.canceled += instance.OnScreenPos;
         }
 
         /// <summary>
@@ -349,15 +309,12 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         /// <seealso cref="InputActions" />
         private void UnregisterCallbacks(IInputActions instance)
         {
-            @Tap.started -= instance.OnTap;
-            @Tap.performed -= instance.OnTap;
-            @Tap.canceled -= instance.OnTap;
-            @Hold.started -= instance.OnHold;
-            @Hold.performed -= instance.OnHold;
-            @Hold.canceled -= instance.OnHold;
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
+            @Press.started -= instance.OnPress;
+            @Press.performed -= instance.OnPress;
+            @Press.canceled -= instance.OnPress;
+            @ScreenPos.started -= instance.OnScreenPos;
+            @ScreenPos.performed -= instance.OnScreenPos;
+            @ScreenPos.canceled -= instance.OnScreenPos;
         }
 
         /// <summary>
@@ -399,25 +356,18 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
     public interface IInputActions
     {
         /// <summary>
-        /// Method invoked when associated input action "Tap" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Press" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnTap(InputAction.CallbackContext context);
+        void OnPress(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Hold" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "ScreenPos" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnHold(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Drag" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnDrag(InputAction.CallbackContext context);
+        void OnScreenPos(InputAction.CallbackContext context);
     }
 }

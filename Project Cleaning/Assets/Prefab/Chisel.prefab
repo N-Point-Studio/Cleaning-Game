@@ -98,7 +98,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb6b1ce26854f4f9d89b43c05152ae3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  toolType: 1
   removableTag: Dirts
+  brush: {fileID: 2800000, guid: b0c5258eca94a426d947d8153a2bf65e, type: 3}
+  tipPointPos: {fileID: 7072490882780517854}
+  rayDistance: 10
 --- !u!54 &8081084080203595480
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -139,6 +143,7 @@ GameObject:
   - component: {fileID: 5895792165083555674}
   - component: {fileID: 5884551172855048939}
   - component: {fileID: 8164019712204011816}
+  - component: {fileID: 6727589638105506258}
   m_Layer: 6
   m_Name: Chisel
   m_TagString: Tools
@@ -225,16 +230,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11838562c750e430183e8bf5f6e1714d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  tipPoint: {fileID: 7072490882780517854}
+  lookTarget: {fileID: 0}
+  gizmosRange: 10
+  rotateSmoothness: 20
+  movementSmoothness: 10
+  positionThreshold: 0.001
+  normalDamping: 10
   dragDistance: 15
   moveSmoothness: 10
   returnSmoothness: 5
   draggableLayer:
     serializedVersion: 2
     m_Bits: 64
-  tipPoint: {fileID: 7072490882780517854}
-  lookTarget: {fileID: 0}
-  gizmoSize: 0.05
-  gizmoLineLength: 2.07
+  isActive: 1
 --- !u!136 &8164019712204011816
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -258,3 +268,15 @@ CapsuleCollider:
   m_Height: 7.9460673
   m_Direction: 1
   m_Center: {x: 0.0000008943701, y: -0.011060952, z: -1.2349174e-11}
+--- !u!114 &6727589638105506258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9209013482760100247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29f41c66ce8bd4627895756e9f15ca03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

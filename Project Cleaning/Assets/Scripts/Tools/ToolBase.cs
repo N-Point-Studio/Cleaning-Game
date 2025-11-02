@@ -1,17 +1,33 @@
 using UnityEngine;
 
-[RequireComponent(typeof(ToolInputReader))]
+// [RequireComponent(typeof(ToolInputReader))]
+
 public abstract class ToolBase : MonoBehaviour
 {
     [SerializeField] protected Camera mainCamera;
-    protected ToolInputReader inputHandler;
+    // protected ToolInputReader inputHandler;
     protected bool isDragging;
+
+    [Header("Tool References")]
+    [SerializeField] protected Transform tipPoint;
+    [SerializeField] protected Transform lookTarget;
+
+    [Header("Tool Settings")]
+    [SerializeField] protected float gizmosRange = 10f;
+    [SerializeField] protected float rotateSmoothness = 20f;
+    [SerializeField] protected float movementSmoothness = 10f;
+    [SerializeField] protected float positionThreshold = 0.001f;
+    [SerializeField] protected float normalDamping = 10f;
 
     [Header("Settings")]
     [SerializeField] protected float dragDistance = 2f;
     [SerializeField] protected float moveSmoothness = 10f;
     [SerializeField] protected float returnSmoothness = 5f;
     [SerializeField] protected LayerMask draggableLayer;
+
+    // [SerializeField] protected InputReader inputReader;
+
+    public bool isActive = true;
 
     protected Transform targetObject;
     protected Vector3 dragOffset;
@@ -22,24 +38,26 @@ public abstract class ToolBase : MonoBehaviour
     protected virtual void Awake()
     {
         mainCamera = Camera.main;
-        inputHandler = GetComponent<ToolInputReader>();
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
+        // inputHandler = GetComponent<ToolInputReader>();
     }
 
-    protected virtual void OnEnable()
-    {
-        inputHandler.OnTouchStart += OnToolDragStart;
-        inputHandler.OnTouchMove += OnToolDragging;
-        inputHandler.OnTouchEnd += OnToolDragEnd;
-        inputHandler.OnTouchTap += OnToolTap;
-    }
+    // protected virtual void OnEnable()
+    // {
+    //     inputHandler.OnTouchStart += OnToolDragStart;
+    //     inputHandler.OnTouchMove += OnToolDragging;
+    //     inputHandler.OnTouchEnd += OnToolDragEnd;
+    //     inputHandler.OnTouchTap += OnToolTap;
+    // }
 
-    protected virtual void OnDisable()
-    {
-        inputHandler.OnTouchStart -= OnToolDragStart;
-        inputHandler.OnTouchMove -= OnToolDragging;
-        inputHandler.OnTouchEnd -= OnToolDragEnd;
-        inputHandler.OnTouchTap -= OnToolTap;
-    }
+    // protected virtual void OnDisable()
+    // {
+    //     inputHandler.OnTouchStart -= OnToolDragStart;
+    //     inputHandler.OnTouchMove -= OnToolDragging;
+    //     inputHandler.OnTouchEnd -= OnToolDragEnd;
+    //     inputHandler.OnTouchTap -= OnToolTap;
+    // }
 
     protected Vector3 GetWorldPoint(Vector2 screenPos, float distance)
     {

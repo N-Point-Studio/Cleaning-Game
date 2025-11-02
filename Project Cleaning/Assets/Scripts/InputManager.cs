@@ -1,31 +1,38 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class InputReader : MonoBehaviour, InputSystem.IInputActions
+public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 {
+    public static TouchManager Instance { get; private set; }  // Singleton instance
+
     public InputSystem inputSystem;
     public Vector3 curScreenPos;
-    Camera camera;
+    private Camera mainCamera;
     public bool isDragging;
+    public bool isInteracting = false;
 
-    private Vector3 WorldPos
+    private void Awake()
     {
-        get
+        if (Instance != null && Instance != this)
         {
-            float z = camera.WorldToScreenPoint(transform.position).z;
-            return camera.ScreenToWorldPoint(curScreenPos + new Vector3(0, 0, z));
+            Destroy(gameObject);
+            return;
         }
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // Optional: persists across scenes
+
+        mainCamera = Camera.main;
+        inputSystem = new InputSystem();
+        inputSystem.Input.SetCallbacks(this);
     }
 
     private bool isClickedOn
     {
         get
         {
-            Ray ray = camera.ScreenPointToRay(curScreenPos);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit))
+            Ray ray = mainCamera.ScreenPointToRay(curScreenPos);
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
                 return hit.transform == transform;
             }
@@ -43,24 +50,18 @@ public class InputReader : MonoBehaviour, InputSystem.IInputActions
         inputSystem.Input.Disable();
     }
 
-    private void Awake()
-    {
-        camera = Camera.main;
-        inputSystem = new InputSystem();
-        inputSystem.Input.SetCallbacks(this);
-    }
-
     public void OnPress(InputAction.CallbackContext context)
     {
         if (context.performed)
         {
             Debug.Log("Press performed");
-            if (isClickedOn) StartCoroutine(Drag());
+            if (isClickedOn) { }
         }
         else if (context.canceled)
         {
-            Debug.Log("Press Canceled");
-            isDragging = false;
+            Debug.Log("Press canceled");
+            curScreenPos = Vector3.zero;
+            TouchUsed(false);
         }
     }
 
@@ -71,14 +72,8 @@ public class InputReader : MonoBehaviour, InputSystem.IInputActions
         curScreenPos = context.ReadValue<Vector2>();
     }
 
-    private IEnumerator Drag()
+    public void TouchUsed(bool isUsed)
     {
-        isDragging = true;
-        Vector3 offset = transform.position - WorldPos;
-        while (isDragging)
-        {
-            transform.position = WorldPos + offset;
-            yield return null;
-        }
+        isInteracting = isUsed;
     }
 }
