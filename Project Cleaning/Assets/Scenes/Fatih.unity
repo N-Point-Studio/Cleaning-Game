@@ -2501,7 +2501,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &351041017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2509,11 +2509,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 351041016}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f09820dc9aba74b729e9b1dfd881c2fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputReader: {fileID: 0}
+  tools:
+  - {fileID: 6069696683473551297}
+  - {fileID: 3976173342559765335}
+  activeToolIndex: 0
 --- !u!4 &351041018
 Transform:
   m_ObjectHideFlags: 0
@@ -4600,7 +4605,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!65 &1446947038
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5609,7 +5614,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 3215ce60666d547999d265b42c8ca86e,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3215ce60666d547999d265b42c8ca86e,
         type: 3}
@@ -7494,6 +7499,7 @@ GameObject:
   - component: {fileID: 3976173342559765334}
   - component: {fileID: 3976173342559765335}
   - component: {fileID: 3976173342559765336}
+  - component: {fileID: 3976173342559765337}
   m_Layer: 6
   m_Name: Brush
   m_TagString: Tools
@@ -7568,7 +7574,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -7585,7 +7591,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71ebcfd8a0f574c14baf739e8bb0089e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dragDistance: 2
+  dragDistance: 10
   moveSmoothness: 10
   returnSmoothness: 5
   draggableLayer:
@@ -7595,6 +7601,9 @@ MonoBehaviour:
   lookTarget: {fileID: 1446947041}
   gizmosRange: 5
   rotateSmoothness: 10
+  movementSmoothness: 10
+  positionThreshold: 0.001
+  normalDamping: 10
 --- !u!114 &3976173342559765336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7607,6 +7616,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29f41c66ce8bd4627895756e9f15ca03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!65 &3976173342559765337
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 849561502646556234}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.7039495, y: 7.323598, z: 1.1470581}
+  m_Center: {x: 0.0047363983, y: -0.67834234, z: 1.2495056}
 --- !u!1001 &5819634593943154924
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7688,13 +7718,25 @@ PrefabInstance:
     - target: {fileID: 9209013482760100247, guid: 869c48dbd26e5404780ce4e01e034e2e,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 869c48dbd26e5404780ce4e01e034e2e, type: 3}
+--- !u!114 &6069696683473551297 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5884551172855048939, guid: 869c48dbd26e5404780ce4e01e034e2e,
+    type: 3}
+  m_PrefabInstance: {fileID: 5819634593943154924}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11838562c750e430183e8bf5f6e1714d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

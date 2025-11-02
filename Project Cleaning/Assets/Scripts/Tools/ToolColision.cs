@@ -1,98 +1,116 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
-enum CollisionToolsType
+public class ToolCollision : MonoBehaviour
 {
-    Texture,
-    Mesh,
-}
+    public enum CollisionToolsType
+    {
+        Texture,
+        Mesh,
+    }
 
-public class ToolColision : MonoBehaviour
-{
-    [SerializeField] private CollisionToolsType toolType = CollisionToolsType.Mesh;
+    [SerializeField] private CollisionToolsType toolType = CollisionToolsType.Texture;
     [SerializeField] private string removableTag = "Dirts";
     [SerializeField] private Texture2D brush;
+    [SerializeField] private Transform tipPointPos;
+    [SerializeField] private float rayDistance = 10f;
+
+    private void Update()
+    {
+        if (toolType != CollisionToolsType.Texture || tipPointPos == null) return;
+        Ray ray = new Ray(tipPointPos.position, tipPointPos.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance))
+        {
+            var targetRenderer = hit.collider.GetComponent<Renderer>();
+            if (targetRenderer == null) return;
+
+            if (hit.collider.CompareTag(removableTag))
+            {
+                var clean = hit.collider.GetComponent<Clean>();
+                if (clean != null)
+                {
+                    clean.CleanAt(hit.textureCoord, brush);
+                    Vector2 uv = hit.textureCoord;
+                    Debug.Log($"[TipPoint Raycast] Cleaned {hit.collider.name}, UV: {uv.x:F3}, {uv.y:F3}");
+                }
+            }
+        }
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag(removableTag))
-        {
-            switch (toolType)
-            {
-                case CollisionToolsType.Mesh:
-                    DestroyMeshDirts(collision.gameObject);
-                    break;
-                case CollisionToolsType.Texture:
-                    TryCleanTexture(collision);
-                    break;
-            }
-        }
+        HandleCollision(collision.gameObject, collision.contacts);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(removableTag))
+        HandleCollision(other.gameObject, null);
+    }
+
+    private void HandleCollision(GameObject target, ContactPoint[] contacts)
+    {
+        if (!target.CompareTag(removableTag)) return;
+
+        switch (toolType)
         {
-            switch (toolType)
-            {
-                case CollisionToolsType.Mesh:
-                    DestroyMeshDirts(other.gameObject);
-                    break;
-                case CollisionToolsType.Texture:
-                    TryCleanTexture(other);
-                    break;
-            }
+            case CollisionToolsType.Mesh:
+                Destroy(target);
+                Debug.Log($"Removed object: {target.name}");
+                break;
+
+            case CollisionToolsType.Texture:
+                var clean = target.GetComponent<Clean>();
+                if (clean == null) return;
+
+                // Jika ada contact points (dari OnCollision), gunakan itu
+                if (contacts != null && contacts.Length > 0)
+                {
+                    foreach (var contact in contacts)
+                    {
+                        TryCleanAtContact(clean, contact);
+                    }
+                }
+                else
+                {
+                    // Jika OnTrigger, lakukan raycast dari tipPoint ke target
+                    TryCleanAtTrigger(clean, target);
+                }
+                break;
         }
     }
 
-    private void DestroyMeshDirts(GameObject gameObject)
+    private void TryCleanAtContact(Clean clean, ContactPoint contact)
     {
-        Destroy(gameObject);
-        Debug.Log($"Removed object: {gameObject.name}");
+        var meshCollider = contact.thisCollider as MeshCollider;
+        if (meshCollider == null || meshCollider.convex) return;
+
+        Ray ray = new Ray(contact.point + contact.normal * 0.001f, -contact.normal);
+        if (meshCollider.Raycast(ray, out RaycastHit hit, 0.01f))
+        {
+            clean.CleanAt(hit.textureCoord, brush);
+            Debug.Log("Cleaned at UV: " + hit.textureCoord);
+        }
     }
 
-    private void CleanTexture()
+    private void TryCleanAtTrigger(Clean clean, GameObject target)
     {
-
-    }
-
-    private void TryCleanTexture(Collision collision)
-    {
-        var renderer = collision.gameObject.GetComponent<Renderer>();
-        if (renderer == null) return;
-
-        var clean = renderer.GetComponent<Clean>();
-        if (clean == null) return;
-
-        Vector3 hitPoint = collision.contacts[0].point;
-        CleanAtPoint(clean, renderer, hitPoint);
-    }
-
-    private void TryCleanTexture(Collider collider)
-    {
-        var renderer = collider.GetComponent<Renderer>();
-        if (renderer == null) return;
-
-        var clean = renderer.GetComponent<Clean>();
-        if (clean == null) return;
-
-        Vector3 hitPoint = collider.ClosestPoint(transform.position);
-        CleanAtPoint(clean, renderer, hitPoint);
-    }
-
-    private void CleanAtPoint(Clean clean, Renderer renderer, Vector3 hitPoint)
-    {
-        Vector3 dir = (hitPoint - transform.position).normalized;
-        Ray ray = new Ray(transform.position, dir);
+        Vector3 dir = (target.transform.position - tipPointPos.position).normalized;
+        Ray ray = new Ray(tipPointPos.position, dir);
         float maxDistance = 5f;
 
         if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
         {
-            if (hit.collider != null && hit.collider.gameObject == renderer.gameObject)
+            if (hit.collider != null && hit.collider.gameObject == target)
             {
                 clean.CleanAt(hit.textureCoord, brush);
+                Debug.Log("Cleaned at trigger UV: " + hit.textureCoord);
             }
         }
     }
 
+    private void OnDrawGizmos()
+    {
+        if (tipPointPos == null) return;
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(tipPointPos.position, tipPointPos.position + tipPointPos.forward * 10f);
+    }
 }
