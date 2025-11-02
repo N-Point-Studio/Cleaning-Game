@@ -200,8 +200,21 @@ public class ObjectCloseUpManager : MonoBehaviour
 
     public void SetCurrentObject(Transform targetObject)
     {
-        Debug.Log($"🔄 SetCurrentObject called with: {targetObject?.name ?? "null"}");
-        Debug.Log($"    Previous object: {currentCloseUpObject?.name ?? "null"}");
+        // FIXED: Use proper Unity null checks to prevent MissingReferenceException
+        string targetName = "null";
+        if (targetObject != null && targetObject.gameObject != null)
+        {
+            targetName = targetObject.name;
+        }
+
+        string previousName = "null";
+        if (currentCloseUpObject != null && currentCloseUpObject.gameObject != null)
+        {
+            previousName = currentCloseUpObject.name;
+        }
+
+        Debug.Log($"🔄 SetCurrentObject called with: {targetName}");
+        Debug.Log($"    Previous object: {previousName}");
 
         currentCloseUpObject = targetObject;
         hasObjectInCloseUp = targetObject != null;
@@ -209,6 +222,15 @@ public class ObjectCloseUpManager : MonoBehaviour
         if (targetObject == null)
         {
             Debug.Log("✅ Current object set to null, HasObjectInCloseUp = false");
+            return;
+        }
+
+        // Additional check to ensure object wasn't destroyed
+        if (targetObject.gameObject == null)
+        {
+            Debug.LogWarning("⚠️ Target object was destroyed, setting to null");
+            currentCloseUpObject = null;
+            hasObjectInCloseUp = false;
             return;
         }
 

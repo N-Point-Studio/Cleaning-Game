@@ -33,6 +33,13 @@ public class JarAutoAssembly : MonoBehaviour
     [SerializeField] private Vector3 topPosition = new Vector3(0.285f, 1.617f, -0.177f);
     [SerializeField] private Vector3 correctRotation = new Vector3(-89.98f, 0f, 0f);
 
+    [Header("Final Assembly Positions & Rotations")]
+    [Tooltip("Exact final positions and rotations when all pieces are assembled")]
+    [SerializeField] private Vector3 finalBottomPosition = new Vector3(-0.0399f, 4.12828f, -1.46515f);
+    [SerializeField] private Vector3 finalMiddlePosition = new Vector3(0f, 2.97428f, -1.45318f);
+    [SerializeField] private Vector3 finalTopPosition = new Vector3(0.415f, 4.07528f, -1.72915f);
+    [SerializeField] private Vector3 finalRotation = new Vector3(-89.98f, 0f, 0f);
+
     [Header("Piece Settings")]
     public JarPieceType pieceType;
     public bool isAssembled = false;
@@ -164,9 +171,12 @@ public class JarAutoAssembly : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (jarFullyAssembled && assembledJarRoot != null)
+        // FIXED: When jar is fully assembled, individual pieces should not respond to clicks
+        // Only the assembled jar root should handle mouse events
+        if (jarFullyAssembled)
         {
-            TryInspectAssembledJar();
+            Debug.Log($"🚫 Individual piece {pieceType} clicked but jar is fully assembled - ignoring click");
+            Debug.Log($"🎯 Click should be handled by assembled jar root instead");
             return;
         }
 
@@ -177,7 +187,8 @@ public class JarAutoAssembly : MonoBehaviour
 
             if (assembledPieces.Count > 1 && assembledPieces.Count < allPieces.Count)
             {
-                Debug.Log($"🔗 Assembled piece {pieceType} clicked - part of partial assembly with {assembledPieces.Count} pieces");
+                Debug.Log($"🔗 Partial assembly piece {pieceType} clicked - will rotate as GROUP with {assembledPieces.Count} pieces");
+                Debug.Log($"🔒 Individual piece rotation blocked - only group rotation allowed");
             }
             else if (assembledPieces.Count == allPieces.Count)
             {
@@ -445,51 +456,6 @@ public class JarAutoAssembly : MonoBehaviour
         }
     }
 
-    void TryInspectAssembledJar()
-    {
-        if (assembledJarRoot == null)
-        {
-            Debug.LogWarning($"Jar is assembled but no assembledJarRoot assigned for {pieceType}");
-            return;
-        }
-
-        Debug.Log($"🎯 Assembled jar clicked - enabling rotation in place");
-
-        // Make sure the collider is enabled for proper raycast detection
-        if (assembledJarCollider != null)
-        {
-            assembledJarCollider.enabled = true;
-        }
-
-        // Start inspection on assembled jar to enable visual feedback
-        var assembledInspectable = assembledJarRoot.GetComponent<IInspectable>();
-        if (assembledInspectable != null)
-        {
-            assembledInspectable.OnInspectionStart();
-            Debug.Log($"✅ Started inspection on assembled jar: {assembledJarRoot.name}");
-        }
-
-        // Get the ObjectCloseUpManager to manually set up rotation-only mode
-        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
-        if (closeUpManager != null)
-        {
-            // Manually set the assembled jar as current object without animation
-            closeUpManager.SetCurrentObject(assembledJarRoot);
-            Debug.Log($"✅ Set assembled jar as current object for rotation (no movement)");
-        }
-
-        // Start rotation immediately without any position changes
-        var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
-        if (smoothRotator != null)
-        {
-            // Update rotator to use current position (no movement)
-            smoothRotator.UpdateFixedPosition(assembledJarRoot.position);
-            smoothRotator.StartRotating(assembledJarRoot);
-            Debug.Log($"🔄 Started rotation for assembled jar at current position: {assembledJarRoot.position}");
-        }
-
-        Debug.Log($"✅ Assembled jar ready for rotation - pieces stay in assembled positions");
-    }
 
     void Update()
     {
@@ -705,7 +671,7 @@ public class JarAutoAssembly : MonoBehaviour
         // This prevents GetCorrectPosition from applying wrong offsets during animation
         isAssembled = true;
 
-        // NEW LOGIC: Adapt this piece to match existing assembled pieces' positioning
+        // Adapt this piece to match existing assembled pieces' positioning
         Vector3 adaptedTargetPosition = AdaptToExistingPiecesPosition(targetPosition);
 
         // Cache the adapted inspection offset for this piece
@@ -716,15 +682,20 @@ public class JarAutoAssembly : MonoBehaviour
         Debug.Log($"📦 Adapted target position for {pieceType}: {adaptedTargetPosition}");
         Debug.Log($"📦 Cached adapted inspection offset: {adaptedInspectionOffset}");
 
-        // Animate to the adapted target position (following existing pieces)
+        // FIRST: Reset all existing assembled pieces to default rotation (keep their positions)
+        ResetAllAssembledPiecesToDefaultRotation();
+
+        // THEN: Animate to the adapted target position (shared inspection position)
         transform.DOMove(adaptedTargetPosition, assemblyDuration).SetEase(Ease.OutBack);
 
-        // Calculate and apply correct rotation
-        Quaternion correctRot = GetCorrectRotation();
+        // FIXED: Get base rotation without any inspection offsets to ensure default snap behavior
+        Quaternion correctRot = GetBaseCorrectWorldRotation();
         transform.DORotateQuaternion(correctRot, assemblyDuration).SetEase(Ease.OutBack);
 
         // Add assembly effect
         transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5);
+
+        Debug.Log($"🔄 {pieceType} rotating to base assembly rotation during inspection assembly: {correctRot.eulerAngles}");
 
         // Hide any outline that was showing
         HideInspectedObjectOutline();
@@ -778,14 +749,6 @@ public class JarAutoAssembly : MonoBehaviour
         return adaptedPosition;
     }
 
-    /// <summary>
-    /// DEPRECATED: Old alignment method - now pieces follow existing instead of leading
-    /// </summary>
-    void AlignAllPiecesToNewAssembly(Vector3 newInspectionOffset)
-    {
-        // This method is no longer used with the new "last piece follows" logic
-        Debug.Log($"⚠️ AlignAllPiecesToNewAssembly called but deprecated - using follow logic instead");
-    }
 
     /// <summary>
     /// Hide outline on inspected object when drag ends
@@ -1020,6 +983,69 @@ public class JarAutoAssembly : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Get the final assembly position for this piece type when all pieces are assembled
+    /// </summary>
+    Vector3 GetFinalAssemblyPosition()
+    {
+        switch (pieceType)
+        {
+            case JarPieceType.Bottom:
+                return finalBottomPosition;
+            case JarPieceType.Middle:
+                return finalMiddlePosition;
+            case JarPieceType.Top:
+                return finalTopPosition;
+            default:
+                return transform.position;
+        }
+    }
+
+    /// <summary>
+    /// Enforce the exact final positions and rotations for all pieces when jar is completed
+    /// </summary>
+    void EnforceFinalAssemblyPositions()
+    {
+        Debug.Log("🎯 Enforcing final assembly positions and rotations for all pieces");
+
+        // Calculate center position of all final piece positions
+        Vector3 centerPosition = Vector3.zero;
+        int assembledCount = 0;
+
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece != null && piece.isAssembled)
+            {
+                Vector3 finalPos = piece.GetFinalAssemblyPosition();
+                Quaternion finalRot = Quaternion.Euler(finalRotation);
+
+                Debug.Log($"🔧 Setting {piece.pieceType} to final position: {finalPos}, rotation: {finalRotation}");
+
+                // Kill any ongoing animations
+                piece.transform.DOKill();
+
+                // Set exact final position and rotation with smooth animation
+                piece.transform.DOMove(finalPos, assemblyDuration * 0.5f).SetEase(Ease.OutQuad);
+                piece.transform.DORotateQuaternion(finalRot, assemblyDuration * 0.5f).SetEase(Ease.OutQuad);
+
+                // Add to center calculation
+                centerPosition += finalPos;
+                assembledCount++;
+            }
+        }
+
+        // Calculate and set the assembled jar root position to the center of all pieces
+        if (assembledCount > 0 && assembledJarRoot != null)
+        {
+            centerPosition /= assembledCount;
+            assembledJarRoot.position = centerPosition;
+            Debug.Log($"🎯 Updated assembled jar root position to center of pieces: {centerPosition}");
+        }
+
+        Debug.Log("✅ All pieces moved to final assembly positions and rotations");
+    }
+
+
     void ComputeLocalAssemblyOffsets()
     {
         Vector3 worldTarget = GetConfiguredWorldPosition();
@@ -1045,11 +1071,11 @@ public class JarAutoAssembly : MonoBehaviour
 
         isDragging = false;
 
-        // NEW LOGIC: If there are already assembled pieces, adapt to their position
+        // Get the shared inspection position where other pieces are assembled
         Vector3 correctPos = GetCorrectPosition();
         Vector3 adaptedPos = AdaptToExistingPiecesPosition(correctPos);
 
-        // Cache the adapted offset
+        // Cache the adapted offset for inspection assembly positioning
         Vector3 basePos = GetBaseCorrectWorldPosition();
         Vector3 adaptedOffset = adaptedPos - basePos;
 
@@ -1057,15 +1083,21 @@ public class JarAutoAssembly : MonoBehaviour
         isAssembled = true;
         CacheInspectionOffsets(adaptedOffset, Quaternion.identity);
 
-        // Use MarkAssembled with the adapted position
+        // FIRST: Reset all existing assembled pieces to default rotation (keep their positions)
+        ResetAllAssembledPiecesToDefaultRotation();
+
+        // THEN: Assemble this piece to the shared inspection position
         transform.DOKill();
         transform.DOMove(adaptedPos, assemblyDuration).SetEase(Ease.OutBack);
 
-        Quaternion correctRot = GetCorrectRotation();
+        // FIXED: Get base rotation without any inspection offsets to ensure default snap behavior
+        Quaternion correctRot = GetBaseCorrectWorldRotation();
         transform.DORotateQuaternion(correctRot, assemblyDuration).SetEase(Ease.OutBack);
         transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5);
 
-        Debug.Log($"📦 {pieceType} assembled to adapted position: {adaptedPos}");
+        Debug.Log($"🔄 {pieceType} rotating to base assembly rotation: {correctRot.eulerAngles}");
+
+        Debug.Log($"📦 {pieceType} assembled to shared inspection position: {adaptedPos}");
 
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager != null && closeUpManager.HasObjectInCloseUp)
@@ -1081,6 +1113,35 @@ public class JarAutoAssembly : MonoBehaviour
         CheckJarCompletion();
     }
 
+    /// <summary>
+    /// Reset all currently assembled pieces to their default rotation only
+    /// Keeps pieces in their inspection assembly positions but resets rotation to default
+    /// </summary>
+    void ResetAllAssembledPiecesToDefaultRotation()
+    {
+        Debug.Log($"🔄 Resetting all assembled pieces to default rotation (keeping inspection positions) before {pieceType} assembly");
+
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece != null && piece != this && piece.isAssembled)
+            {
+                // Get the base assembly rotation (but keep current position for inspection mode)
+                Quaternion defaultRot = piece.GetBaseCorrectWorldRotation();
+
+                Debug.Log($"    - Resetting {piece.pieceType} rotation:");
+                Debug.Log($"        Position: {piece.transform.position} (keeping current)");
+                Debug.Log($"        Rotation: {piece.transform.rotation.eulerAngles} -> {defaultRot.eulerAngles}");
+
+                // Animate to default rotation ONLY (keep current position)
+                piece.transform.DOKill();
+                piece.transform.DORotateQuaternion(defaultRot, assemblyDuration).SetEase(Ease.OutBack);
+
+                // Clear only the rotation offset, keep position offset for inspection mode
+                piece.CacheInspectionOffsets(piece.inspectionOffset, Quaternion.identity);
+            }
+        }
+    }
+
     void CheckJarCompletion()
     {
         int assembledPieces = GetAssembledPieceCount();
@@ -1094,9 +1155,13 @@ public class JarAutoAssembly : MonoBehaviour
 
         jarFullyAssembled = true;
 
+        // CRITICAL: Enforce exact final positions and rotations before any other processing
+        EnforceFinalAssemblyPositions();
+
         HandleAllPiecesOnCompletion();
 
-        StartCoroutine(CelebrationSequence());
+        // Start celebration after final positions are set
+        StartCoroutine(CelebrationSequenceAfterFinalPositions());
 
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
 
@@ -1129,96 +1194,33 @@ public class JarAutoAssembly : MonoBehaviour
                 Debug.Log("ℹ️ No object currently in close-up, proceeding to bring assembled jar");
             }
 
-            // FIXED: Disable normal inspection for assembled jar to prevent position changes
+            // FIXED: Keep assembled jar inspectable for rotation - same as individual pieces
             var parentInspectable = assembledJarRoot.GetComponent<InspectableJar>();
             if (parentInspectable != null)
             {
-                parentInspectable.SetInspectable(false);
-                Debug.Log($"🔒 DISABLED normal inspection for assembled jar {assembledJarRoot.name} - prevents position changes");
+                parentInspectable.SetInspectable(true);
+                Debug.Log($"✅ KEPT assembled jar inspectable for rotation - same as individual pieces");
             }
             else
             {
                 Debug.LogWarning($"⚠️ No InspectableJar component found on assembled jar root: {assembledJarRoot.name}");
             }
 
-            // CRITICAL FIX: Set up rotation-only mode and manually set as current close-up object
+            // Enable assembled jar collider for interaction
             if (assembledJarCollider != null)
             {
                 assembledJarCollider.enabled = true;
-
-                // CRITICAL: Manually set the assembled jar as the current close-up object
-                // This enables rotation without calling BringObjectToCloseUp which moves it
-                if (closeUpManager != null)
-                {
-                    // Use reflection to directly set the current object without position animation
-                    try
-                    {
-                        // Try to set it directly - this may require the close-up manager to have a setter
-                        var currentObjectProperty = closeUpManager.GetType().GetProperty("CurrentCloseUpObject");
-                        var hasObjectProperty = closeUpManager.GetType().GetProperty("HasObjectInCloseUp");
-
-                        if (currentObjectProperty != null && hasObjectProperty != null)
-                        {
-                            currentObjectProperty.SetValue(closeUpManager, assembledJarRoot);
-                            hasObjectProperty.SetValue(closeUpManager, true);
-                            Debug.Log($"🎯 MANUALLY set ParentJar as current close-up object without animation");
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"⚠️ Could not access ObjectCloseUpManager properties - using alternative approach");
-                        }
-                    }
-                    catch
-                    {
-                        Debug.LogWarning($"⚠️ Reflection approach failed - ParentJar may still go through normal selection");
-                    }
-                }
-
-                Debug.Log($"✅ ENABLED ParentJar collider {assembledJarCollider.name} for rotation");
-                Debug.Log($"🔒 Set up ROTATION-ONLY mode for ParentJar");
-                Debug.Log($"    - ParentJar should now be clickable for rotation");
-                Debug.Log($"    - Position changes prevented by manual close-up setup");
+                Debug.Log($"✅ ENABLED assembled jar collider for rotation interaction");
             }
             else
             {
                 Debug.LogWarning($"⚠️ No assembled jar collider found for {assembledJarRoot.name}");
             }
 
-            // Now set up the assembled jar for rotation-only inspection
-            if (closeUpManager != null)
-            {
-                Debug.Log($"🎯 SETTING UP ASSEMBLED JAR for rotation-only inspection: {assembledJarRoot.name}");
+            // NEW: Automatically enable rotation after jar completion (no click needed)
+            StartCoroutine(EnableAssembledJarRotationAfterDelay());
 
-                // Start inspection on assembled jar
-                var assembledInspectable = assembledJarRoot.GetComponent<IInspectable>();
-                if (assembledInspectable != null)
-                {
-                    assembledInspectable.OnInspectionStart();
-                    Debug.Log($"✅ Started inspection on assembled jar: {assembledJarRoot.name}");
-                }
-
-                // CRITICAL FIX: Set up rotation-only mode without moving the assembled jar
-                // This prevents the pieces from being moved from their assembly positions
-                closeUpManager.SetCurrentObject(assembledJarRoot);
-
-                // Enable rotation immediately at current position
-                var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
-                if (smoothRotator != null)
-                {
-                    smoothRotator.UpdateFixedPosition(assembledJarRoot.position);
-                    smoothRotator.StartRotating(assembledJarRoot);
-                    Debug.Log($"🔄 Started rotation for assembled jar at current position: {assembledJarRoot.position}");
-                }
-
-                Debug.Log($"🔒 ASSEMBLED JAR READY FOR ROTATION-ONLY MODE");
-                Debug.Log($"    - No position changes applied to assembled jar");
-                Debug.Log($"    - All pieces remain exactly where they were assembled");
-                Debug.Log($"    - Rotation enabled immediately without animation");
-            }
-            else
-            {
-                Debug.LogError("❌ CloseUpManager is null!");
-            }
+            Debug.Log($"✅ ASSEMBLED JAR SETUP COMPLETE - rotation will be automatically enabled");
         }
         else
         {
@@ -1226,23 +1228,92 @@ public class JarAutoAssembly : MonoBehaviour
         }
     }
 
-    IEnumerator CelebrationSequence()
+
+    IEnumerator CelebrationSequenceAfterFinalPositions()
     {
         Debug.Log("🎉 Jar restoration complete! 🎉");
 
-        yield return new WaitForSeconds(0.5f);
+        // Wait for the final position animations to complete
+        yield return new WaitForSeconds(assemblyDuration * 0.5f + 0.1f);
 
-        // Simple celebration effect - just a gentle scale pulse
+        // Simple celebration effect - just a gentle scale pulse that doesn't affect position
         foreach (JarAutoAssembly piece in allPieces)
         {
             if (piece != null && piece.isAssembled)
             {
-                piece.transform.DOPunchScale(Vector3.one * 0.1f, 0.5f, 3);
+                piece.transform.DOPunchScale(Vector3.one * 0.05f, 0.3f, 2);
             }
         }
 
+        Debug.Log("✅ Jar pieces are now in perfect final positions!");
         // Optional: Add particle effects, sound, or UI feedback here
-        // No rotation - jar stays in perfect final position
+        // No rotation or position changes - jar stays in exact final position
+    }
+
+    /// <summary>
+    /// Automatically enable rotation for the assembled jar after a short delay
+    /// This eliminates the need for the user to click first
+    /// </summary>
+    IEnumerator EnableAssembledJarRotationAfterDelay()
+    {
+        // Wait for all animations and celebration to complete
+        yield return new WaitForSeconds(assemblyDuration * 0.5f + 0.5f);
+
+        // FIXED: Add proper null checks to prevent MissingReferenceException
+        if (assembledJarRoot == null)
+        {
+            Debug.LogWarning("⚠️ AssembledJarRoot is null - cannot enable automatic rotation");
+            yield break;
+        }
+
+        // Additional check to ensure the object hasn't been destroyed
+        if (assembledJarRoot.gameObject == null)
+        {
+            Debug.LogWarning("⚠️ AssembledJarRoot GameObject has been destroyed - cannot enable automatic rotation");
+            yield break;
+        }
+
+        Debug.Log("🔄 Auto-enabling assembled jar rotation - no click needed!");
+
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager == null)
+        {
+            Debug.LogWarning("⚠️ ObjectCloseUpManager not found - cannot enable rotation");
+            yield break;
+        }
+
+        // Set up rotation-only mode WITHOUT bringing to close-up
+        // The jar rotates at its current assembled position
+        closeUpManager.SetCurrentObject(assembledJarRoot);
+
+        // Enable rotation at current position (no movement)
+        var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
+        if (smoothRotator != null)
+        {
+            // Start rotation at the jar's current assembled position
+            smoothRotator.UpdateFixedPosition(assembledJarRoot.position);
+            smoothRotator.StartRotating(assembledJarRoot);
+
+            Debug.Log("✅ Assembled jar rotation AUTO-ENABLED at position: " + assembledJarRoot.position);
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ SmoothObjectRotator not found - rotation may not work properly");
+        }
+
+        // Start inspection for visual feedback (but no position changes)
+        var assembledInspectable = assembledJarRoot.GetComponent<IInspectable>();
+        if (assembledInspectable != null)
+        {
+            assembledInspectable.OnInspectionStart();
+            Debug.Log("✅ Visual feedback enabled for assembled jar rotation");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ No IInspectable component found on assembled jar root");
+        }
+
+        Debug.Log("🎯 Assembled jar is now ready for immediate rotation!");
     }
 
     void HandleJarFullyAssembledState(bool includeTransformAdjustments)
@@ -1322,7 +1393,8 @@ public class JarAutoAssembly : MonoBehaviour
         isAssembled = true;
 
         Vector3 correctPos = GetCorrectPosition();
-        Quaternion correctRot = GetCorrectRotation();
+        // FIXED: Use base rotation to ensure default snap behavior
+        Quaternion correctRot = GetBaseCorrectWorldRotation();
 
         transform.DOKill();
 
@@ -1332,6 +1404,7 @@ public class JarAutoAssembly : MonoBehaviour
             transform.DORotateQuaternion(correctRot, assemblyDuration).SetEase(Ease.OutBack);
 
             transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5);
+            Debug.Log($"🔄 {pieceType} (MarkAssembled) rotating to base assembly rotation: {correctRot.eulerAngles}");
         }
         else
         {
@@ -1339,6 +1412,33 @@ public class JarAutoAssembly : MonoBehaviour
             transform.rotation = correctRot;
         }
     }
+
+    // Test function to verify final positions
+    [ContextMenu("Test Final Positions")]
+    public void TestFinalPositions()
+    {
+        Debug.Log("🧪 Testing Final Assembly Positions:");
+        Debug.Log($"Bottom: {finalBottomPosition} (Target: -0.0399, 4.12828, -1.46515)");
+        Debug.Log($"Middle: {finalMiddlePosition} (Target: 0, 2.97428, -1.45318)");
+        Debug.Log($"Top: {finalTopPosition} (Target: 0.415, 4.07528, -1.72915)");
+        Debug.Log($"Final Rotation: {finalRotation} (Target: -89.98, 0, 0)");
+
+        // Immediately set all pieces to final positions for testing
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece != null)
+            {
+                Vector3 finalPos = piece.GetFinalAssemblyPosition();
+                Quaternion finalRot = Quaternion.Euler(finalRotation);
+
+                piece.transform.position = finalPos;
+                piece.transform.rotation = finalRot;
+
+                Debug.Log($"Set {piece.pieceType} to: Position {finalPos}, Rotation {finalRot.eulerAngles}");
+            }
+        }
+    }
+
 
     // Reset function for testing
     [ContextMenu("Reset Assembly")]
