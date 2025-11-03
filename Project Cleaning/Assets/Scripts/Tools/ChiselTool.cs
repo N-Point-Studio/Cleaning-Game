@@ -48,10 +48,10 @@ public class ChiselTool : ToolBase
             return;
         }
 
-        if (isDragging && lookTarget != null && tipPoint != null)
-        {
-            RotateTowardsLookTarget();
-        }
+        // if (isDragging && lookTarget != null && tipPoint != null)
+        // {
+        //     RotateTowardsLookTarget();
+        // }
 
         if (isDragging && tipPoint != null)
         {
@@ -118,11 +118,11 @@ public class ChiselTool : ToolBase
         TouchManager.Instance.TouchUsed(false);
     }
 
-    public override void OnToolTap(Vector2 screenPos)
-    {
-        if (isReturning) return;
-        Debug.Log("Brush clicked");
-    }
+    // public override void OnToolTap(Vector2 screenPos)
+    // {
+    //     if (isReturning) return;
+    //     Debug.Log("Brush clicked");
+    // }
 
     private void ResetDrag()
     {

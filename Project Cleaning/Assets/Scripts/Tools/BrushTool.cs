@@ -6,7 +6,6 @@ public class BrushTool : ToolBase
 
     private void Update()
     {
-        // --- 1. Detect first touch on this brush ---
         if (!TouchManager.Instance.isInteracting)
         {
             Ray ray = mainCamera.ScreenPointToRay(TouchManager.Instance.curScreenPos);
@@ -16,26 +15,20 @@ public class BrushTool : ToolBase
                 {
                     Debug.Log("Brush selected!");
                     TouchManager.Instance.TouchUsed(true);
-
-                    // Start dragging
                     OnToolDragStart(TouchManager.Instance.curScreenPos);
                 }
             }
         }
         else if (isDragging)
         {
-            // --- 2. Handle dragging motion ---
             OnToolDragging(TouchManager.Instance.curScreenPos);
         }
-
-        // --- 3. Handle release / touch cancel ---
         if (!TouchManager.Instance.isInteracting && isDragging)
         {
             Debug.Log("Brush drag end!");
             OnToolDragEnd(TouchManager.Instance.curScreenPos);
         }
 
-        // --- 4. Return & rotation logic ---
         if (isReturning)
         {
             MoveTarget(initialPosition, returnSmoothness, initialRotation);
@@ -53,14 +46,14 @@ public class BrushTool : ToolBase
             return;
         }
 
-        if (isDragging && lookTarget != null && tipPoint != null)
-        {
-            RotateTowardsLookTarget();
-        }
+        // if (isDragging && lookTarget != null && tipPoint != null)
+        // {
+        //     RotateTowardsLookTarget();
+        // }
 
         if (isDragging && tipPoint != null)
         {
-            HandleSurfaceDetection();
+            HandleScreenSurfaceDetection();
         }
     }
 
@@ -71,22 +64,28 @@ public class BrushTool : ToolBase
         targetObject.rotation = Quaternion.Slerp(targetObject.rotation, targetRot, Time.deltaTime * rotateSmoothness);
     }
 
-    private void HandleSurfaceDetection()
+    private void HandleScreenSurfaceDetection()
     {
-        Ray ray = new Ray(tipPoint.position, tipPoint.forward);
+        if (tipPoint == null || mainCamera == null) return;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(tipPoint.position);
+        screenPos.z += gizmosRange;
+        Vector3 worldEnd = mainCamera.ScreenToWorldPoint(screenPos);
+
+        Vector3 rayDir = (worldEnd - tipPoint.position).normalized;
+        Ray ray = new Ray(tipPoint.position, rayDir);
+
 
         if (Physics.Raycast(ray, out RaycastHit hit, gizmosRange))
         {
-            if (!hit.collider.CompareTag("Dirts")) return;
+            if (!hit.collider.CompareTag("Dirts")) { isSurfaceDeteced = false; return; }
 
-            Debug.Log($"Detected Dirts: {hit.collider.name}");
-            Vector3 targetPos = hit.point - tipPoint.forward;
-            targetObject.position = Vector3.Lerp(targetObject.position, targetPos, Time.deltaTime * movementSmoothness);
+            isSurfaceDeteced = true;
+            Debug.Log($"[SCREEN] Detected Dirts: {hit.collider.name}");
+            Vector3 targetPos = (hit.point - tipPoint.position).normalized;
 
-            smoothedNormal = smoothedNormal == Vector3.zero ? hit.normal : Vector3.Lerp(smoothedNormal, hit.normal, Time.deltaTime * normalDamping);
-
-            Quaternion surfaceRot = Quaternion.LookRotation(-smoothedNormal, Vector3.up);
-            targetObject.rotation = Quaternion.RotateTowards(targetObject.rotation, surfaceRot, rotateSmoothness * Time.deltaTime);
+            targetObject.position = Vector3.Lerp(targetObject.position, hit.point, Time.deltaTime * movementSmoothness);
+            Quaternion targetRot = Quaternion.FromToRotation(tipPoint.forward, targetPos) * targetObject.rotation;
+            targetObject.rotation = Quaternion.Slerp(targetObject.rotation, targetRot, rotateSmoothness * Time.deltaTime);
         }
     }
 
@@ -109,9 +108,8 @@ public class BrushTool : ToolBase
     public override void OnToolDragging(Vector2 screenPos)
     {
         if (isReturning || !isDragging || targetObject == null) return;
-
-        Vector3 targetPos = GetWorldPoint(screenPos, dragDistance) + dragOffset;
-        MoveTarget(targetPos, movementSmoothness);
+        Vector3 targetPosTouch = GetWorldPoint(screenPos, dragDistance) + dragOffset;
+        MoveTarget(targetPosTouch, movementSmoothness);
     }
 
     public override void OnToolDragEnd(Vector2 screenPos)
@@ -123,28 +121,15 @@ public class BrushTool : ToolBase
         TouchManager.Instance.TouchUsed(false);
     }
 
-    public override void OnToolTap(Vector2 screenPos)
-    {
-        if (isReturning) return;
-        Debug.Log("Brush clicked");
-    }
-
-    private void ResetDrag()
-    {
-        isReturning = false;
-        isDragging = false;
-        targetObject = null;
-    }
-
     private void OnDrawGizmos()
     {
-        if (tipPoint == null) return;
-
-        Vector3 direction = mainCamera.transform.forward;
-        Vector3 endPoint = tipPoint.position + direction * gizmosRange;
+        if (tipPoint == null || mainCamera == null) return;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(tipPoint.position);
+        screenPos.z += gizmosRange;
+        Vector3 worldEnd = mainCamera.ScreenToWorldPoint(screenPos);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(tipPoint.position, endPoint);
-        Gizmos.DrawSphere(endPoint, 0.05f);
+        Gizmos.DrawLine(tipPoint.position, worldEnd);
+        Gizmos.DrawSphere(worldEnd, 0.05f);
     }
 }
