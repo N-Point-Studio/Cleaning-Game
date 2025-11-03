@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [System.Serializable]
 public class AssembledJarInteraction : MonoBehaviour
@@ -6,8 +7,39 @@ public class AssembledJarInteraction : MonoBehaviour
     [Header("Debug")]
     public bool enableDebugLogs = true;
 
-    void OnMouseDown()
+    void Start()
     {
+        // Original behavior restored - no input variables needed
+    }
+
+    void OnEnable()
+    {
+        TouchManager.OnMouseDown += HandleMouseDown;
+    }
+
+    void OnDisable()
+    {
+        TouchManager.OnMouseDown -= HandleMouseDown;
+    }
+
+    bool IsClickedOn(Vector2 screenPos)
+    {
+        Camera camera = Camera.main;
+        if (camera == null) return false;
+
+        Ray ray = camera.ScreenPointToRay(screenPos);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            return hit.transform == transform;
+        }
+        return false;
+    }
+
+    void HandleMouseDown(Vector2 screenPos)
+    {
+        // Check if this object was clicked
+        if (!IsClickedOn(screenPos)) return;
+
         // Only respond to clicks when the jar is fully assembled
         if (!JarAutoAssembly.IsJarFullyAssembled)
         {

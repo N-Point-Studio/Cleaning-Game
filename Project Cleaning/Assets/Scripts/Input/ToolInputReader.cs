@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class ToolInputReader : MonoBehaviour
 {
@@ -11,11 +12,12 @@ public class ToolInputReader : MonoBehaviour
     private float tapThreshold = 0.2f; // detik
     private float touchStartTime;
     private Vector2 startPos;
+    private bool wasPressed = false;
 
     private void Update()
     {
 #if UNITY_EDITOR
-        HandleMouseInput(); // biar bisa test di Editor
+        HandleMouseInput(); // Use TouchManager for editor testing
 #else
         HandleTouchInput();
 #endif
@@ -23,22 +25,24 @@ public class ToolInputReader : MonoBehaviour
 
     private void HandleMouseInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (TouchManager.IsPressed && !wasPressed)
         {
-            startPos = Input.mousePosition;
+            startPos = TouchManager.MousePosition;
             touchStartTime = Time.time;
-            OnTouchStart?.Invoke(Input.mousePosition);
+            OnTouchStart?.Invoke(TouchManager.MousePosition);
+            wasPressed = true;
         }
-        else if (Input.GetMouseButton(0))
+        else if (TouchManager.IsPressed && wasPressed)
         {
-            OnTouchMove?.Invoke(Input.mousePosition);
+            OnTouchMove?.Invoke(TouchManager.MousePosition);
         }
-        else if (Input.GetMouseButtonUp(0))
+        else if (!TouchManager.IsPressed && wasPressed)
         {
-            OnTouchEnd?.Invoke(Input.mousePosition);
+            OnTouchEnd?.Invoke(TouchManager.MousePosition);
 
             if (Time.time - touchStartTime <= tapThreshold)
-                OnTouchTap?.Invoke(Input.mousePosition);
+                OnTouchTap?.Invoke(TouchManager.MousePosition);
+            wasPressed = false;
         }
     }
 
@@ -51,23 +55,25 @@ public class ToolInputReader : MonoBehaviour
 
         switch (touch.phase)
         {
-            case TouchPhase.Began:
+            case UnityEngine.TouchPhase.Began:
                 startPos = pos;
                 touchStartTime = Time.time;
                 OnTouchStart?.Invoke(pos);
                 break;
 
-            case TouchPhase.Moved:
-            case TouchPhase.Stationary:
+            case UnityEngine.TouchPhase.Moved:
+            case UnityEngine.TouchPhase.Stationary:
                 OnTouchMove?.Invoke(pos);
                 break;
 
-            case TouchPhase.Ended:
-            case TouchPhase.Canceled:
+            case UnityEngine.TouchPhase.Ended:
+            case UnityEngine.TouchPhase.Canceled:
                 OnTouchEnd?.Invoke(pos);
                 if (Time.time - touchStartTime <= tapThreshold)
                     OnTouchTap?.Invoke(pos);
                 break;
         }
     }
+
+    // Now uses TouchManager with new Input System
 }

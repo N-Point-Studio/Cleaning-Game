@@ -1,16 +1,25 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 {
     public static TouchManager Instance { get; private set; }  // Singleton instance
 
-    public InputSystem inputSystem;
+    // Events for other scripts to listen to (replaces OnMouseDown/Up/Drag)
+    public static event Action<Vector2> OnMouseDown;
+    public static event Action<Vector2> OnMouseUp;
+    public static event Action<Vector2> OnMouseDrag;
+
     public Vector3 curScreenPos;
     private Camera mainCamera;
     public bool isDragging;
     public bool isInteracting = false;
+
+    // New Input System
+    private InputSystem inputSystem;
+    private bool isPressed = false;
+    private bool wasPressed = false;
 
     private void Awake()
     {
@@ -23,23 +32,69 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         DontDestroyOnLoad(gameObject);
 
         mainCamera = Camera.main;
+
+        // Initialize new Input System
         inputSystem = new InputSystem();
         inputSystem.Input.SetCallbacks(this);
     }
 
-    void Update()
+    private void OnEnable()
     {
+        inputSystem?.Input.Enable();
+    }
+
+    private void OnDisable()
+    {
+        inputSystem?.Input.Disable();
+    }
+
+    // New Input System callbacks
+    public void OnPress(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            isPressed = true;
+            if (!wasPressed)
+            {
+                wasPressed = true;
+                OnMouseDown?.Invoke(curScreenPos);
+            }
+        }
+        else if (context.canceled)
+        {
+            isPressed = false;
+            if (wasPressed)
+            {
+                wasPressed = false;
+                OnMouseUp?.Invoke(curScreenPos);
+            }
+            isDragging = false;
+        }
+    }
+
+    public void OnScreenPos(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        curScreenPos = context.ReadValue<Vector2>();
+
+        // Handle threshold
         float threshold = 10f;
-        Debug.Log("CURRENTPOS: " + curScreenPos);
         if (curScreenPos.x <= threshold || curScreenPos.y <= threshold)
         {
             curScreenPos = Vector3.zero;
             isInteracting = false;
         }
+
+        // If pressed and moving, it's a drag
+        if (isPressed && wasPressed)
+        {
+            isDragging = true;
+            OnMouseDrag?.Invoke(curScreenPos);
+        }
     }
 
-
-    public bool isClickedOn
+    public bool IsClickedOn
     {
         get
         {
@@ -52,40 +107,12 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         }
     }
 
-    void OnEnable()
-    {
-        inputSystem.Input.Enable();
-    }
-
-    void OnDisable()
-    {
-        inputSystem.Input.Disable();
-    }
-
-    public void OnPress(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            Debug.Log("Press performed");
-            if (isClickedOn) { }
-        }
-        else if (context.canceled)
-        {
-            Debug.Log("Press canceled");
-            curScreenPos = Vector3.zero;
-            isInteracting = false;
-        }
-    }
-
-    public void OnScreenPos(InputAction.CallbackContext context)
-    {
-        if (!context.performed) return;
-        Debug.Log("Screen Pos performed");
-        curScreenPos = context.ReadValue<Vector2>();
-    }
-
     public void TouchUsed(bool isUsed)
     {
         isInteracting = isUsed;
     }
+
+    // Static properties to maintain compatibility
+    public static Vector2 MousePosition => Instance != null ? Instance.curScreenPos : Vector2.zero;
+    public static bool IsPressed => Instance != null && Instance.isPressed;
 }

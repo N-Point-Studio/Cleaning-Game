@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Fatih.unity
     guid: 9684725875ea14bc68699bead1a19db0
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Alvin.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects: {}

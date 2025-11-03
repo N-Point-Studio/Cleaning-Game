@@ -47,6 +47,8 @@ public class ObjectCloseUpManager : MonoBehaviour
     private bool hasObjectInCloseUp = false;
     private bool isObjectTransitioning = false; // Prevents rotation input while tweens are running
 
+    // Original behavior restored
+
     // Components will auto-initialize if not assigned
     public SmoothObjectRotator SmoothRotator => smoothRotator;
     public ObjectAnimationHandler AnimationHandler => animationHandler;
@@ -62,9 +64,21 @@ public class ObjectCloseUpManager : MonoBehaviour
         SetupComponents();
     }
 
+    void OnEnable()
+    {
+        TouchManager.OnMouseDown += HandleMouseDown;
+        TouchManager.OnMouseUp += HandleMouseUp;
+    }
+
+    void OnDisable()
+    {
+        TouchManager.OnMouseDown -= HandleMouseDown;
+        TouchManager.OnMouseUp -= HandleMouseUp;
+    }
+
     void Update()
     {
-        HandleInput();
+        HandleKeyboardInput();
     }
 
     /// <summary>
@@ -117,60 +131,66 @@ public class ObjectCloseUpManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Handle user input - centralized input management
+    /// Handle keyboard input only
     /// </summary>
-    void HandleInput()
+    void HandleKeyboardInput()
     {
         // Exit close-up view
         if (hasObjectInCloseUp && Input.GetKeyDown(exitCloseUpKey))
         {
             ExitCloseUp();
         }
+    }
 
-        // Handle mouse input based on current state
-        if (Input.GetMouseButtonDown(0))
+    /// <summary>
+    /// Handle mouse down from TouchManager
+    /// </summary>
+    void HandleMouseDown(Vector2 screenPos)
+    {
+        Debug.Log($"🖱️ Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
+
+        if (hasObjectInCloseUp)
         {
-            Debug.Log($"🖱️ Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
+            Debug.Log("🔄 Object in close-up - requesting rotation start");
 
-            if (hasObjectInCloseUp)
+            if (isObjectTransitioning)
             {
-                Debug.Log("🔄 Object in close-up - requesting rotation start");
+                Debug.Log("⏳ Close-up transition still running - deferring rotation start");
+                return;
+            }
 
-                if (isObjectTransitioning)
-                {
-                    Debug.Log("⏳ Close-up transition still running - deferring rotation start");
-                    return;
-                }
-
-                if (ShouldAllowRotation(currentCloseUpObject))
-                {
-                    // Update the rotator's fixed position before starting rotation
-                    UpdateRotatorFixedPosition(currentCloseUpObject);
-                    smoothRotator.StartRotating(currentCloseUpObject);
-                }
-                else
-                {
-                    Debug.Log("🚫 Rotation blocked: individual piece after completion");
-                }
+            if (ShouldAllowRotation(currentCloseUpObject))
+            {
+                // Update the rotator's fixed position before starting rotation
+                UpdateRotatorFixedPosition(currentCloseUpObject);
+                smoothRotator.StartRotating(currentCloseUpObject);
             }
             else
             {
-                Debug.Log("🎯 No object in close-up - trying to select object...");
-
-                // Debug: Check what objects are under the mouse before trying selection
-                DebugObjectsUnderMouse();
-
-                // No object in close-up - try to select one
-                selectionHandler.TrySelectObjectAtMousePosition();
+                Debug.Log("🚫 Rotation blocked: individual piece after completion");
             }
         }
-        else if (Input.GetMouseButtonUp(0))
+        else
         {
-            if (hasObjectInCloseUp)
-            {
-                // Stop rotation when mouse is released
-                smoothRotator.StopRotating();
-            }
+            Debug.Log("🎯 No object in close-up - trying to select object...");
+
+            // Debug: Check what objects are under the mouse before trying selection
+            DebugObjectsUnderMouse(screenPos);
+
+            // No object in close-up - try to select one
+            selectionHandler.TrySelectObjectAtScreenPosition(screenPos);
+        }
+    }
+
+    /// <summary>
+    /// Handle mouse up from TouchManager
+    /// </summary>
+    void HandleMouseUp(Vector2 screenPos)
+    {
+        if (hasObjectInCloseUp)
+        {
+            // Stop rotation when mouse is released
+            smoothRotator.StopRotating();
         }
     }
 
@@ -610,14 +630,14 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// <summary>
     /// Debug method to check what objects are under the mouse cursor
     /// </summary>
-    void DebugObjectsUnderMouse()
+    void DebugObjectsUnderMouse(Vector2 screenPos)
     {
         Camera cam = Camera.main;
         if (cam == null) return;
 
-        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = cam.ScreenPointToRay(screenPos);
         Debug.Log($"🔍 DEBUGGING OBJECTS UNDER MOUSE:");
-        Debug.Log($"    Mouse Position: {Input.mousePosition}");
+        Debug.Log($"    Mouse Position: {screenPos}");
         Debug.Log($"    Ray: {ray.origin} -> {ray.direction}");
 
         // Test with all layers first

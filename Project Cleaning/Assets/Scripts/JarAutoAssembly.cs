@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using DG.Tweening;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -61,6 +62,8 @@ public class JarAutoAssembly : MonoBehaviour
     private Camera mainCamera;
     private Vector3 targetPosition;
     private Vector3 originalPosition;
+
+    // Original behavior restored - no input variables needed
     private static List<JarAutoAssembly> allPieces = new List<JarAutoAssembly>();
     private static bool jarFullyAssembled = false;
     private static bool staticsInitialized = false;
@@ -131,6 +134,8 @@ public class JarAutoAssembly : MonoBehaviour
         originalParent = transform.parent;
         inspectableComponent = GetComponent<InspectableJar>();
         initialScriptEnabled = enabled;
+
+        // Input handled by TouchManager - original OnMouseDown behavior preserved
         if (inspectableComponent != null)
         {
             initialCanBeInspected = inspectableComponent.canBeInspected;
@@ -169,8 +174,37 @@ public class JarAutoAssembly : MonoBehaviour
         }
     }
 
-    void OnMouseDown()
+    void OnEnable()
     {
+        TouchManager.OnMouseDown += HandleMouseDown;
+        TouchManager.OnMouseUp += HandleMouseUp;
+        TouchManager.OnMouseDrag += HandleMouseDrag;
+    }
+
+    void OnDisable()
+    {
+        TouchManager.OnMouseDown -= HandleMouseDown;
+        TouchManager.OnMouseUp -= HandleMouseUp;
+        TouchManager.OnMouseDrag -= HandleMouseDrag;
+    }
+
+    bool IsClickedOn(Vector2 screenPos)
+    {
+        if (mainCamera == null) return false;
+
+        Ray ray = mainCamera.ScreenPointToRay(screenPos);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            return hit.transform == transform;
+        }
+        return false;
+    }
+
+    void HandleMouseDown(Vector2 screenPos)
+    {
+        // Check if this object was clicked
+        if (!IsClickedOn(screenPos)) return;
+
         // FIXED: When jar is fully assembled, individual pieces should not respond to clicks
         // Only the assembled jar root should handle mouse events
         if (jarFullyAssembled)
@@ -212,15 +246,17 @@ public class JarAutoAssembly : MonoBehaviour
         // The inspection system should NOT automatically trigger until we decide
     }
 
-    void OnMouseDrag()
+    void HandleMouseDrag(Vector2 screenPos)
     {
+        // Only handle drag for this specific object if it's being held or dragged
+        if (!isHoldingForDrag && !isDragging) return;
+
         // Handle dragging in two cases:
         // 1. Already in drag mode (dragging active)
         // 2. Holding for drag (will become active when timer completes)
         if (isAssembled || mainCamera == null) return;
-        if (!isDragging && !isHoldingForDrag) return;
 
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = mainCamera.ScreenPointToRay(screenPos);
         Plane dragPlane = new Plane(Vector3.up, new Vector3(0, transform.position.y, 0));
 
         float distance;
@@ -236,8 +272,11 @@ public class JarAutoAssembly : MonoBehaviour
         }
     }
 
-    void OnMouseUp()
+    void HandleMouseUp(Vector2 screenPos)
     {
+        // Only handle mouse up for this specific object if it was being held or dragged
+        if (!isHoldingForDrag && !isDragging) return;
+
         if (isHoldingForDrag)
         {
             // Check if it was a short click (< holdTimeForDrag) or long hold

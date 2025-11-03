@@ -39,25 +39,20 @@ public class ObjectSelectionHandler : MonoBehaviour
         Debug.Log("Object selection handler initialized");
     }
 
-    /// <summary>
-    /// Handle mouse input for object selection
-    /// </summary>
-    void HandleSelectionInput()
-    {
-        // Only allow selection if no object is currently in close-up
-        if (closeUpManager.HasObjectInCloseUp) return;
-
-        // Check for mouse click
-        if (Input.GetMouseButtonDown(0))
-        {
-            TrySelectObject();
-        }
-    }
 
     /// <summary>
     /// Try to select an object under the mouse cursor (called by manager)
     /// </summary>
     public void TrySelectObjectAtMousePosition()
+    {
+        // This method is kept for backwards compatibility but should use the newer overload
+        TrySelectObjectAtScreenPosition(Vector2.zero); // Will use legacy Input.mousePosition
+    }
+
+    /// <summary>
+    /// Try to select an object at the specified screen position (new input system)
+    /// </summary>
+    public void TrySelectObjectAtScreenPosition(Vector2 screenPosition)
     {
         if (playerCamera == null)
         {
@@ -65,8 +60,12 @@ public class ObjectSelectionHandler : MonoBehaviour
             return;
         }
 
-        Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        // Use provided screen position if valid, otherwise fall back to TouchManager
+        Vector2 useScreenPos = (screenPosition != Vector2.zero) ? screenPosition : TouchManager.MousePosition;
+
+        Ray ray = playerCamera.ScreenPointToRay(useScreenPos);
         Debug.Log($"Raycast from: {ray.origin} direction: {ray.direction}");
+        Debug.Log($"Screen position: {useScreenPos}");
         Debug.Log($"Layer mask: {selectableLayerMask} (binary: {Convert.ToString(selectableLayerMask, 2)})");
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, selectableLayerMask))
@@ -165,8 +164,8 @@ public class ObjectSelectionHandler : MonoBehaviour
         {
             Gizmos.color = Color.red;
             Vector3 mouseWorldPos = playerCamera.ScreenToWorldPoint(new Vector3(
-                Input.mousePosition.x,
-                Input.mousePosition.y,
+                TouchManager.MousePosition.x,
+                TouchManager.MousePosition.y,
                 playerCamera.nearClipPlane
             ));
 
@@ -242,9 +241,9 @@ public class ObjectSelectionHandler : MonoBehaviour
             return;
         }
 
-        Ray ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = playerCamera.ScreenPointToRay(TouchManager.MousePosition);
         Debug.Log($"🔍 RAYCAST TEST:");
-        Debug.Log($"    Mouse Position: {Input.mousePosition}");
+        Debug.Log($"    Mouse Position: {TouchManager.MousePosition}");
         Debug.Log($"    Ray Origin: {ray.origin}");
         Debug.Log($"    Ray Direction: {ray.direction}");
         Debug.Log($"    Layer Mask: {selectableLayerMask} (binary: {System.Convert.ToString(selectableLayerMask, 2)})");

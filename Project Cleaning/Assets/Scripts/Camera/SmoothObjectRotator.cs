@@ -74,7 +74,7 @@ public class SmoothObjectRotator : MonoBehaviour
         targetVerticalRotation = 0f;
 
         // Initialize mouse position
-        lastMousePosition = Input.mousePosition;
+        lastMousePosition = TouchManager.MousePosition;
     }
 
     /// <summary>
@@ -97,12 +97,14 @@ public class SmoothObjectRotator : MonoBehaviour
         Debug.Log($"Updated fixed rotation position to: {newPosition}");
     }
 
+    // TouchManager integration removed - back to original input handling
+
     /// <summary>
     /// Handle smooth rotation input
     /// </summary>
     void HandleSmoothRotation()
     {
-        Vector3 currentMousePosition = Input.mousePosition;
+        Vector3 currentMousePosition = TouchManager.MousePosition;
 
         if (!rotationStarted)
         {
