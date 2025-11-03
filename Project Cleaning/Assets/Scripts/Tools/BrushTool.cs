@@ -60,7 +60,7 @@ public class BrushTool : ToolBase
 
         if (isDragging && tipPoint != null)
         {
-            // HandleSurfaceDetection();
+            HandleSurfaceDetection();
         }
     }
 

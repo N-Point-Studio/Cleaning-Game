@@ -2199,9 +2199,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rayDistance: 2
   cleanableLayer:
-    serializedVersion: 2
     m_Bits: 128
   brush: {fileID: 2800000, guid: b0c5258eca94a426d947d8153a2bf65e, type: 3}
+  cam: {fileID: 0}
 --- !u!1 &263031673
 GameObject:
   m_ObjectHideFlags: 0
@@ -3023,6 +3023,9 @@ MonoBehaviour:
       m_Action: Screen Pos
       m_Flags: 0
     m_Flags: 0
+  curScreenPos: {x: 0, y: 0, z: 0}
+  camera: {fileID: 0}
+  isDragging: 0
 --- !u!54 &489854581
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -8178,15 +8181,12 @@ MonoBehaviour:
   gizmosRange: 11.44
   rotateSmoothness: 10
   movementSmoothness: 15
-  positionThreshold: 0.001
   normalDamping: 10
   dragDistance: 10
-  moveSmoothness: 10
   returnSmoothness: 5
   draggableLayer:
     serializedVersion: 2
     m_Bits: 64
-  isActive: 1
 --- !u!114 &3976173342559765336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8317,6 +8317,7 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 351041018}
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
@@ -8334,7 +8335,6 @@ SceneRoots:
   - {fileID: 11829846}
   - {fileID: 1446947041}
   - {fileID: 1497000169}
-  - {fileID: 351041018}
   - {fileID: 1613124688}
   - {fileID: 1495351925}
   - {fileID: 1087569368}
