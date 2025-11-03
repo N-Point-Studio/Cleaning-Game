@@ -16,18 +16,18 @@ public abstract class ToolBase : MonoBehaviour
     [SerializeField] protected float gizmosRange = 10f;
     [SerializeField] protected float rotateSmoothness = 20f;
     [SerializeField] protected float movementSmoothness = 10f;
-    [SerializeField] protected float positionThreshold = 0.001f;
+    // [SerializeField] protected float positionThreshold = 0.001f;
     [SerializeField] protected float normalDamping = 10f;
 
     [Header("Settings")]
     [SerializeField] protected float dragDistance = 2f;
-    [SerializeField] protected float moveSmoothness = 10f;
+    // [SerializeField] protected float moveSmoothness = 10f;
     [SerializeField] protected float returnSmoothness = 5f;
     [SerializeField] protected LayerMask draggableLayer;
 
     // [SerializeField] protected InputReader inputReader;
 
-    public bool isActive = true;
+    // public bool isActive = true;
 
     protected Transform targetObject;
     protected Vector3 dragOffset;
@@ -74,8 +74,8 @@ public abstract class ToolBase : MonoBehaviour
             targetObject.rotation = Quaternion.Slerp(targetObject.rotation, rotation.Value, Time.deltaTime * speed);
     }
 
-    public virtual void OnToolActivate() { }
-    public virtual void OnToolDeactivate() { }
+    // public virtual void OnToolActivate() { }
+    // public virtual void OnToolDeactivate() { }
     public abstract void OnToolDragStart(Vector2 screenPos);
     public abstract void OnToolDragging(Vector2 screenPos);
     public abstract void OnToolDragEnd(Vector2 screenPos);
