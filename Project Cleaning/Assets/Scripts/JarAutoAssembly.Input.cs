@@ -3,16 +3,48 @@ using UnityEngine;
 
 public partial class JarAutoAssembly : MonoBehaviour
 {
-    bool IsClickedOn(Vector2 screenPos)
+    bool IsClickedOn(Vector2 screenPos, out RaycastHit hit)
     {
+        hit = new RaycastHit();
         if (mainCamera == null) return false;
 
         Ray ray = mainCamera.ScreenPointToRay(screenPos);
-        if (Physics.Raycast(ray, out RaycastHit hit))
+        if (!Physics.Raycast(ray, out hit))
+            return false;
+
+        if (jarFullyAssembled)
         {
-            return hit.transform == transform;
+            if (hit.transform == assembledJarRoot)
+            {
+                // If we hit the assembled jar, find which piece is closest to the hit point.
+                float minDistance = float.MaxValue;
+                JarAutoAssembly closestPiece = null;
+                foreach (var piece in allPieces)
+                {
+                    if (piece == null) continue;
+                    
+                    // Use collider bounds for a more accurate check
+                    Collider pieceCollider = piece.GetComponent<Collider>();
+                    Vector3 closestPoint = (pieceCollider != null) ? pieceCollider.ClosestPoint(hit.point) : piece.transform.position;
+                    float dist = Vector3.Distance(hit.point, closestPoint);
+
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        closestPiece = piece;
+                    }
+                }
+
+                if (closestPiece == this)
+                {
+                    Debug.Log($"Closest piece to click on assembled jar is {pieceType}");
+                    return true;
+                }
+                return false;
+            }
         }
-        return false;
+        
+        return hit.transform == transform;
     }
 
     void HandleMouseDown(Vector2 screenPos)
@@ -25,7 +57,7 @@ public partial class JarAutoAssembly : MonoBehaviour
         }
 
         // Check if this object was clicked
-        if (!IsClickedOn(screenPos)) return;
+        if (!IsClickedOn(screenPos, out _)) return;
 
         awaitingReassemblyDecision = false;
         reassemblyHoldTriggered = false;

@@ -12,7 +12,8 @@ public partial class JarAutoAssembly : MonoBehaviour
         {
             Transform currentObject = closeUpManager.CurrentCloseUpObject;
             if (currentObject == transform ||
-                (currentPartialAssemblyParent != null && currentObject == currentPartialAssemblyParent.transform))
+                (currentPartialAssemblyParent != null && currentObject == currentPartialAssemblyParent.transform) ||
+                (jarFullyAssembled && currentObject == assembledJarRoot))
             {
                 closeUpManager.PauseRotation();
                 closeUpManager.AnimationHandler?.StopCurrentAnimation();
@@ -30,23 +31,23 @@ public partial class JarAutoAssembly : MonoBehaviour
 
         if (wasFullyAssembled)
         {
-            jarFullyAssembled = false;
-            ResetJarCompletionState();
+            // NEW: Detach one piece instead of resetting all
+            DetachSinglePieceFromAssembly();
         }
         else if (assembledJarCollider != null)
         {
             assembledJarCollider.enabled = false;
         }
 
+        // This piece is now unassembled
         isAssembled = false;
         isDragging = false;
+        isHoldingForDrag = false;
 
         transform.DOKill();
 
-        if (!wasFullyAssembled)
-        {
-            PlayReassemblyReturnAnimation();
-        }
+        // Animate the piece back to its original position
+        PlayReassemblyReturnAnimation();
 
         inspectionOffset = Vector3.zero;
         inspectionRotationOffset = Quaternion.identity;
@@ -63,8 +64,53 @@ public partial class JarAutoAssembly : MonoBehaviour
 
         enabled = true;
         reassemblyHoldTriggered = false;
-
     }
+
+    /// <summary>
+    /// Detaches a single piece from a fully assembled jar.
+    /// </summary>
+    void DetachSinglePieceFromAssembly()
+    {
+        Debug.Log($"🔧 Detaching {pieceType} from fully assembled jar.");
+
+        // Jar is no longer fully assembled
+        jarFullyAssembled = false;
+
+        // Stop the assembled jar from rotating
+        ResetJarCompletionState();
+
+        // Re-enable interaction for the other pieces
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece == null || piece == this)
+                continue;
+
+            // Re-enable the inspectable component for the other pieces
+            if (piece.inspectableComponent != null && piece.allowReassemblyAfterCompletion)
+            {
+                piece.inspectableComponent.SetInspectable(piece.initialCanBeInspected);
+            }
+
+            // Ensure the piece's script is enabled
+            if (!piece.enabled)
+            {
+                piece.enabled = true;
+            }
+            
+            // Ensure piece colliders are on so they can be selected
+            if (piece.pieceCollider != null)
+            {
+                piece.pieceCollider.enabled = true;
+            }
+        }
+        
+        // This piece is no longer assembled
+        isAssembled = false;
+        
+        // Move this piece out of the assembledJarRoot hierarchy
+        transform.SetParent(originalParent, true);
+    }
+
 
     void ResetJarCompletionState()
     {
@@ -80,36 +126,6 @@ public partial class JarAutoAssembly : MonoBehaviour
         if (closeUpManager != null && closeUpManager.CurrentCloseUpObject == assembledJarRoot)
         {
             closeUpManager.ExitCloseUp(true);
-        }
-
-        foreach (JarAutoAssembly piece in allPieces)
-        {
-            if (piece == null)
-                continue;
-
-            piece.transform.DOKill();
-
-            if (piece.inspectableComponent != null && piece.allowReassemblyAfterCompletion)
-            {
-                piece.inspectableComponent.SetInspectable(piece.initialCanBeInspected);
-            }
-
-            if (!piece.enabled)
-            {
-                piece.enabled = true;
-            }
-
-            piece.awaitingReassemblyDecision = false;
-            piece.reassemblyHoldTriggered = false;
-            piece.isHoldingForDrag = false;
-            piece.isDragging = false;
-            piece.isAssembled = false;
-            piece.targetPosition = piece.originalPosition;
-            piece.inspectionOffset = Vector3.zero;
-            piece.inspectionRotationOffset = Quaternion.identity;
-            piece.localOffsetsComputed = false;
-
-            piece.PlayReassemblyReturnAnimation();
         }
     }
 
@@ -161,11 +177,10 @@ public partial class JarAutoAssembly : MonoBehaviour
 
     void SnapBackToOriginalTransform()
     {
-        transform.SetParent(originalParent, false);
+        // The animation was in world space. We just need to snap the final world values.
+        // The parent was already set correctly at the start of the animation.
         transform.position = originalPosition;
         transform.rotation = originalRotation;
-        transform.localPosition = originalLocalPosition;
-        transform.localRotation = originalLocalRotation;
         transform.localScale = originalScale;
         targetPosition = originalPosition;
     }
