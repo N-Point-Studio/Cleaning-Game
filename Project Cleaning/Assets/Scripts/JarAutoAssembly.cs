@@ -41,6 +41,20 @@ public class JarAutoAssembly : MonoBehaviour
     [SerializeField] private Vector3 finalTopPosition = new Vector3(0.415f, 4.07528f, -1.72915f);
     [SerializeField] private Vector3 finalRotation = new Vector3(-89.98f, 0f, 0f);
 
+    [Header("Completion Animation")]
+    [SerializeField] private float completionMoveDuration = 0.7f;
+    [SerializeField] private Ease completionMoveEase = Ease.OutCubic;
+    [SerializeField] private Ease completionRotateEase = Ease.OutCubic;
+    [SerializeField] private float completionScaleOvershoot = 0.05f;
+    [SerializeField] private float completionScaleDuration = 0.35f;
+    [SerializeField] private float completionCascadeDelay = 0.08f;
+
+    [Header("Scale Adaptation")]
+    [Tooltip("Positions were authored using this uniform piece scale. Target locations adapt automatically when actual scale differs.")]
+    [SerializeField] private float referencePieceScale = 100f;
+    [Tooltip("Apply automatic scaling to configured world/final positions based on current piece scale.")]
+    [SerializeField] private bool autoScaleConfiguredPositions = true;
+
     [Header("Piece Settings")]
     public JarPieceType pieceType;
     public bool isAssembled = false;
@@ -202,6 +216,13 @@ public class JarAutoAssembly : MonoBehaviour
 
     void HandleMouseDown(Vector2 screenPos)
     {
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null && closeUpManager.IsTransitioning)
+        {
+            Debug.Log($"⏳ Close-up transition active - ignoring click on {pieceType}");
+            return;
+        }
+
         // Check if this object was clicked
         if (!IsClickedOn(screenPos)) return;
 
@@ -460,7 +481,7 @@ public class JarAutoAssembly : MonoBehaviour
                 Object.DestroyImmediate(currentPartialAssemblyParent);
 
             currentPartialAssemblyParent = null;
-            Debug.Log($"🗑️ Cleaned up temporary assembly parent");
+            Debug.Log("🗑️ Cleaned up temporary assembly parent");
         }
     }
 
@@ -473,6 +494,12 @@ public class JarAutoAssembly : MonoBehaviour
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager != null && !jarFullyAssembled)
         {
+            if (closeUpManager.IsTransitioning)
+            {
+                Debug.Log($"⏳ Close-up transition active - delaying inspection request for {pieceType}");
+                return;
+            }
+
             // Check if this piece is part of a partial assembly (multiple pieces assembled together)
             List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
 
@@ -1009,17 +1036,39 @@ public class JarAutoAssembly : MonoBehaviour
 
     Vector3 GetConfiguredWorldPosition()
     {
+        Vector3 referenceWorldPosition;
+
         switch (pieceType)
         {
             case JarPieceType.Bottom:
-                return bottomPosition;
+                referenceWorldPosition = bottomPosition;
+                break;
             case JarPieceType.Middle:
-                return middlePosition;
+                referenceWorldPosition = middlePosition;
+                break;
             case JarPieceType.Top:
-                return topPosition;
+                referenceWorldPosition = topPosition;
+                break;
             default:
-                return transform.position;
+                referenceWorldPosition = transform.position;
+                break;
         }
+
+        if (!autoScaleConfiguredPositions)
+            return referenceWorldPosition;
+
+        float scaleRatio = GetScaleRatio();
+        if (Mathf.Approximately(scaleRatio, 1f))
+            return referenceWorldPosition;
+
+        if (assembledJarRoot != null)
+        {
+            Vector3 localReference = assembledJarRoot.InverseTransformPoint(referenceWorldPosition);
+            Vector3 scaledLocal = localReference * scaleRatio;
+            return assembledJarRoot.TransformPoint(scaledLocal);
+        }
+
+        return referenceWorldPosition * scaleRatio;
     }
 
     /// <summary>
@@ -1027,17 +1076,56 @@ public class JarAutoAssembly : MonoBehaviour
     /// </summary>
     Vector3 GetFinalAssemblyPosition()
     {
+        Vector3 referenceWorldPosition;
+
         switch (pieceType)
         {
             case JarPieceType.Bottom:
-                return finalBottomPosition;
+                referenceWorldPosition = finalBottomPosition;
+                break;
             case JarPieceType.Middle:
-                return finalMiddlePosition;
+                referenceWorldPosition = finalMiddlePosition;
+                break;
             case JarPieceType.Top:
-                return finalTopPosition;
+                referenceWorldPosition = finalTopPosition;
+                break;
             default:
-                return transform.position;
+                referenceWorldPosition = transform.position;
+                break;
         }
+
+        if (!autoScaleConfiguredPositions)
+            return referenceWorldPosition;
+
+        float scaleRatio = GetScaleRatio();
+        if (Mathf.Approximately(scaleRatio, 1f))
+            return referenceWorldPosition;
+
+        if (assembledJarRoot != null)
+        {
+            Vector3 localReference = assembledJarRoot.InverseTransformPoint(referenceWorldPosition);
+            Vector3 scaledLocal = localReference * scaleRatio;
+            return assembledJarRoot.TransformPoint(scaledLocal);
+        }
+
+        return referenceWorldPosition * scaleRatio;
+    }
+
+    float GetScaleRatio()
+    {
+        if (!autoScaleConfiguredPositions)
+            return 1f;
+
+        if (referencePieceScale <= Mathf.Epsilon)
+            return 1f;
+
+        Vector3 lossyScale = transform.lossyScale;
+
+        float uniformScale = (Mathf.Abs(lossyScale.x) + Mathf.Abs(lossyScale.y) + Mathf.Abs(lossyScale.z)) / 3f;
+        if (Mathf.Approximately(uniformScale, 0f))
+            return 1f;
+
+        return uniformScale / referencePieceScale;
     }
 
     /// <summary>
@@ -1047,15 +1135,45 @@ public class JarAutoAssembly : MonoBehaviour
     {
         Debug.Log("🎯 Enforcing final assembly positions and rotations for all pieces");
 
-        // Calculate center position of all final piece positions
-        Vector3 centerPosition = Vector3.zero;
+        // Get the inspection position from the ObjectCloseUpManager
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager == null)
+        {
+            Debug.LogError("ObjectCloseUpManager not found! Cannot align to inspection position.");
+            return;
+        }
+        // Use the default GetCloseUpPosition which doesn't require a target
+        Vector3 inspectionCenter = closeUpManager.GetCloseUpPosition();
+
+        // Calculate the current center of the hardcoded final positions
+        Vector3 originalFinalCenter = Vector3.zero;
         int assembledCount = 0;
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece != null && piece.isAssembled)
+            {
+                originalFinalCenter += piece.GetFinalAssemblyPosition();
+                assembledCount++;
+            }
+        }
+
+        if (assembledCount > 0)
+        {
+            originalFinalCenter /= assembledCount;
+        }
+
+        // Calculate the offset needed to move the original center to the inspection center
+        Vector3 positionOffset = inspectionCenter - originalFinalCenter;
+        Debug.Log($"Aligning assembled jar to inspection position. Offset: {positionOffset}");
+
+        // Move all pieces with the calculated offset
+        int cascadeIndex = 0;
 
         foreach (JarAutoAssembly piece in allPieces)
         {
             if (piece != null && piece.isAssembled)
             {
-                Vector3 finalPos = piece.GetFinalAssemblyPosition();
+                Vector3 finalPos = piece.GetFinalAssemblyPosition() + positionOffset; // Apply offset
                 Quaternion finalRot = Quaternion.Euler(finalRotation);
 
                 Debug.Log($"🔧 Setting {piece.pieceType} to final position: {finalPos}, rotation: {finalRotation}");
@@ -1063,25 +1181,73 @@ public class JarAutoAssembly : MonoBehaviour
                 // Kill any ongoing animations
                 piece.transform.DOKill();
 
-                // Set exact final position and rotation with smooth animation
-                piece.transform.DOMove(finalPos, assemblyDuration * 0.5f).SetEase(Ease.OutQuad);
-                piece.transform.DORotateQuaternion(finalRot, assemblyDuration * 0.5f).SetEase(Ease.OutQuad);
+                Vector3 originalScale = piece.transform.localScale;
+                Sequence completionSequence = DOTween.Sequence();
 
-                // Add to center calculation
-                centerPosition += finalPos;
-                assembledCount++;
+                float cascadeDelay = Mathf.Max(0f, cascadeIndex * completionCascadeDelay);
+
+                completionSequence.Append(
+                    piece.transform.DOMove(finalPos, completionMoveDuration)
+                        .SetEase(completionMoveEase)
+                );
+
+                completionSequence.Join(
+                    piece.transform.DORotateQuaternion(finalRot, completionMoveDuration)
+                        .SetEase(completionRotateEase)
+                );
+
+                if (completionScaleOvershoot > 0f && completionScaleDuration > 0f)
+                {
+                    float bounceDelay = Mathf.Max(0f, completionMoveDuration - completionScaleDuration);
+                    Tween scaleTween = piece.transform
+                        .DOScale(originalScale * (1f + completionScaleOvershoot), completionScaleDuration)
+                        .SetEase(Ease.OutSine)
+                        .SetLoops(2, LoopType.Yoyo)
+                        .SetDelay(bounceDelay);
+
+                    completionSequence.Join(scaleTween);
+                }
+
+                if (cascadeDelay > 0f)
+                {
+                    completionSequence.SetDelay(cascadeDelay);
+                }
+
+                completionSequence.OnComplete(() =>
+                {
+                    piece.transform.position = finalPos;
+                    piece.transform.rotation = finalRot;
+                    piece.transform.localScale = originalScale;
+                })
+                .Play();
+                cascadeIndex++;
             }
         }
 
-        // Calculate and set the assembled jar root position to the center of all pieces
+        // Set the assembled jar root position to the inspection center
         if (assembledCount > 0 && assembledJarRoot != null)
         {
-            centerPosition /= assembledCount;
-            assembledJarRoot.position = centerPosition;
-            Debug.Log($"🎯 Updated assembled jar root position to center of pieces: {centerPosition}");
+            assembledJarRoot.DOKill();
+
+            Sequence rootSequence = DOTween.Sequence();
+            float rootDelay = Mathf.Max(0f, (cascadeIndex - 1) * completionCascadeDelay);
+            rootSequence.Append(
+                assembledJarRoot.DOMove(inspectionCenter, completionMoveDuration)
+                    .SetEase(completionMoveEase)
+            );
+            if (rootDelay > 0f)
+                rootSequence.SetDelay(rootDelay);
+
+            rootSequence.OnComplete(() =>
+            {
+                assembledJarRoot.position = inspectionCenter;
+            })
+            .Play();
+
+            Debug.Log($"🎯 Updated assembled jar root position to inspection center: {inspectionCenter}");
         }
 
-        Debug.Log("✅ All pieces moved to final assembly positions and rotations");
+        Debug.Log("✅ All pieces moved to final assembly positions and rotations, aligned with inspection view.");
     }
 
 
@@ -1238,7 +1404,7 @@ public class JarAutoAssembly : MonoBehaviour
             if (parentInspectable != null)
             {
                 parentInspectable.SetInspectable(true);
-                Debug.Log($"✅ KEPT assembled jar inspectable for rotation - same as individual pieces");
+                Debug.Log("✅ KEPT assembled jar inspectable for rotation - same as individual pieces");
             }
             else
             {
@@ -1249,7 +1415,7 @@ public class JarAutoAssembly : MonoBehaviour
             if (assembledJarCollider != null)
             {
                 assembledJarCollider.enabled = true;
-                Debug.Log($"✅ ENABLED assembled jar collider for rotation interaction");
+                Debug.Log("✅ ENABLED assembled jar collider for rotation interaction");
             }
             else
             {
@@ -1259,7 +1425,7 @@ public class JarAutoAssembly : MonoBehaviour
             // NEW: Automatically enable rotation after jar completion (no click needed)
             StartCoroutine(EnableAssembledJarRotationAfterDelay());
 
-            Debug.Log($"✅ ASSEMBLED JAR SETUP COMPLETE - rotation will be automatically enabled");
+            Debug.Log("✅ ASSEMBLED JAR SETUP COMPLETE - rotation will be automatically enabled");
         }
         else
         {

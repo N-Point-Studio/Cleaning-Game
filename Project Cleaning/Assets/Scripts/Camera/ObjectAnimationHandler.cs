@@ -178,6 +178,24 @@ public class ObjectAnimationHandler : MonoBehaviour
             scale = targetObject.localScale,
             parent = targetObject.parent
         };
+
+        LogStoredOriginalState(targetObject);
+    }
+
+    /// <summary>
+    /// Emit debug information about the cached original transform values
+    /// </summary>
+    void LogStoredOriginalState(Transform targetObject)
+    {
+        if (targetObject == null)
+            return;
+
+        string parentName = originalState.parent != null ? originalState.parent.name : "<None>";
+        Debug.Log($"🗂️ Cached original transform for {targetObject.name}");
+        Debug.Log($"    Position: {originalState.position}");
+        Debug.Log($"    Rotation (Euler): {originalState.rotation}");
+        Debug.Log($"    Local Scale: {originalState.scale}");
+        Debug.Log($"    Parent: {parentName}");
     }
 
     /// <summary>

@@ -53,6 +53,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     public SmoothObjectRotator SmoothRotator => smoothRotator;
     public ObjectAnimationHandler AnimationHandler => animationHandler;
     public ObjectSelectionHandler SelectionHandler => selectionHandler;
+    public bool IsTransitioning => isObjectTransitioning;
 
     void Awake()
     {
@@ -147,6 +148,12 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     void HandleMouseDown(Vector2 screenPos)
     {
+        if (isObjectTransitioning)
+        {
+            Debug.Log("⏳ Close-up transition active - ignoring click input");
+            return;
+        }
+
         Debug.Log($"🖱️ Mouse clicked - hasObjectInCloseUp: {hasObjectInCloseUp}");
 
         if (hasObjectInCloseUp)
@@ -187,6 +194,12 @@ public class ObjectCloseUpManager : MonoBehaviour
     /// </summary>
     void HandleMouseUp(Vector2 screenPos)
     {
+        if (isObjectTransitioning)
+        {
+            Debug.Log("⏳ Close-up transition active - ignoring mouse up");
+            return;
+        }
+
         if (hasObjectInCloseUp)
         {
             // Stop rotation when mouse is released
@@ -225,6 +238,7 @@ public class ObjectCloseUpManager : MonoBehaviour
 
         Debug.Log($"🆕 No object in close-up, bringing {targetObject.name} directly");
         SetCurrentObject(targetObject);
+        LogInspectionPositionDetails(targetObject);
 
         // Start animation
         Debug.Log($"🎬 Starting animation for {targetObject.name}");
@@ -496,7 +510,9 @@ public class ObjectCloseUpManager : MonoBehaviour
     {
         if (currentCloseUpObject == null) return;
 
-        Debug.Log($"Switching inspection from {currentCloseUpObject.name} to {newObject.name}");
+        Transform previousObject = currentCloseUpObject;
+
+        Debug.Log($"Switching inspection from {previousObject.name} to {newObject.name}");
 
         // Stop rotation on current object
         if (smoothRotator != null)
@@ -506,16 +522,20 @@ public class ObjectCloseUpManager : MonoBehaviour
         }
 
         // End inspection on current object
-        var currentInspectable = currentCloseUpObject.GetComponent<IInspectable>();
+        var currentInspectable = previousObject.GetComponent<IInspectable>();
         currentInspectable?.OnInspectionEnd();
+
+        // Clear active state while the previous object returns
+        currentCloseUpObject = null;
+        hasObjectInCloseUp = false;
 
         // Return current object to original position immediately (no animation)
         isObjectTransitioning = true;
-        animationHandler.AnimateFromCloseUp(currentCloseUpObject, () => {
+        animationHandler.AnimateFromCloseUp(previousObject, () => {
             // After current object returns, bring new object to close-up
             Debug.Log($"Previous object returned, now bringing {newObject.name} to close-up");
-            currentCloseUpObject = newObject;
-            hasObjectInCloseUp = true;
+            SetCurrentObject(newObject);
+            LogInspectionPositionDetails(newObject);
 
             // Start inspection on new object
             var newInspectable = newObject.GetComponent<IInspectable>();
@@ -678,6 +698,97 @@ public class ObjectCloseUpManager : MonoBehaviour
         {
             Debug.Log($"❌ No clickable objects hit with current layer mask");
         }
+    }
+
+    /// <summary>
+    /// Output detailed positional data for the object being inspected
+    /// </summary>
+    void LogInspectionPositionDetails(Transform targetObject)
+    {
+        if (targetObject == null)
+        {
+            Debug.LogWarning("LogInspectionPositionDetails called with null target");
+            return;
+        }
+
+        Camera cam = Camera.main;
+        if (cam == null)
+        {
+            Debug.LogWarning("Cannot log inspection details - Camera.main is missing");
+            return;
+        }
+
+        string parentName = targetObject.parent != null ? targetObject.parent.name : "<None>";
+        Debug.Log($"📐 Inspection data for {targetObject.name}");
+        Debug.Log($"    Parent: {parentName}");
+        Debug.Log($"    World Position: {targetObject.position}");
+        Debug.Log($"    Local Position: {targetObject.localPosition}");
+        Debug.Log($"    World Rotation (Euler): {targetObject.rotation.eulerAngles}");
+        Debug.Log($"    Local Rotation (Euler): {targetObject.localEulerAngles}");
+        Debug.Log($"    Local Scale: {targetObject.localScale}");
+        Debug.Log($"    Lossy Scale: {targetObject.lossyScale}");
+
+        bool usedAssembledOverride = false;
+        bool usedDynamicDistance = false;
+
+        float selectedDistance = distanceFromCamera;
+        Vector3 selectedOffset = positionOffset;
+
+        if (useAssembledJarOverride && IsAssembledJar(targetObject))
+        {
+            usedAssembledOverride = true;
+            selectedDistance = assembledJarDistance;
+            selectedOffset = assembledJarOffset;
+        }
+        else if (useDynamicDistance)
+        {
+            usedDynamicDistance = true;
+
+            Renderer[] renderers = targetObject.GetComponentsInChildren<Renderer>();
+            bool boundsFromRenderers = renderers.Length > 0;
+            Bounds bounds = GetObjectBounds(targetObject);
+            float largestDimension = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            float safeBaseReference = Mathf.Approximately(baseSizeReference, 0f) ? 1f : baseSizeReference;
+            float rawMultiplier = largestDimension / safeBaseReference;
+            float clampedMultiplier = Mathf.Clamp(rawMultiplier, minDistanceMultiplier, maxDistanceMultiplier);
+
+            selectedDistance = distanceFromCamera * clampedMultiplier;
+
+            Debug.Log($"    Bounds Centre: {bounds.center}");
+            Debug.Log($"    Bounds Size: {bounds.size}");
+            Debug.Log($"    Bounds Source: {(boundsFromRenderers ? "Renderers" : "Collider/Fallback")}");
+            Debug.Log($"    Dynamic Distance -> Raw Multiplier: {rawMultiplier:F3}, Clamped: {clampedMultiplier:F3}");
+        }
+
+        Vector3 closeUpTarget = cam.transform.position + cam.transform.forward * selectedDistance + selectedOffset;
+        Debug.Log($"    Close-Up Target Position: {closeUpTarget}");
+        Debug.Log($"    Distance Mode: {(usedAssembledOverride ? "Assembled Jar Override" : (usedDynamicDistance ? "Dynamic" : "Fixed"))}");
+        Debug.Log($"    Distance Used: {selectedDistance:F3} (Base: {distanceFromCamera:F3})");
+        Debug.Log($"    Offset Applied: {selectedOffset}");
+
+        JarAutoAssembly jarComponent = targetObject.GetComponent<JarAutoAssembly>();
+        if (jarComponent != null)
+        {
+            bool isRoot = jarComponent.IsAssembledJarRoot(targetObject);
+            Debug.Log($"    Jar Piece Type: {jarComponent.pieceType}, Is Assembled: {jarComponent.isAssembled}, Is Root: {isRoot}");
+
+            Vector3 baseCorrectPosition = jarComponent.GetBaseCorrectWorldPosition();
+            Quaternion baseCorrectRotation = jarComponent.GetBaseCorrectWorldRotation();
+            Debug.Log($"    Jar Base Position: {baseCorrectPosition}");
+            Debug.Log($"    Jar Base Rotation (Euler): {baseCorrectRotation.eulerAngles}");
+        }
+
+        var inspectable = targetObject.GetComponent<IInspectable>();
+        if (inspectable != null)
+        {
+            float idealScale = inspectable.GetIdealInspectionScale();
+            Transform inspectionTarget = inspectable.GetInspectionTarget();
+            Debug.Log($"    Inspectable Ideal Scale: {idealScale}");
+            Debug.Log($"    Inspectable Target: {(inspectionTarget != null ? inspectionTarget.name : "<null>")}");
+        }
+
+        Debug.Log($"    Camera Position: {cam.transform.position}");
+        Debug.Log($"    Camera Forward: {cam.transform.forward}");
     }
 
     void OnDrawGizmosSelected()

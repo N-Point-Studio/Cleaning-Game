@@ -53,6 +53,12 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
+            Vector2 latestPointerPos = ReadPointerScreenPosition();
+            if (latestPointerPos != Vector2.zero)
+            {
+                curScreenPos = latestPointerPos;
+            }
+
             isPressed = true;
             if (!wasPressed)
             {
@@ -115,4 +121,19 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     // Static properties to maintain compatibility
     public static Vector2 MousePosition => Instance != null ? Instance.curScreenPos : Vector2.zero;
     public static bool IsPressed => Instance != null && Instance.isPressed;
+
+    Vector2 ReadPointerScreenPosition()
+    {
+        if (Pointer.current != null)
+        {
+            return Pointer.current.position.ReadValue();
+        }
+
+        if (Mouse.current != null)
+        {
+            return Mouse.current.position.ReadValue();
+        }
+
+        return curScreenPos;
+    }
 }

@@ -54,6 +54,12 @@ public class ObjectSelectionHandler : MonoBehaviour
     /// </summary>
     public void TrySelectObjectAtScreenPosition(Vector2 screenPosition)
     {
+        if (closeUpManager != null && closeUpManager.IsTransitioning)
+        {
+            Debug.Log("⏳ Selection ignored - close-up transition in progress");
+            return;
+        }
+
         if (playerCamera == null)
         {
             Debug.LogError("ObjectSelectionHandler: playerCamera is null!");
@@ -62,6 +68,12 @@ public class ObjectSelectionHandler : MonoBehaviour
 
         // Use provided screen position if valid, otherwise fall back to TouchManager
         Vector2 useScreenPos = (screenPosition != Vector2.zero) ? screenPosition : TouchManager.MousePosition;
+
+        if (useScreenPos == Vector2.zero)
+        {
+            Debug.Log("Selection skipped - no valid screen position yet");
+            return;
+        }
 
         Ray ray = playerCamera.ScreenPointToRay(useScreenPos);
         Debug.Log($"Raycast from: {ray.origin} direction: {ray.direction}");
