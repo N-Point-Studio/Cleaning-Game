@@ -9,7 +9,7 @@ public class ObjectAnimationHandler : MonoBehaviour
 {
     [Header("Animation Settings")]
     public Ease moveToCloseUpEase = Ease.OutBack;
-    public Ease returnEase = Ease.OutQuad;
+    public Ease returnEase = Ease.InQuad;
     public float punchScaleAmount = 0.1f;
     public float punchDuration = 0.3f;
 
@@ -113,19 +113,19 @@ public class ObjectAnimationHandler : MonoBehaviour
 
         // Return to original position
         returnSequence.Append(
-            targetObject.DOMove(originalState.position, animationDuration)
+            targetObject.DOMove(originalState.position, animationDuration * 0.6f)
                 .SetEase(returnEase)
         );
 
         // Return to original scale
         returnSequence.Join(
-            targetObject.DOScale(originalState.scale, animationDuration)
+            targetObject.DOScale(originalState.scale, animationDuration * 0.6f)
                 .SetEase(returnEase)
         );
 
         // Return to original rotation
         returnSequence.Join(
-            targetObject.DORotate(originalState.rotation, animationDuration)
+            targetObject.DORotate(originalState.rotation, animationDuration * 0.6f)
                 .SetEase(returnEase)
         );
 

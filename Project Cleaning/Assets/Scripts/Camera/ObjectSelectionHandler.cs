@@ -154,14 +154,27 @@ public class ObjectSelectionHandler : MonoBehaviour
     /// </summary>
     void SelectObject(Transform targetObject)
     {
-        Debug.Log($"Selected object for close-up: {targetObject.name}");
+        Transform selectionTarget = targetObject;
+        var jarPiece = targetObject.GetComponent<JarAutoAssembly>();
+
+        if (jarPiece != null && JarAutoAssembly.IsJarFullyAssembled)
+        {
+            Transform assembledRoot = jarPiece.AssembledRoot;
+            if (assembledRoot != null)
+            {
+                Debug.Log($"🔁 Redirecting selection from piece {targetObject.name} to assembled jar root {assembledRoot.name}");
+                selectionTarget = assembledRoot;
+            }
+        }
+
+        Debug.Log($"Selected object for close-up: {selectionTarget.name}");
 
         // Notify inspectable component if it exists
-        var inspectable = targetObject.GetComponent<IInspectable>();
+        var inspectable = selectionTarget.GetComponent<IInspectable>();
         inspectable?.OnInspectionStart();
 
         // Tell the close-up manager to bring the object to camera
-        closeUpManager.BringObjectToCloseUp(targetObject);
+        closeUpManager.BringObjectToCloseUp(selectionTarget);
     }
 
     

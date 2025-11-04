@@ -11,7 +11,12 @@ public class ObjectCloseUpManager : MonoBehaviour
     public float distanceFromCamera = 2f;
     public Vector3 positionOffset = Vector3.zero;
     public float objectScale = 1.0f;
-    public float animationSpeed = 1f;
+    public float animationSpeed = 0.25f;
+    [Tooltip("Darken background while an object is inspected")]
+    public bool useBackgroundDimming = true;
+    public CanvasGroup dimmingOverlay;
+    public float dimmingTargetAlpha = 0.45f;
+    public float dimmingSpeed = 6f;
 
     [Header("Dynamic Distance Settings")]
     [Tooltip("Automatically adjust distance based on object size")]
@@ -58,6 +63,7 @@ public class ObjectCloseUpManager : MonoBehaviour
     void Awake()
     {
         InitializeComponents();
+        UpdateDimmingOverlay(false, true);
     }
 
     void Start()
@@ -159,6 +165,23 @@ public class ObjectCloseUpManager : MonoBehaviour
         if (hasObjectInCloseUp)
         {
             Debug.Log("🔄 Object in close-up - requesting rotation start");
+
+            var mouseDownJarPiece = currentCloseUpObject != null ? currentCloseUpObject.GetComponent<JarAutoAssembly>() : null;
+            if (mouseDownJarPiece != null)
+            {
+                if (mouseDownJarPiece.IsReassemblyHoldLocked)
+                {
+                    Debug.Log("♻️ Reassembly hold active - skipping rotation start");
+                    return;
+                }
+
+                Transform rotationTarget = mouseDownJarPiece.EnsureRotationTarget(this, false);
+                if (rotationTarget != null && rotationTarget != currentCloseUpObject)
+                {
+                    Debug.Log($"🔁 Switching rotation target to {rotationTarget.name} for partial assembly");
+                    SetCurrentObject(rotationTarget);
+                }
+            }
 
             if (isObjectTransitioning)
             {
@@ -267,6 +290,8 @@ public class ObjectCloseUpManager : MonoBehaviour
         currentCloseUpObject = targetObject;
         hasObjectInCloseUp = targetObject != null;
 
+        UpdateDimmingOverlay(hasObjectInCloseUp);
+
         if (targetObject == null)
         {
             Debug.Log("✅ Current object set to null, HasObjectInCloseUp = false");
@@ -368,6 +393,17 @@ public class ObjectCloseUpManager : MonoBehaviour
         {
             Debug.Log("Auto-starting rotation for single-click inspection");
 
+            var autoRotationJarPiece = currentCloseUpObject.GetComponent<JarAutoAssembly>();
+            if (autoRotationJarPiece != null)
+            {
+                Transform rotationTarget = autoRotationJarPiece.EnsureRotationTarget(this, false);
+                if (rotationTarget != null && rotationTarget != currentCloseUpObject)
+                {
+                    Debug.Log($"🔁 Auto-rotation switching target to {rotationTarget.name} for partial assembly");
+                    SetCurrentObject(rotationTarget);
+                }
+            }
+
             bool shouldRotate = ShouldAllowRotation(currentCloseUpObject);
             if (shouldRotate)
             {
@@ -403,7 +439,30 @@ public class ObjectCloseUpManager : MonoBehaviour
         currentCloseUpObject = null;
         hasObjectInCloseUp = false;
         isObjectTransitioning = false;
+        UpdateDimmingOverlay(false);
         Debug.Log("Object returned to original position");
+    }
+
+    void UpdateDimmingOverlay(bool enable, bool instant = false)
+    {
+        if (!useBackgroundDimming || dimmingOverlay == null)
+            return;
+
+        float targetAlpha = enable ? dimmingTargetAlpha : 0f;
+        if (Mathf.Approximately(dimmingOverlay.alpha, targetAlpha))
+            return;
+
+        dimmingOverlay.DOKill();
+
+        if (instant)
+        {
+            dimmingOverlay.alpha = targetAlpha;
+            return;
+        }
+
+        float distance = Mathf.Abs(dimmingOverlay.alpha - targetAlpha);
+        float duration = (dimmingSpeed <= 0f) ? 0.2f : Mathf.Clamp(distance / dimmingSpeed, 0.05f, 0.35f);
+        dimmingOverlay.DOFade(targetAlpha, duration).SetEase(Ease.OutSine);
     }
 
     /// <summary>
@@ -578,10 +637,21 @@ public class ObjectCloseUpManager : MonoBehaviour
             return false;
 
         // If jar is not fully assembled, allow rotation of any object
-        if (!JarAutoAssembly.IsJarFullyAssembled)
+        JarAutoAssembly[] allPieces = FindObjectsOfType<JarAutoAssembly>();
+        bool anyNotAssembled = false;
+        foreach (var piece in allPieces)
         {
-            return true;
+            if (piece != null && piece.isAssembled)
+            {
+                continue;
+            }
+
+            anyNotAssembled = true;
+            break;
         }
+
+        if (anyNotAssembled)
+            return true;
 
         // Jar is fully assembled - check what type of object we're trying to rotate
         var jarComponent = target.GetComponent<JarAutoAssembly>();

@@ -49,6 +49,11 @@ public class JarAutoAssembly : MonoBehaviour
     [SerializeField] private float completionScaleDuration = 0.35f;
     [SerializeField] private float completionCascadeDelay = 0.08f;
 
+    [Header("Reassembly Settings")]
+    [SerializeField] private bool allowReassemblyAfterCompletion = true;
+    [SerializeField] private float reassemblyReturnDuration = 0.45f;
+    [SerializeField] private Ease reassemblyEase = Ease.OutBack;
+
     [Header("Scale Adaptation")]
     [Tooltip("Positions were authored using this uniform piece scale. Target locations adapt automatically when actual scale differs.")]
     [SerializeField] private float referencePieceScale = 100f;
@@ -73,9 +78,17 @@ public class JarAutoAssembly : MonoBehaviour
     private bool isDragging = false;
     private bool isHoldingForDrag = false;
     private float holdStartTime = 0f;
+    private bool reassemblyHoldTriggered = false;
+    private bool awaitingReassemblyDecision = false;
+    private Vector2 reassemblyHoldStartScreenPos;
     private Camera mainCamera;
     private Vector3 targetPosition;
     private Vector3 originalPosition;
+    private Vector3 originalLocalPosition;
+    private Quaternion originalLocalRotation;
+    private Vector3 originalLocalScale;
+    private Quaternion originalRotation;
+    private Vector3 originalScale;
 
     // Original behavior restored - no input variables needed
     private static List<JarAutoAssembly> allPieces = new List<JarAutoAssembly>();
@@ -94,6 +107,8 @@ public class JarAutoAssembly : MonoBehaviour
     private InspectableJar inspectableComponent;
     private bool initialCanBeInspected = true;
     private bool initialScriptEnabled;
+
+    public Transform AssembledRoot => assembledJarRoot;
 
     private static void EnsureStaticState()
     {
@@ -143,6 +158,14 @@ public class JarAutoAssembly : MonoBehaviour
     {
         originalPosition = transform.position;
         targetPosition = transform.position;
+        originalLocalPosition = transform.localPosition;
+        originalLocalRotation = transform.localRotation;
+        originalLocalScale = new Vector3(
+            Mathf.Abs(transform.localScale.x),
+            Mathf.Abs(transform.localScale.y),
+            Mathf.Abs(transform.localScale.z));
+        originalRotation = transform.rotation;
+        originalScale = transform.localScale;
         mainCamera = Camera.main;
         pieceCollider = GetComponent<Collider>();
         originalParent = transform.parent;
@@ -226,14 +249,8 @@ public class JarAutoAssembly : MonoBehaviour
         // Check if this object was clicked
         if (!IsClickedOn(screenPos)) return;
 
-        // FIXED: When jar is fully assembled, individual pieces should not respond to clicks
-        // Only the assembled jar root should handle mouse events
-        if (jarFullyAssembled)
-        {
-            Debug.Log($"🚫 Individual piece {pieceType} clicked but jar is fully assembled - ignoring click");
-            Debug.Log($"🎯 Click should be handled by assembled jar root instead");
-            return;
-        }
+        awaitingReassemblyDecision = false;
+        reassemblyHoldTriggered = false;
 
         if (isAssembled)
         {
@@ -254,7 +271,19 @@ public class JarAutoAssembly : MonoBehaviour
                 Debug.Log($"🧩 Single assembled piece {pieceType} clicked");
             }
 
-            TryInspection();
+            if (!allowReassemblyAfterCompletion && jarFullyAssembled)
+            {
+                Debug.Log($"🚫 Reassembly disabled - ignoring hold on {pieceType}");
+                return;
+            }
+
+            awaitingReassemblyDecision = true;
+            reassemblyHoldTriggered = false;
+            isHoldingForDrag = true;
+            holdStartTime = Time.time;
+            reassemblyHoldStartScreenPos = screenPos;
+
+            Debug.Log($"Hold {pieceType} for {holdTimeForDrag}s to disassemble. Release quickly to inspect.");
             return;
         }
 
@@ -269,6 +298,18 @@ public class JarAutoAssembly : MonoBehaviour
 
     void HandleMouseDrag(Vector2 screenPos)
     {
+        if (awaitingReassemblyDecision && isAssembled)
+        {
+            if (Vector2.Distance(screenPos, reassemblyHoldStartScreenPos) >= 20f)
+            {
+                awaitingReassemblyDecision = false;
+                isHoldingForDrag = false;
+                reassemblyHoldTriggered = false;
+                Debug.Log($"Drag detected on assembled {pieceType} - canceling reassembly hold");
+                return;
+            }
+        }
+
         // Only handle drag for this specific object if it's being held or dragged
         if (!isHoldingForDrag && !isDragging) return;
 
@@ -295,6 +336,39 @@ public class JarAutoAssembly : MonoBehaviour
 
     void HandleMouseUp(Vector2 screenPos)
     {
+        if (awaitingReassemblyDecision)
+        {
+            float holdDuration = Time.time - holdStartTime;
+            awaitingReassemblyDecision = false;
+            isHoldingForDrag = false;
+
+            if (reassemblyHoldTriggered)
+            {
+                return;
+            }
+
+            if (holdDuration < holdTimeForDrag)
+            {
+                if (jarFullyAssembled)
+                {
+                    Debug.Log($"Short click on fully assembled {pieceType} - rotation handled by assembled jar root");
+                }
+                else if (inspectableComponent == null || inspectableComponent.CanBeInspected())
+                {
+                    Debug.Log($"Short click detected ({holdDuration:F1}s) on assembled {pieceType} - triggering inspection");
+                    TryInspection();
+                }
+                else
+                {
+                    Debug.Log($"Inspection disabled for assembled {pieceType} - ignoring short click");
+                }
+            }
+
+            reassemblyHoldTriggered = false;
+
+            return;
+        }
+
         // Only handle mouse up for this specific object if it was being held or dragged
         if (!isHoldingForDrag && !isDragging) return;
 
@@ -375,7 +449,7 @@ public class JarAutoAssembly : MonoBehaviour
     /// <summary>
     /// Set up rotation for partially assembled jar pieces as a group
     /// </summary>
-    void SetupPartialAssemblyRotation(List<JarAutoAssembly> assembledPieces, ObjectCloseUpManager closeUpManager)
+    Transform SetupPartialAssemblyRotation(List<JarAutoAssembly> assembledPieces, ObjectCloseUpManager closeUpManager, bool startRotation = true)
     {
         Debug.Log($"🔗 Setting up partial assembly rotation for {assembledPieces.Count} pieces");
 
@@ -397,16 +471,20 @@ public class JarAutoAssembly : MonoBehaviour
             closeUpManager.SetCurrentObject(tempParent.transform);
 
             // Enable rotation at current position
-            var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
-            if (smoothRotator != null)
+            if (startRotation)
             {
-                smoothRotator.UpdateFixedPosition(tempParent.transform.position);
-                smoothRotator.StartRotating(tempParent.transform);
-                Debug.Log($"🔄 Started partial assembly rotation at position: {tempParent.transform.position}");
+                var smoothRotator = FindObjectOfType<SmoothObjectRotator>();
+                if (smoothRotator != null)
+                {
+                    smoothRotator.UpdateFixedPosition(tempParent.transform.position);
+                    smoothRotator.StartRotating(tempParent.transform);
+                    Debug.Log($"🔄 Started partial assembly rotation at position: {tempParent.transform.position}");
+                }
             }
 
             Debug.Log($"✅ Partial assembly ({assembledPieces.Count} pieces) ready for group rotation");
             Debug.Log($"🔒 Unassembled pieces will remain independent");
+            return tempParent.transform;
         }
         else
         {
@@ -420,6 +498,22 @@ public class JarAutoAssembly : MonoBehaviour
                 closeUpManager.BringObjectToCloseUp(transform);
             }
         }
+
+        return transform;
+    }
+
+    public Transform EnsureRotationTarget(ObjectCloseUpManager closeUpManager, bool startRotation)
+    {
+        if (!isAssembled || closeUpManager == null)
+            return transform;
+
+        List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
+        if (assembledPieces.Count > 1 && assembledPieces.Count < allPieces.Count)
+        {
+            return SetupPartialAssemblyRotation(assembledPieces, closeUpManager, startRotation);
+        }
+
+        return transform;
     }
 
     /// <summary>
@@ -548,6 +642,32 @@ public class JarAutoAssembly : MonoBehaviour
             }
         }
 
+        if (awaitingReassemblyDecision && isAssembled && !reassemblyHoldTriggered)
+        {
+            float holdDuration = Time.time - holdStartTime;
+
+            if (holdDuration >= holdTimeForDrag)
+            {
+                Debug.Log($"♻️ HOLD TIME REACHED ({holdDuration:F1}s) - REASSEMBLING {pieceType} TO ORIGINAL POSITION");
+                awaitingReassemblyDecision = false;
+                isHoldingForDrag = false;
+                reassemblyHoldTriggered = true;
+
+                ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+                if (closeUpManager != null && closeUpManager.CurrentCloseUpObject == transform)
+                {
+                    closeUpManager.PauseRotation();
+                }
+
+                TriggerReassemblyFromHold();
+            }
+            else if (Mathf.FloorToInt(holdDuration * 2) != Mathf.FloorToInt((holdDuration - Time.deltaTime) * 2))
+            {
+                float remaining = holdTimeForDrag - holdDuration;
+                Debug.Log($"⏱️ Holding assembled {pieceType} - {remaining:F1}s remaining to disassemble");
+            }
+        }
+
         // Handle drag movement
         if (isDragging && !isAssembled)
         {
@@ -599,6 +719,140 @@ public class JarAutoAssembly : MonoBehaviour
 
         Debug.Log($"Drag mode started for {pieceType} - now drag mouse to move piece for assembly");
     }
+
+    void TriggerReassemblyFromHold()
+    {
+        Debug.Log($"♻️ Reassembly triggered for {pieceType} - returning to original position");
+
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null && closeUpManager.HasObjectInCloseUp)
+        {
+            Transform currentObject = closeUpManager.CurrentCloseUpObject;
+            if (currentObject == transform ||
+                (currentPartialAssemblyParent != null && currentObject == currentPartialAssemblyParent.transform))
+            {
+                closeUpManager.ExitCloseUp(true);
+            }
+            else
+            {
+                closeUpManager.PauseRotation();
+            }
+        }
+
+        CleanupTemporaryAssemblyParent();
+
+        if (jarFullyAssembled)
+        {
+            jarFullyAssembled = false;
+            ResetJarCompletionState();
+        }
+        else if (assembledJarCollider != null)
+        {
+            assembledJarCollider.enabled = false;
+        }
+
+        isAssembled = false;
+        targetPosition = originalPosition;
+        isDragging = false;
+
+        transform.DOKill();
+        transform.SetParent(originalParent, true);
+
+        inspectionOffset = Vector3.zero;
+        inspectionRotationOffset = Quaternion.identity;
+        localOffsetsComputed = false;
+
+        bool colliderInitiallyEnabled = pieceCollider != null && pieceCollider.enabled;
+        if (pieceCollider != null)
+            pieceCollider.enabled = false;
+
+        if (inspectableComponent != null)
+        {
+            inspectableComponent.SetInspectable(initialCanBeInspected);
+            if (inspectableComponent.IsBeingInspected())
+            {
+                inspectableComponent.OnInspectionEnd();
+            }
+        }
+
+        enabled = true;
+        reassemblyHoldTriggered = false;
+
+        // Exit close-up view after disassembly
+        closeUpManager?.ClearCurrentObject();
+        closeUpManager?.ExitCloseUp(true);
+
+        float duration = Mathf.Max(0.05f, reassemblyReturnDuration);
+        Sequence reassembleSequence = DOTween.Sequence();
+        reassembleSequence.Append(transform.DOMove(originalPosition, duration).SetEase(reassemblyEase));
+        reassembleSequence.Join(transform.DORotateQuaternion(originalRotation, duration).SetEase(reassemblyEase));
+        reassembleSequence.OnComplete(() =>
+        {
+            transform.SetParent(originalParent, false);
+            transform.localPosition = originalLocalPosition;
+            transform.localRotation = originalLocalRotation;
+            transform.localScale = new Vector3(
+                Mathf.Abs(originalLocalScale.x),
+                Mathf.Abs(originalLocalScale.y),
+                Mathf.Abs(originalLocalScale.z));
+
+            if (colliderInitiallyEnabled && pieceCollider != null)
+            {
+                pieceCollider.enabled = true;
+            }
+        });
+    }
+
+    void ResetJarCompletionState()
+    {
+        if (assembledJarCollider != null)
+        {
+            assembledJarCollider.enabled = false;
+        }
+
+        SmoothObjectRotator rotator = FindObjectOfType<SmoothObjectRotator>();
+        rotator?.StopRotating();
+
+        ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
+        if (closeUpManager != null && closeUpManager.CurrentCloseUpObject == assembledJarRoot)
+        {
+            closeUpManager.ExitCloseUp(true);
+        }
+
+        foreach (JarAutoAssembly piece in allPieces)
+        {
+            if (piece == null)
+                continue;
+
+            if (piece.pieceCollider != null)
+            {
+                piece.pieceCollider.enabled = true;
+            }
+
+            if (piece.inspectableComponent != null && piece.allowReassemblyAfterCompletion)
+            {
+                piece.inspectableComponent.SetInspectable(piece.initialCanBeInspected);
+            }
+
+            if (!piece.enabled)
+            {
+                piece.enabled = true;
+            }
+
+            piece.awaitingReassemblyDecision = false;
+            piece.reassemblyHoldTriggered = false;
+            piece.isHoldingForDrag = false;
+            piece.isDragging = false;
+            piece.targetPosition = piece.originalPosition;
+            Vector3 safeScale = piece.originalLocalScale;
+            safeScale.x = Mathf.Abs(safeScale.x);
+            safeScale.y = Mathf.Abs(safeScale.y);
+            safeScale.z = Mathf.Abs(safeScale.z);
+            piece.transform.localScale = safeScale;
+        }
+    }
+
+    internal bool IsReassemblyHoldLocked => reassemblyHoldTriggered;
 
     void TryAssemble()
     {
@@ -1541,9 +1795,16 @@ public class JarAutoAssembly : MonoBehaviour
             // transform.SetParent(assembledJarRoot, true);
         }
 
-        if (disablePieceCollidersOnCompletion && pieceCollider != null)
+        if (pieceCollider != null)
         {
-            pieceCollider.enabled = false;
+            if (allowReassemblyAfterCompletion)
+            {
+                pieceCollider.enabled = true;
+            }
+            else if (disablePieceCollidersOnCompletion)
+            {
+                pieceCollider.enabled = false;
+            }
         }
 
         if (assembledJarCollider != null)
@@ -1561,7 +1822,14 @@ public class JarAutoAssembly : MonoBehaviour
             }
         }
 
-        enabled = false;
+        if (!allowReassemblyAfterCompletion)
+        {
+            enabled = false;
+        }
+        else if (!enabled)
+        {
+            enabled = true;
+        }
     }
 
     void HandleAllPiecesOnCompletion()
