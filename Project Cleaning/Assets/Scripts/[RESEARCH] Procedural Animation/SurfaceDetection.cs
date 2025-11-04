@@ -13,7 +13,6 @@ public class SurfaceDetection : MonoBehaviour
     [SerializeField] private float offsetDistance = 0.05f;
     [SerializeField] private LayerMask dirtsLayerMask;
 
-    // Raycast results
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
@@ -29,16 +28,11 @@ public class SurfaceDetection : MonoBehaviour
             return;
 
         RaycastHit hit;
-
-        // Fire a ray straight forward from the tip
         if (Physics.Raycast(currentPointTransform.position, currentPointTransform.forward, out hit, rayLength, dirtsLayerMask))
         {
             IsSurfaceDetected = true;
             RaycastTipPos = hit.point;
             RaycastTipNormal = hit.normal;
-
-            // Optional: Move tip slightly away from surface to prevent clipping
-            // currentPointTransform.position = hit.point + hit.normal * offsetDistance;
         }
         else
         {
@@ -52,21 +46,17 @@ public class SurfaceDetection : MonoBehaviour
         if (currentPointTransform == null)
             return;
 
-        // Draw forward ray
         Gizmos.color = Color.yellow;
         Gizmos.DrawRay(currentPointTransform.position, currentPointTransform.forward * rayLength);
 
         if (IsSurfaceDetected && RaycastTipPos != Vector3.positiveInfinity)
         {
-            // Draw hit point
             Gizmos.color = Color.green;
             Gizmos.DrawSphere(RaycastTipPos, 0.05f);
 
-            // Draw normal direction
             Gizmos.color = Color.red;
             Gizmos.DrawRay(RaycastTipPos, RaycastTipNormal * 0.3f);
 
-            // Draw line from tip to hit
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(currentPointTransform.position, RaycastTipPos);
         }
