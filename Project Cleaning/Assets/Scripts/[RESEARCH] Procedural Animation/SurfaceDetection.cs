@@ -12,10 +12,16 @@ public class SurfaceDetection : MonoBehaviour
     [SerializeField] private float rayLength = 10f;
     [SerializeField] private float offsetDistance = 0.05f;
     [SerializeField] private LayerMask dirtsLayerMask;
-
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
+    public Clean CleaningSurface { get; private set; }
+    public Vector2 TextureSurface { get; private set; }
+
+    void Awake()
+    {
+        CleaningSurface = null;
+    }
 
     private void Update()
     {
@@ -33,11 +39,15 @@ public class SurfaceDetection : MonoBehaviour
             IsSurfaceDetected = true;
             RaycastTipPos = hit.point;
             RaycastTipNormal = hit.normal;
+            TextureSurface = hit.textureCoord;
+            var clean = hit.collider.GetComponent<Clean>();
+            CleaningSurface = clean;
         }
         else
         {
             IsSurfaceDetected = false;
             RaycastTipPos = Vector3.positiveInfinity;
+            CleaningSurface = null;
         }
     }
 

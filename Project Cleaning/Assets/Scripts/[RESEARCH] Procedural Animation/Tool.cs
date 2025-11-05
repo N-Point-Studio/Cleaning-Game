@@ -11,7 +11,7 @@ public class Tool : MonoBehaviour
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float rotateSpeed = 10f;
 
-    private Vector3 initialPosition;
+    [SerializeField] private Transform initialPosition;
     private Quaternion initialRotation;
 
     private void Awake()
@@ -19,7 +19,6 @@ public class Tool : MonoBehaviour
         if (surfaceDetection == null)
             Debug.LogWarning("[Tool] SurfaceDetection belum di-assign!");
 
-        initialPosition = transform.position;
         initialRotation = transform.rotation;
     }
 
@@ -47,7 +46,7 @@ public class Tool : MonoBehaviour
 
     private void ReturnToInitial()
     {
-        transform.position = Vector3.Lerp(transform.position, initialPosition, Time.deltaTime * moveSpeed);
+        transform.position = Vector3.Lerp(transform.position, initialPosition.position, Time.deltaTime * moveSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * rotateSpeed);
     }
 

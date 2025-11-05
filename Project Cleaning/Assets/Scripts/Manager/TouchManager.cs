@@ -4,13 +4,16 @@ using UnityEngine.InputSystem;
 
 public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 {
-    public static TouchManager Instance { get; private set; }  // Singleton instance
+    public static TouchManager Instance { get; private set; }
 
     public InputSystem inputSystem;
     public Vector3 curScreenPos;
     private Camera mainCamera;
-    public bool isDragging;
     public bool isInteracting = false;
+
+    private float edgeOffset = 10f;
+    private float screenWidth;
+    private float screenHeight;
 
     private void Awake()
     {
@@ -25,19 +28,16 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         mainCamera = Camera.main;
         inputSystem = new InputSystem();
         inputSystem.Input.SetCallbacks(this);
+
+        screenWidth = Screen.width;
+        screenHeight = Screen.height;
     }
 
     void Update()
     {
-        float threshold = 10f;
-        Debug.Log("CURRENTPOS: " + curScreenPos);
-        if (curScreenPos.x <= threshold || curScreenPos.y <= threshold)
-        {
-            curScreenPos = Vector3.zero;
-            isInteracting = false;
-        }
+        if (curScreenPos == Vector3.zero) return;
+        ScreenSafeArea();
     }
-
 
     public bool isClickedOn
     {
@@ -49,6 +49,20 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
                 return hit.transform == transform;
             }
             return false;
+        }
+    }
+
+    public void ScreenSafeArea()
+    {
+        bool isOutOfBonds =
+            curScreenPos.x <= edgeOffset ||
+            curScreenPos.y <= edgeOffset ||
+            curScreenPos.x >= screenWidth - edgeOffset ||
+            curScreenPos.y >= screenHeight - edgeOffset;
+
+        if (isOutOfBonds || !isInteracting)
+        {
+            curScreenPos = Vector3.zero;
         }
     }
 
@@ -66,12 +80,10 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
-            Debug.Log("Press performed");
             if (isClickedOn) { }
         }
         else if (context.canceled)
         {
-            Debug.Log("Press canceled");
             curScreenPos = Vector3.zero;
             isInteracting = false;
         }
@@ -80,7 +92,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public void OnScreenPos(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
-        Debug.Log("Screen Pos performed");
         curScreenPos = context.ReadValue<Vector2>();
     }
 

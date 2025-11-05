@@ -21,6 +21,7 @@ public class DraggableObject : MonoBehaviour
 
     private void Update()
     {
+
         if (TouchManager.Instance == null) return;
         if (!TouchManager.Instance.isInteracting)
         {
@@ -61,16 +62,20 @@ public class DraggableObject : MonoBehaviour
 
     private void MoveOnScreen(Vector2 screenPos, float speed)
     {
-        Debug.Log("Stop Move");
-        Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.WorldToScreenPoint(initialPosition).z));
-        Vector3 target = new Vector3(worldPos.x, worldPos.y + grabOffset, initialPosition.z);
-        transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
+        if (TouchManager.Instance.curScreenPos != Vector3.zero)
+        {
+            Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.WorldToScreenPoint(initialPosition).z));
+            Vector3 target = new Vector3(worldPos.x, worldPos.y + grabOffset, initialPosition.z);
+            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
+        }
+        else
+        {
+            MoveBack(10);
+        }
     }
 
     private void MoveBack(float speed)
     {
-        Debug.Log("Stop Back");
-
         transform.position = Vector3.Lerp(transform.position, initialPosition, Time.deltaTime * speed);
     }
 }
