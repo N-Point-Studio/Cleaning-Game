@@ -272,6 +272,12 @@ public partial class JarAutoAssembly : MonoBehaviour
 
         isAssembled = true;
 
+        if (!assemblyOrder.Contains(this))
+        {
+            assemblyOrder.Add(this);
+            Debug.Log($"Added {pieceType} to assembly order via MarkAssembled. Total: {assemblyOrder.Count}");
+        }
+
         Vector3 correctPos = GetCorrectPosition();
         // FIXED: Use base rotation to ensure default snap behavior
         Quaternion correctRot = GetBaseCorrectWorldRotation();
@@ -326,6 +332,7 @@ public partial class JarAutoAssembly : MonoBehaviour
     {
         // Clean up any temporary assembly parent
         CleanupTemporaryAssemblyParent();
+        assemblyOrder.Clear();
 
         foreach (JarAutoAssembly piece in allPieces)
         {
@@ -530,6 +537,12 @@ public partial class JarAutoAssembly : MonoBehaviour
         // CRITICAL: Set this piece as assembled BEFORE animation
         // This prevents GetCorrectPosition from applying wrong offsets during animation
         isAssembled = true;
+
+        if (!assemblyOrder.Contains(this))
+        {
+            assemblyOrder.Add(this);
+            Debug.Log($"Added {pieceType} to assembly order. Total: {assemblyOrder.Count}");
+        }
 
         // Adapt this piece to match existing assembled pieces' positioning
         Vector3 adaptedTargetPosition = AdaptToExistingPiecesPosition(targetPosition);
@@ -1080,6 +1093,13 @@ public partial class JarAutoAssembly : MonoBehaviour
 
         // Set as assembled and cache the adapted offset
         isAssembled = true;
+
+        if (!assemblyOrder.Contains(this))
+        {
+            assemblyOrder.Add(this);
+            Debug.Log($"Added {pieceType} to assembly order. Total: {assemblyOrder.Count}");
+        }
+
         CacheInspectionOffsets(adaptedOffset, Quaternion.identity);
 
         // FIRST: Reset all existing assembled pieces to default rotation (keep their positions)
@@ -1116,29 +1136,43 @@ public partial class JarAutoAssembly : MonoBehaviour
     /// Reset all currently assembled pieces to their default rotation only
     /// Keeps pieces in their inspection assembly positions but resets rotation to default
     /// </summary>
-    void ResetAllAssembledPiecesToDefaultRotation()
-    {
-        Debug.Log($"🔄 Resetting all assembled pieces to default rotation (keeping inspection positions) before {pieceType} assembly");
-
-        foreach (JarAutoAssembly piece in allPieces)
+        void ResetAllAssembledPiecesToDefaultRotation()
         {
-            if (piece != null && piece != this && piece.isAssembled)
+            Debug.Log($"🔄 Resetting all assembled pieces to default rotation (keeping inspection positions) before {pieceType} assembly");
+    
+            // If a temporary parent is being used for group rotation, reset ITS rotation.
+            if (JarAutoAssembly.currentPartialAssemblyParent != null)
             {
-                // Get the base assembly rotation (but keep current position for inspection mode)
-                Quaternion defaultRot = piece.GetBaseCorrectWorldRotation();
-
-                Debug.Log($"    - Resetting {piece.pieceType} rotation:");
-                Debug.Log($"        Position: {piece.transform.position} (keeping current)");
-                Debug.Log($"        Rotation: {piece.transform.rotation.eulerAngles} -> {defaultRot.eulerAngles}");
-
-                // Animate to default rotation ONLY (keep current position)
-                piece.transform.DOKill();
-                piece.transform.DORotateQuaternion(defaultRot, assemblyDuration).SetEase(Ease.OutBack);
-
-                // Clear only the rotation offset, keep position offset for inspection mode
-                piece.CacheInspectionOffsets(piece.inspectionOffset, Quaternion.identity);
+                Debug.Log($"Found partial assembly parent. Resetting its rotation to default.");
+                JarAutoAssembly.currentPartialAssemblyParent.transform.DOKill();
+                // The parent's default rotation should be identity, as the pieces have their own world rotations baked in.
+                JarAutoAssembly.currentPartialAssemblyParent.transform.DORotateQuaternion(Quaternion.identity, assemblyDuration).SetEase(Ease.OutBack);
+    
+                // Also clear the inspection rotation offsets on the children, as the parent is now reset
+                foreach (Transform child in JarAutoAssembly.currentPartialAssemblyParent.transform)
+                {
+                    JarAutoAssembly childPiece = child.GetComponent<JarAutoAssembly>();
+                    if (childPiece != null)
+                    {
+                        childPiece.CacheInspectionOffsets(childPiece.inspectionOffset, Quaternion.identity);
+                    }
+                }
+            }
+            else // Fallback to old logic if no parent is found
+            {
+                Debug.Log("No partial assembly parent found. Resetting rotation of individual pieces.");
+                foreach (JarAutoAssembly piece in allPieces)
+                {
+                    if (piece != null && piece != this && piece.isAssembled)
+                    {
+                        Quaternion defaultRot = piece.GetBaseCorrectWorldRotation();
+                        Debug.Log($"    - Resetting {piece.pieceType} rotation to {defaultRot.eulerAngles}");
+    
+                        piece.transform.DOKill();
+                        piece.transform.DORotateQuaternion(defaultRot, assemblyDuration).SetEase(Ease.OutBack);
+                        piece.CacheInspectionOffsets(piece.inspectionOffset, Quaternion.identity);
+                    }
+                }
             }
         }
-    }
-
 }

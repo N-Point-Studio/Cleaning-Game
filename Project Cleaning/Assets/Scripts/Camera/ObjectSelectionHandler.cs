@@ -157,14 +157,12 @@ public class ObjectSelectionHandler : MonoBehaviour
         Transform selectionTarget = targetObject;
         var jarPiece = targetObject.GetComponent<JarAutoAssembly>();
 
-        if (jarPiece != null && JarAutoAssembly.IsJarFullyAssembled)
+        if (jarPiece != null) // Check if it's a jar piece first
         {
-            Transform assembledRoot = jarPiece.AssembledRoot;
-            if (assembledRoot != null)
-            {
-                Debug.Log($"🔁 Redirecting selection from piece {targetObject.name} to assembled jar root {assembledRoot.name}");
-                selectionTarget = assembledRoot;
-            }
+            // Use the JarAutoAssembly logic to determine the correct inspection target
+            // This will return the group parent if it's a partial assembly, or the assembledJarRoot if fully assembled, or the piece itself.
+            selectionTarget = jarPiece.EnsureRotationTarget(closeUpManager, false); // Pass false for startRotation as manager will handle it.
+            Debug.Log($"🔁 Jar piece detected. Selection target determined by JarAutoAssembly: {selectionTarget.name}");
         }
 
         Debug.Log($"Selected object for close-up: {selectionTarget.name}");

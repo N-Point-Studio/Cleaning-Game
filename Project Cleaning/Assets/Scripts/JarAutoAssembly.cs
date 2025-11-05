@@ -92,7 +92,8 @@ public partial class JarAutoAssembly : MonoBehaviour
     private static List<JarAutoAssembly> allPieces = new List<JarAutoAssembly>();
     private static bool jarFullyAssembled = false;
     private static bool staticsInitialized = false;
-    private static GameObject currentPartialAssemblyParent = null;
+    private static List<JarAutoAssembly> assemblyOrder = new List<JarAutoAssembly>();
+    public static GameObject currentPartialAssemblyParent = null;
 
     public static bool IsJarFullyAssembled => jarFullyAssembled;
 
@@ -112,6 +113,7 @@ public partial class JarAutoAssembly : MonoBehaviour
             return;
 
         allPieces = new List<JarAutoAssembly>();
+        assemblyOrder.Clear();
         jarFullyAssembled = false;
         staticsInitialized = true;
     }

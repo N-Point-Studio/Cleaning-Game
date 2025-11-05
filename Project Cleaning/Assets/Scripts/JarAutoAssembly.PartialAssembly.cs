@@ -6,15 +6,16 @@ public partial class JarAutoAssembly : MonoBehaviour
     List<JarAutoAssembly> GetAssembledPieces()
     {
         List<JarAutoAssembly> assembled = new List<JarAutoAssembly>();
-
+        string piecesFound = "";
         foreach (JarAutoAssembly piece in allPieces)
         {
             if (piece != null && piece.isAssembled)
             {
                 assembled.Add(piece);
+                piecesFound += piece.pieceType.ToString() + " ";
             }
         }
-
+        Debug.Log($"[GetAssembledPieces] Found {assembled.Count} assembled pieces: {piecesFound}");
         return assembled;
     }
 
@@ -66,16 +67,31 @@ public partial class JarAutoAssembly : MonoBehaviour
 
     public Transform EnsureRotationTarget(ObjectCloseUpManager closeUpManager, bool startRotation)
     {
-        if (!isAssembled || closeUpManager == null)
-            return transform;
+        Debug.Log($"[EnsureRotationTarget] Called for piece: {pieceType}");
 
-        List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
-        if (assembledPieces.Count > 1 && assembledPieces.Count < allPieces.Count)
+        if (closeUpManager == null)
         {
-            return SetupPartialAssemblyRotation(assembledPieces, closeUpManager, startRotation);
+            Debug.LogError("[EnsureRotationTarget] closeUpManager is null!");
+            return transform;
         }
 
-        return transform;
+        List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
+        bool isThisPieceAssembled = isAssembled;
+        bool isJarFullyAssembledNow = jarFullyAssembled;
+
+        Debug.Log($"[EnsureRotationTarget] State for {pieceType}: isAssembled={isThisPieceAssembled}, assembledPieces.Count={assembledPieces.Count}, jarFullyAssembled={isJarFullyAssembledNow}");
+
+        // If this piece is part of a partial assembly (more than 1 piece assembled, but not all)
+        if (isThisPieceAssembled && assembledPieces.Count > 1 && !isJarFullyAssembledNow)
+        {
+            Debug.Log($"[EnsureRotationTarget] Decision: Partial assembly detected. Returning group transform.");
+            return SetupPartialAssemblyRotation(assembledPieces, closeUpManager, startRotation);
+        }
+        else
+        {
+            Debug.Log($"[EnsureRotationTarget] Decision: Not a partial assembly. Returning single piece transform.");
+            return transform;
+        }
     }
 
     GameObject CreateTemporaryAssemblyParent(List<JarAutoAssembly> assembledPieces)
@@ -92,25 +108,25 @@ public partial class JarAutoAssembly : MonoBehaviour
         }
         centerPosition /= assembledPieces.Count;
 
-        currentPartialAssemblyParent = new GameObject("PartialAssemblyParent");
-        currentPartialAssemblyParent.transform.position = centerPosition;
+        JarAutoAssembly.currentPartialAssemblyParent = new GameObject("PartialAssemblyParent");
+        JarAutoAssembly.currentPartialAssemblyParent.transform.position = centerPosition;
 
         foreach (JarAutoAssembly piece in assembledPieces)
         {
-            piece.transform.SetParent(currentPartialAssemblyParent.transform, true);
+            piece.transform.SetParent(JarAutoAssembly.currentPartialAssemblyParent.transform, true);
         }
 
         Debug.Log($"🏗️ Created temporary parent for {assembledPieces.Count} assembled pieces at {centerPosition}");
-        return currentPartialAssemblyParent;
+        return JarAutoAssembly.currentPartialAssemblyParent;
     }
 
     static void CleanupTemporaryAssemblyParent()
     {
-        if (currentPartialAssemblyParent != null)
+        if (JarAutoAssembly.currentPartialAssemblyParent != null)
         {
-            for (int i = currentPartialAssemblyParent.transform.childCount - 1; i >= 0; i--)
+            for (int i = JarAutoAssembly.currentPartialAssemblyParent.transform.childCount - 1; i >= 0; i--)
             {
-                Transform child = currentPartialAssemblyParent.transform.GetChild(i);
+                Transform child = JarAutoAssembly.currentPartialAssemblyParent.transform.GetChild(i);
                 JarAutoAssembly piece = child.GetComponent<JarAutoAssembly>();
                 if (piece != null)
                 {
@@ -119,43 +135,58 @@ public partial class JarAutoAssembly : MonoBehaviour
             }
 
             if (Application.isPlaying)
-                Object.Destroy(currentPartialAssemblyParent);
+                Object.Destroy(JarAutoAssembly.currentPartialAssemblyParent);
             else
-                Object.DestroyImmediate(currentPartialAssemblyParent);
+                Object.DestroyImmediate(JarAutoAssembly.currentPartialAssemblyParent);
 
-            currentPartialAssemblyParent = null;
+            JarAutoAssembly.currentPartialAssemblyParent = null;
             Debug.Log("🗑️ Cleaned up temporary assembly parent");
         }
     }
 
     void TryInspection()
     {
+        Debug.Log($"[TryInspection] Called for piece: {pieceType}");
+
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
-        if (closeUpManager != null && !jarFullyAssembled)
+        if (closeUpManager == null)
         {
-            if (closeUpManager.IsTransitioning)
-            {
-                Debug.Log($"⏳ Close-up transition active - delaying inspection request for {pieceType}");
-                return;
-            }
+            Debug.LogError("[TryInspection] ObjectCloseUpManager not found!");
+            return;
+        }
 
-            List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
+        if (closeUpManager.IsTransitioning)
+        {
+            Debug.Log($"[TryInspection] Close-up transition active, ignoring request.");
+            return;
+        }
 
-            if (assembledPieces.Count > 1 && isAssembled)
+        List<JarAutoAssembly> assembledPieces = GetAssembledPieces();
+        bool isThisPieceAssembled = isAssembled;
+        bool isJarFullyAssembledNow = jarFullyAssembled;
+
+        Debug.Log($"[TryInspection] State for {pieceType}: isAssembled={isThisPieceAssembled}, assembledPieces.Count={assembledPieces.Count}, jarFullyAssembled={isJarFullyAssembledNow}");
+
+        if (isThisPieceAssembled && assembledPieces.Count > 1)
+        {
+            if (!isJarFullyAssembledNow)
             {
-                Debug.Log($"🔗 Partial assembly detected! {assembledPieces.Count} pieces assembled together");
+                Debug.Log($"[TryInspection] Decision: Partial assembly detected. Inspecting as a group.");
                 SetupPartialAssemblyRotation(assembledPieces, closeUpManager);
             }
             else
             {
-                Debug.Log($"Jar piece {pieceType} - bringing to close-up for inspection (assembled: {isAssembled})");
-
-                var inspectable = GetComponent<IInspectable>();
-                if (inspectable != null)
-                {
-                    inspectable.OnInspectionStart();
-                    closeUpManager.BringObjectToCloseUp(transform);
-                }
+                Debug.Log($"[TryInspection] Decision: Full assembly detected. Letting root object handle inspection.");
+            }
+        }
+        else
+        {
+            Debug.Log($"[TryInspection] Decision: Inspecting piece individually.");
+            var inspectable = GetComponent<IInspectable>();
+            if (inspectable != null)
+            {
+                inspectable.OnInspectionStart();
+                closeUpManager.BringObjectToCloseUp(transform);
             }
         }
     }

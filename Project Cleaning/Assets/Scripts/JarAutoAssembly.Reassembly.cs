@@ -3,7 +3,42 @@ using DG.Tweening;
 
 public partial class JarAutoAssembly : MonoBehaviour
 {
-    void TriggerReassemblyFromHold()
+    public static void DisassembleLastPiece()
+    {
+        if (assemblyOrder.Count <= 1)
+        {
+            Debug.Log("Hanya tersisa satu bagian, tidak bisa dibongkar lebih lanjut dengan cara ini.");
+            return;
+        }
+
+        JarAutoAssembly pieceToDisassemble = assemblyOrder[assemblyOrder.Count - 1];
+        assemblyOrder.RemoveAt(assemblyOrder.Count - 1);
+
+        Debug.Log($"Membongkar bagian: {pieceToDisassemble.pieceType}. Sisa dalam urutan: {assemblyOrder.Count}");
+
+        if (pieceToDisassemble != null)
+        {
+            pieceToDisassemble.InitiateDisassembly();
+        }
+
+        // Jika setelah pembongkaran hanya tersisa satu bagian, otomatis masuk ke mode inspeksi.
+        if (assemblyOrder.Count == 1)
+        {
+            JarAutoAssembly lastRemainingPiece = assemblyOrder[0];
+            if (lastRemainingPiece != null)
+            {
+                Debug.Log($"Hanya satu bagian tersisa ({lastRemainingPiece.pieceType}), otomatis inspeksi.");
+
+                // Tandai sebagai tidak terpasang
+                lastRemainingPiece.isAssembled = false;
+
+                // Panggil inspeksi otomatis
+                lastRemainingPiece.TryInspection();
+            }
+        }
+    }
+
+    public void InitiateDisassembly()
     {
         Debug.Log($"♻️ Reassembly triggered for {pieceType} - returning to original position");
 
@@ -12,7 +47,7 @@ public partial class JarAutoAssembly : MonoBehaviour
         {
             Transform currentObject = closeUpManager.CurrentCloseUpObject;
             if (currentObject == transform ||
-                (currentPartialAssemblyParent != null && currentObject == currentPartialAssemblyParent.transform) ||
+                (JarAutoAssembly.currentPartialAssemblyParent != null && currentObject == JarAutoAssembly.currentPartialAssemblyParent.transform) ||
                 (jarFullyAssembled && currentObject == assembledJarRoot))
             {
                 closeUpManager.PauseRotation();

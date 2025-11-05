@@ -296,18 +296,19 @@ public partial class JarAutoAssembly : MonoBehaviour
 
             if (holdDuration >= holdTimeForDrag)
             {
-                Debug.Log($"♻️ HOLD TIME REACHED ({holdDuration:F1}s) - REASSEMBLING {pieceType} TO ORIGINAL POSITION");
+                Debug.Log($"♻️ HOLD TIME REACHED ({holdDuration:F1}s) - Triggering disassembly of last piece.");
                 awaitingReassemblyDecision = false;
                 isHoldingForDrag = false;
                 reassemblyHoldTriggered = true;
 
+                // Pause rotation if the clicked object is being inspected
                 ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
                 if (closeUpManager != null && closeUpManager.CurrentCloseUpObject == transform)
                 {
                     closeUpManager.PauseRotation();
                 }
 
-                TriggerReassemblyFromHold();
+                DisassembleLastPiece();
             }
             else if (Mathf.FloorToInt(holdDuration * 2) != Mathf.FloorToInt((holdDuration - Time.deltaTime) * 2))
             {
@@ -322,13 +323,25 @@ public partial class JarAutoAssembly : MonoBehaviour
             CheckOutlineProximity();
         }
 
-        if (currentPartialAssemblyParent != null)
+        if (JarAutoAssembly.currentPartialAssemblyParent != null)
         {
             ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
-            if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp ||
-                closeUpManager.CurrentCloseUpObject != currentPartialAssemblyParent.transform)
+            if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp)
             {
+                // If there's no close up object at all, we can safely clean up.
                 CleanupTemporaryAssemblyParent();
+            }
+            else
+            {
+                // Check if the current close up object is another jar piece.
+                bool isInspectingAnotherJarPiece = closeUpManager.CurrentCloseUpObject.GetComponent<JarAutoAssembly>() != null;
+
+                // Only clean up if the current object is NOT the parent AND it's NOT another jar piece.
+                // This allows switching inspection to another piece for assembly without destroying the parent.
+                if (closeUpManager.CurrentCloseUpObject != JarAutoAssembly.currentPartialAssemblyParent.transform && !isInspectingAnotherJarPiece)
+                {
+                    CleanupTemporaryAssemblyParent();
+                }
             }
         }
     }
