@@ -20,14 +20,6 @@ public partial class JarAutoAssembly : MonoBehaviour
     public float snapDistance = 1.5f;
     public float assemblyDuration = 0.8f;
 
-    [Header("Inspection Assembly Settings")]
-    [Tooltip("Enable snap-to-position during inspection mode")]
-    public bool enableInspectionSnap = true;
-    [Tooltip("Snap distance for inspection mode assembly")]
-    public float inspectionSnapDistance = 0.8f;
-    [Tooltip("Visual feedback when near snap zone during inspection")]
-    public bool showInspectionSnapFeedback = true;
-
     [Header("Correct Positions & Rotations")]
     [SerializeField] private Vector3 bottomPosition = new Vector3(-0.17f, 1.67f, 0.087f);
     [SerializeField] private Vector3 middlePosition = new Vector3(-0.13f, 0.516f, 0.099f);

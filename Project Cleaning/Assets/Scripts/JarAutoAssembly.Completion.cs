@@ -387,8 +387,8 @@ public partial class JarAutoAssembly : MonoBehaviour
             Gizmos.DrawLine(transform.position, correctPos);
         }
 
-        // Draw inspection snap zones if in play mode and inspection snap is enabled
-        if (Application.isPlaying && enableInspectionSnap)
+        // Draw inspection snap zones if in play mode
+        if (Application.isPlaying)
         {
             ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
             if (closeUpManager != null && closeUpManager.HasObjectInCloseUp)
@@ -407,7 +407,7 @@ public partial class JarAutoAssembly : MonoBehaviour
 
                         // Draw inspection snap distance
                         Gizmos.color = Color.blue;
-                        Gizmos.DrawWireSphere(inspectionSnapPos, inspectionSnapDistance);
+                        Gizmos.DrawWireSphere(inspectionSnapPos, snapDistance);
 
                         // Draw line from current position to inspection snap position
                         if (!isAssembled)
@@ -434,8 +434,8 @@ public partial class JarAutoAssembly : MonoBehaviour
 
     void TryInspectionAssembly()
     {
-        // Only attempt inspection assembly if we're in inspection mode and feature is enabled
-        if (!enableInspectionSnap || isAssembled) return;
+        // Only attempt inspection assembly if we're not already assembled
+        if (isAssembled) return;
 
         ObjectCloseUpManager closeUpManager = FindObjectOfType<ObjectCloseUpManager>();
         if (closeUpManager == null || !closeUpManager.HasObjectInCloseUp) return;
@@ -451,9 +451,9 @@ public partial class JarAutoAssembly : MonoBehaviour
         Vector3 correctInspectionPos = GetCorrectInspectionPosition(inspectedPiece);
         float distance = Vector3.Distance(transform.position, correctInspectionPos);
 
-        Debug.Log($"Inspection assembly check: {pieceType} -> {inspectedPiece.pieceType}, distance: {distance:F2}, snap threshold: {inspectionSnapDistance}");
+        Debug.Log($"Inspection assembly check: {pieceType} -> {inspectedPiece.pieceType}, distance: {distance:F2}, snap threshold: {snapDistance}");
 
-        if (distance <= inspectionSnapDistance)
+        if (distance <= snapDistance)
         {
             AssembleToInspectionPosition(inspectedPiece, correctInspectionPos);
         }
@@ -682,20 +682,20 @@ public partial class JarAutoAssembly : MonoBehaviour
         // Calculate distance between dragged object and inspected object
         float distance = Vector3.Distance(transform.position, inspectedObject.position);
 
-        // Check for inspection snap zone if enabled
+        // Check for inspection snap zone
         bool inSnapZone = false;
-        if (enableInspectionSnap && showInspectionSnapFeedback && !isAssembled)
+        if (!isAssembled)
         {
             JarAutoAssembly inspectedPiece = inspectedObject.GetComponent<JarAutoAssembly>();
             if (inspectedPiece != null && inspectedPiece.isAssembled)
             {
                 Vector3 correctInspectionPos = GetCorrectInspectionPosition(inspectedPiece);
-                float snapDistance = Vector3.Distance(transform.position, correctInspectionPos);
+                float snapDist = Vector3.Distance(transform.position, correctInspectionPos);
 
-                if (snapDistance <= inspectionSnapDistance)
+                if (snapDist <= snapDistance)
                 {
                     inSnapZone = true;
-                    Debug.Log($"🎯 {pieceType} in inspection SNAP ZONE for {inspectedPiece.pieceType} (snap distance: {snapDistance:F2})");
+                    Debug.Log($"🎯 {pieceType} in inspection SNAP ZONE for {inspectedPiece.pieceType} (snap distance: {snapDist:F2})");
                 }
             }
         }
