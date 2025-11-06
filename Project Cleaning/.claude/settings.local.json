@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(find:*)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_3TbxzT/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_nqoRwF/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_hZDLnY/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_xNBXxF/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_6O7UYQ/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_1Bg39I/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_SYo7CQ/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_o5pV2q/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_HyMK1V/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_oICGde/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_obFtRJ/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_e3JgaD/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_2wX2tS/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_OK1DAh/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_ZyhX9d/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_Z0xcPK/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_iSuLlf/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_mDtafz/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_XqtrmK/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_6BcS2J/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_6DHfOy/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_pSzs4S/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_0CGqqD/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_uvy5Uf/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_cCB63O/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_Uzn0uB/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_7mvZmF/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_Vc2zfC/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_KH6Yrf/**)",
+      "Read(//Users/alvinreyvaldo/Documents/**)",
+      "Bash(cat:*)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_bge1Ea/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_HiOYkx/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
