@@ -37,7 +37,8 @@ public class Tool : MonoBehaviour
     {
         Vector3 targetPos = surfaceDetection.RaycastTipPos;
         Vector3 targetNormal = surfaceDetection.RaycastTipNormal;
-        Quaternion targetRot = Quaternion.LookRotation(-targetNormal, Vector3.up);
+        //NOTE PENTING! kalo mau ubah ke koordinat X, Y ubah ke Vector3.up!
+        Quaternion targetRot = Quaternion.LookRotation(-targetNormal, Vector3.forward);
         transform.SetPositionAndRotation(
             Vector3.Lerp(transform.position, targetPos, Time.deltaTime * moveSpeed),
             Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotateSpeed)

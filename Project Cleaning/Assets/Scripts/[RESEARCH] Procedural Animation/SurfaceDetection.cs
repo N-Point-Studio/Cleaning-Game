@@ -19,7 +19,6 @@ public class SurfaceDetection : MonoBehaviour
     [SerializeField] private float offsetDistance = 0.05f;
     [SerializeField] private LayerMask dirtsLayerMask;
     [SerializeField] private CollisionToolsType surfaceType = CollisionToolsType.Texture;
-
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
@@ -31,6 +30,8 @@ public class SurfaceDetection : MonoBehaviour
     //clean mesh
     public CleanMesh MudObject { get; private set; }
 
+    public bool isUsed = false;
+
     void Awake()
     {
         CleaningSurface = null;
@@ -38,7 +39,8 @@ public class SurfaceDetection : MonoBehaviour
 
     private void Update()
     {
-        PerformRaycast();
+        Debug.Log("is used? " + isUsed);
+        if (isUsed) PerformRaycast();
     }
 
     private void PerformRaycast()

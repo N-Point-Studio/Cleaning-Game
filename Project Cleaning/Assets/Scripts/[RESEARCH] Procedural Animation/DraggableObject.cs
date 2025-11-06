@@ -4,6 +4,7 @@ public class DraggableObject : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Transform GrabPosition;
+    [SerializeField] private SurfaceDetection surface;
     private Vector3 initialPosition;
     private float grabOffset;
     public bool isDragging = false;
@@ -33,6 +34,7 @@ public class DraggableObject : MonoBehaviour
                     isDragging = true;
                     isReturning = false;
                     TouchManager.Instance.TouchUsed(true);
+                    surface.isUsed = true;
                 }
             }
         }
@@ -55,6 +57,8 @@ public class DraggableObject : MonoBehaviour
             {
                 isReturning = false;
                 isDragging = false;
+                surface.isUsed = false;
+
             }
             return;
         }
@@ -65,7 +69,7 @@ public class DraggableObject : MonoBehaviour
         if (TouchManager.Instance.curScreenPos != Vector3.zero)
         {
             Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, mainCamera.WorldToScreenPoint(initialPosition).z));
-            Vector3 target = new Vector3(worldPos.x, worldPos.y + grabOffset, initialPosition.z);
+            Vector3 target = new Vector3(worldPos.x, initialPosition.y, worldPos.z + grabOffset);
             transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
         }
         else

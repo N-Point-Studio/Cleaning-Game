@@ -4439,7 +4439,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!64 &1174376910
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4969,6 +4969,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   curScreenPos: {x: 0, y: 0, z: 0}
   isInteracting: 0
+  isClickedOn: 0
 --- !u!4 &1390666121
 Transform:
   m_ObjectHideFlags: 0
@@ -6579,7 +6580,7 @@ Transform:
   m_GameObject: {fileID: 919132148489788236}
   serializedVersion: 2
   m_LocalRotation: {x: 0.07055275, y: 0.15143263, z: 0.0108367065, w: 0.98588693}
-  m_LocalPosition: {x: 0, y: 0.39, z: -4.18}
+  m_LocalPosition: {x: 0, y: -0.08, z: -3.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7481,6 +7482,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7972151269374129514, guid: ea43a679b6e8347d39d3c84620486d75,
+        type: 3}
+      propertyPath: dirtsLayerMask.m_Bits
+      value: 128
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -81,4 +81,19 @@ public class InputReader : MonoBehaviour, InputSystem.IInputActions
             yield return null;
         }
     }
+
+    public void OnPrimaryFingerPos(InputAction.CallbackContext context)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnSecondaryFingerPos(InputAction.CallbackContext context)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnSecondaryTouchContact(InputAction.CallbackContext context)
+    {
+        throw new System.NotImplementedException();
+    }
 }

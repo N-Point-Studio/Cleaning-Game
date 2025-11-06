@@ -1,293 +1,130 @@
+using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Makes jar pieces inspectable - they come to camera when clicked
-/// </summary>
-public class InspectableJar : MonoBehaviour, IInspectable
+public class InspectableJar : MonoBehaviour
 {
-    [Header("Inspection Settings")]
-    public float inspectionScale = 1.5f;       // How much bigger when inspecting
-    public bool canBeInspected = true;
+    [Header("Zoom Settings")]
+    [SerializeField] private float zoomSpeed = 5f;
+    [SerializeField] private float minZoom = 4.4f;
+    [SerializeField] private float maxZoom = 6.5f;
 
-    [Header("Size-Aware Inspection")]
-    [Tooltip("Use different inspection scale for assembled jar vs individual pieces")]
-    public bool useContextualScale = true;
-    [Tooltip("Scale for individual jar pieces")]
-    public float pieceInspectionScale = 1.5f;
-    [Tooltip("Scale for assembled jar (typically smaller since jar is larger)")]
-    public float assembledJarInspectionScale = 1.0f;
+    [Header("Rotate Settings")]
+    [SerializeField] private float rotationRate = 3.0f;
+    [SerializeField] private bool xRotation = true;
+    [SerializeField] private bool yRotation = true;
+    [SerializeField] private bool invertX = false;
+    [SerializeField] private bool invertY = false;
 
-    [Header("Visual Feedback")]
-    public GameObject highlightEffect;
-    public Color inspectionColor = Color.cyan;
-    public Material inspectionMaterial;         // Optional special material during inspection
+    private bool isRotating = false;
+    private float previousX;
+    private float previousZ;
+    private bool fingerOnObject = false;
+    private float dragThreshold = 5f;
 
-    [Header("Outline System")]
-    public float outlineActivationDistance = 3f; // Distance to activate outline
+    private Coroutine zoomRoutine;
+    private Camera cam;
 
-    // Private fields
-    private Renderer objectRenderer;
-    private Material originalMaterial;
-    private Material[] originalMaterials;  // Store all original materials
-    private Color originalColor;
-    private bool isCurrentlyInspected = false;
-    private bool isShowingOutline = false;
-
-    void Start()
+    private void Awake()
     {
-        objectRenderer = GetComponent<Renderer>();
-        if (objectRenderer != null)
-        {
-            originalMaterial = objectRenderer.material;
-            originalMaterials = objectRenderer.materials;  // Store all materials
-            originalColor = objectRenderer.material.color;
-        }
+        cam = Camera.main;
     }
 
-    #region IInspectable Implementation
-
-    public bool CanBeInspected()
+    private void OnEnable()
     {
-        return canBeInspected && gameObject.activeInHierarchy && !isCurrentlyInspected;
+        TouchManager.ZoomStart += StartZoom;
+        TouchManager.ZoomEnd += StopZoom;
     }
 
-    public float GetIdealInspectionScale()
+    private void OnDisable()
     {
-        if (useContextualScale)
-        {
-            // Check if this is an assembled jar
-            if (IsAssembledJar())
-            {
-                return assembledJarInspectionScale;
-            }
-            else
-            {
-                return pieceInspectionScale;
-            }
-        }
-
-        return inspectionScale;
+        TouchManager.ZoomStart -= StartZoom;
+        TouchManager.ZoomEnd -= StopZoom;
     }
 
-    /// <summary>
-    /// Check if this object is an assembled jar
-    /// </summary>
-    private bool IsAssembledJar()
+    private void Update()
     {
-        // Check if this transform is referenced as an assembled jar root by any jar pieces
-        JarAutoAssembly[] allJarPieces = FindObjectsOfType<JarAutoAssembly>();
-        foreach (var piece in allJarPieces)
+        if (TouchManager.Instance.isInteracting) return;
+        if (!TouchManager.Instance.isClickedOn)
         {
-            if (piece.IsAssembledJarRoot(transform))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void OnInspectionStart()
-    {
-        // Prevent multiple calls to OnInspectionStart
-        if (isCurrentlyInspected)
-        {
-            Debug.Log($"OnInspectionStart already called for {gameObject.name} - skipping duplicate call");
+            isRotating = false;
+            fingerOnObject = false;
             return;
         }
 
-        isCurrentlyInspected = true;
-        Debug.Log($"🔍 Started inspecting jar: {gameObject.name}");
+        Vector2 curPos = TouchManager.Instance.curScreenPos;
+        Ray ray = cam.ScreenPointToRay(curPos);
 
-        // Enable highlight effect
-        if (highlightEffect != null)
+        if (!fingerOnObject)
         {
-            highlightEffect.SetActive(true);
-        }
-
-        // Set up materials for inspection - preserve dual material setup
-        if (objectRenderer != null)
-        {
-            if (inspectionMaterial != null)
+            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
             {
-                // Create array with both materials: main texture + outline
-                Material[] inspectionMaterials = new Material[2];
-                inspectionMaterials[0] = originalMaterials[0];  // Keep original main material
-
-                // DON'T add the outline material yet - only add it when needed
-                // For now, just use the original material
-                inspectionMaterials[1] = originalMaterials[0]; // Placeholder - same as main material
-                objectRenderer.materials = inspectionMaterials;
-                Debug.Log($"🎯 Initial materials: Element 0: {inspectionMaterials[0].name}, Element 1: {inspectionMaterials[1].name}");
+                fingerOnObject = true;
+                previousX = curPos.x;
+                previousZ = curPos.y;
+                return;
             }
-            else
-            {
-                objectRenderer.material.color = inspectionColor;
-            }
-        }
-
-        // Optional: Add particle effects, sounds, etc.
-        PlayInspectionStartEffects();
-    }
-
-    public void OnInspectionEnd()
-    {
-        isCurrentlyInspected = false;
-
-        Debug.Log($"Stopped inspecting jar: {gameObject.name}");
-
-        // Hide outline if it was showing
-        if (isShowingOutline)
-        {
-            HideOutline();
-        }
-
-        // Disable highlight effect
-        if (highlightEffect != null)
-        {
-            highlightEffect.SetActive(false);
-        }
-
-        // Restore original materials
-        if (objectRenderer != null)
-        {
-            if (originalMaterials != null && originalMaterials.Length > 0)
-            {
-                objectRenderer.materials = originalMaterials;
-            }
-            else if (originalMaterial != null)
-            {
-                objectRenderer.material = originalMaterial;
-            }
-            else
-            {
-                objectRenderer.material.color = originalColor;
-            }
-        }
-
-        // Optional: Add exit effects
-        PlayInspectionEndEffects();
-    }
-
-    public Transform GetInspectionTarget()
-    {
-        return transform;
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Play effects when inspection starts
-    /// </summary>
-    private void PlayInspectionStartEffects()
-    {
-        // Add particle effects, sound, etc. here
-        // Example: Play a "woosh" sound when object comes to camera
-    }
-
-    /// <summary>
-    /// Play effects when inspection ends
-    /// </summary>
-    private void PlayInspectionEndEffects()
-    {
-        // Add particle effects, sound, etc. here
-    }
-
-    /// <summary>
-    /// Enable/disable inspection for this jar
-    /// </summary>
-    public void SetInspectable(bool inspectable)
-    {
-        canBeInspected = inspectable;
-    }
-
-    
-
-    /// <summary>
-    /// Check if this jar is currently being inspected
-    /// </summary>
-    public bool IsBeingInspected()
-    {
-        return isCurrentlyInspected;
-    }
-
-    /// <summary>
-    /// Show outline when another object is being dragged nearby
-    /// </summary>
-    public void ShowOutline()
-    {
-        if (isShowingOutline || !isCurrentlyInspected || objectRenderer == null || inspectionMaterial == null)
             return;
-
-        isShowingOutline = true;
-
-        // NOW replace Element 1 with the actual outline material
-        Material[] materials = objectRenderer.materials;
-        if (materials.Length > 1)
+        }
+        float moveDist = Vector2.Distance(new Vector2(previousX, previousZ), curPos);
+        if (moveDist > dragThreshold)
         {
-            // Create a copy of the outline material and make it visible
-            Material outlineMaterialCopy = new Material(inspectionMaterial);
-            if (outlineMaterialCopy.HasProperty("_Outline_Color"))
-            {
-                Color outlineColor = outlineMaterialCopy.GetColor("_Outline_Color");
-                outlineColor.a = 1f; // Make outline visible
-                outlineMaterialCopy.SetColor("_Outline_Color", outlineColor);
-            }
-
-            materials[1] = outlineMaterialCopy;  // Replace Element 1 with visible outline
-            objectRenderer.materials = materials;
+            isRotating = true;
         }
 
-        Debug.Log($"🔴 Showing outline on inspected {gameObject.name} - drag target detected");
-    }
-
-    /// <summary>
-    /// Hide outline when drag object moves away or drag ends
-    /// </summary>
-    public void HideOutline()
-    {
-        if (!isShowingOutline)
-            return;
-
-        isShowingOutline = false;
-
-        // Replace Element 1 with the original material (no outline)
-        if (objectRenderer != null && originalMaterials != null && originalMaterials.Length > 0)
+        if (isRotating)
         {
-            Material[] materials = objectRenderer.materials;
-            if (materials.Length > 1)
-            {
-                materials[1] = originalMaterials[0];  // Replace with original material (no outline)
-                objectRenderer.materials = materials;
-            }
+            RotateObject(curPos);
         }
-
-        Debug.Log($"⚪ Hiding outline on {gameObject.name} - drag target moved away");
     }
 
-    /// <summary>
-    /// Check if outline is currently being shown
-    /// </summary>
-    public bool IsShowingOutline()
+    private void RotateObject(Vector2 touchPos)
     {
-        return isShowingOutline;
+        float deltaX = -(touchPos.y - previousZ) * rotationRate;
+        float deltaY = -(touchPos.x - previousX) * rotationRate;
+
+        if (!yRotation) deltaX = 0;
+        if (!xRotation) deltaY = 0;
+        if (invertX) deltaY *= -1;
+        if (invertY) deltaX *= -1;
+
+        transform.Rotate(deltaX, 0, deltaY, Space.World);
+
+        previousX = touchPos.x;
+        previousZ = touchPos.y;
     }
 
-    void OnDrawGizmosSelected()
+
+    private void StartZoom()
     {
-        // Draw inspection scale preview
-        Gizmos.color = canBeInspected ? Color.green : Color.red;
+        zoomRoutine = StartCoroutine(ZoomRoutine());
+    }
 
-        // Calculate scaled bounds
-        Bounds bounds = GetComponent<Collider>()?.bounds ?? new Bounds(transform.position, Vector3.one);
-        Vector3 scaledSize = bounds.size * inspectionScale;
+    private void StopZoom()
+    {
+        if (zoomRoutine != null)
+            StopCoroutine(zoomRoutine);
+    }
 
-        Gizmos.DrawWireCube(transform.position, scaledSize);
+    IEnumerator ZoomRoutine()
+    {
+        float previousDistance = 0f, distance = 0f;
 
-        // Draw inspection status
-        if (isCurrentlyInspected)
+        while (true)
         {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, 0.5f);
+            distance = Vector2.Distance(TouchManager.Instance.curScreenPos, TouchManager.Instance.curSecondaryPos);
+
+            Vector3 targetPos = transform.position;
+
+            if (distance > previousDistance)
+                targetPos.y += 1f;
+            else if (distance < previousDistance)
+                targetPos.y -= 1f;
+
+            targetPos.y = Mathf.Clamp(targetPos.y, minZoom, maxZoom);
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * zoomSpeed);
+
+            previousDistance = distance;
+            yield return null;
         }
     }
 }

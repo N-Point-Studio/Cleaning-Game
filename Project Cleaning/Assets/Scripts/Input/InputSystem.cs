@@ -109,6 +109,33 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""PrimaryFingerPos"",
+                    ""type"": ""Value"",
+                    ""id"": ""ec757838-861f-42ae-b77f-ae2e2860f1d3"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""SecondaryFingerPos"",
+                    ""type"": ""Value"",
+                    ""id"": ""1f7e3082-2789-47fc-a3c5-5969c28be7e4"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""SecondaryTouchContact"",
+                    ""type"": ""Button"",
+                    ""id"": ""dc9cd6c8-eb94-4bd2-9fc6-c956f7d2db58"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -155,6 +182,39 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
                     ""action"": ""ScreenPos"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ec2c83b7-bc73-4cb9-a7d0-da6fa3ccfa62"",
+                    ""path"": ""<Touchscreen>/touch0/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PrimaryFingerPos"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""42fbbd61-6401-425a-8ce8-e18f839aaa8a"",
+                    ""path"": ""<Touchscreen>/touch1/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SecondaryFingerPos"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""25ecb0e9-e65c-4747-8c01-30ab3e969b38"",
+                    ""path"": ""<Touchscreen>/touch1/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SecondaryTouchContact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -165,6 +225,9 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         m_Input = asset.FindActionMap("Input", throwIfNotFound: true);
         m_Input_Press = m_Input.FindAction("Press", throwIfNotFound: true);
         m_Input_ScreenPos = m_Input.FindAction("ScreenPos", throwIfNotFound: true);
+        m_Input_PrimaryFingerPos = m_Input.FindAction("PrimaryFingerPos", throwIfNotFound: true);
+        m_Input_SecondaryFingerPos = m_Input.FindAction("SecondaryFingerPos", throwIfNotFound: true);
+        m_Input_SecondaryTouchContact = m_Input.FindAction("SecondaryTouchContact", throwIfNotFound: true);
     }
 
     ~@InputSystem()
@@ -247,6 +310,9 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
     private List<IInputActions> m_InputActionsCallbackInterfaces = new List<IInputActions>();
     private readonly InputAction m_Input_Press;
     private readonly InputAction m_Input_ScreenPos;
+    private readonly InputAction m_Input_PrimaryFingerPos;
+    private readonly InputAction m_Input_SecondaryFingerPos;
+    private readonly InputAction m_Input_SecondaryTouchContact;
     /// <summary>
     /// Provides access to input actions defined in input action map "Input".
     /// </summary>
@@ -266,6 +332,18 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Input/ScreenPos".
         /// </summary>
         public InputAction @ScreenPos => m_Wrapper.m_Input_ScreenPos;
+        /// <summary>
+        /// Provides access to the underlying input action "Input/PrimaryFingerPos".
+        /// </summary>
+        public InputAction @PrimaryFingerPos => m_Wrapper.m_Input_PrimaryFingerPos;
+        /// <summary>
+        /// Provides access to the underlying input action "Input/SecondaryFingerPos".
+        /// </summary>
+        public InputAction @SecondaryFingerPos => m_Wrapper.m_Input_SecondaryFingerPos;
+        /// <summary>
+        /// Provides access to the underlying input action "Input/SecondaryTouchContact".
+        /// </summary>
+        public InputAction @SecondaryTouchContact => m_Wrapper.m_Input_SecondaryTouchContact;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -298,6 +376,15 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
             @ScreenPos.started += instance.OnScreenPos;
             @ScreenPos.performed += instance.OnScreenPos;
             @ScreenPos.canceled += instance.OnScreenPos;
+            @PrimaryFingerPos.started += instance.OnPrimaryFingerPos;
+            @PrimaryFingerPos.performed += instance.OnPrimaryFingerPos;
+            @PrimaryFingerPos.canceled += instance.OnPrimaryFingerPos;
+            @SecondaryFingerPos.started += instance.OnSecondaryFingerPos;
+            @SecondaryFingerPos.performed += instance.OnSecondaryFingerPos;
+            @SecondaryFingerPos.canceled += instance.OnSecondaryFingerPos;
+            @SecondaryTouchContact.started += instance.OnSecondaryTouchContact;
+            @SecondaryTouchContact.performed += instance.OnSecondaryTouchContact;
+            @SecondaryTouchContact.canceled += instance.OnSecondaryTouchContact;
         }
 
         /// <summary>
@@ -315,6 +402,15 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
             @ScreenPos.started -= instance.OnScreenPos;
             @ScreenPos.performed -= instance.OnScreenPos;
             @ScreenPos.canceled -= instance.OnScreenPos;
+            @PrimaryFingerPos.started -= instance.OnPrimaryFingerPos;
+            @PrimaryFingerPos.performed -= instance.OnPrimaryFingerPos;
+            @PrimaryFingerPos.canceled -= instance.OnPrimaryFingerPos;
+            @SecondaryFingerPos.started -= instance.OnSecondaryFingerPos;
+            @SecondaryFingerPos.performed -= instance.OnSecondaryFingerPos;
+            @SecondaryFingerPos.canceled -= instance.OnSecondaryFingerPos;
+            @SecondaryTouchContact.started -= instance.OnSecondaryTouchContact;
+            @SecondaryTouchContact.performed -= instance.OnSecondaryTouchContact;
+            @SecondaryTouchContact.canceled -= instance.OnSecondaryTouchContact;
         }
 
         /// <summary>
@@ -369,5 +465,26 @@ public partial class @InputSystem: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnScreenPos(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "PrimaryFingerPos" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPrimaryFingerPos(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SecondaryFingerPos" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSecondaryFingerPos(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SecondaryTouchContact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSecondaryTouchContact(InputAction.CallbackContext context);
     }
 }
