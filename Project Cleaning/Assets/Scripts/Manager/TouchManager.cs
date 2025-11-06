@@ -5,7 +5,6 @@ using UnityEngine.InputSystem;
 public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 {
     public static TouchManager Instance { get; private set; }
-
     public InputSystem inputSystem;
     public Vector3 curScreenPos;
     private Camera mainCamera;
@@ -35,22 +34,12 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     void Update()
     {
+        Debug.Log("Position: " + curScreenPos);
         if (curScreenPos == Vector3.zero) return;
-        ScreenSafeArea();
+        // ScreenSafeArea();
     }
 
-    public bool isClickedOn
-    {
-        get
-        {
-            Ray ray = mainCamera.ScreenPointToRay(curScreenPos);
-            if (Physics.Raycast(ray, out RaycastHit hit))
-            {
-                return hit.transform == transform;
-            }
-            return false;
-        }
-    }
+    public bool isClickedOn = false;
 
     public void ScreenSafeArea()
     {
@@ -80,20 +69,26 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
-            if (isClickedOn) { }
+            Debug.Log("clicked: tap");
+            isClickedOn = true;
         }
         else if (context.canceled)
         {
             curScreenPos = Vector3.zero;
             isInteracting = false;
+            isClickedOn = false;
+            Debug.Log("clicked: release");
         }
     }
 
     public void OnScreenPos(InputAction.CallbackContext context)
     {
-        if (!context.performed) return;
-        curScreenPos = context.ReadValue<Vector2>();
+        if (isClickedOn)
+        {
+            curScreenPos = context.ReadValue<Vector2>();
+        }
     }
+
 
     public void TouchUsed(bool isUsed)
     {

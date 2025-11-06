@@ -27,9 +27,20 @@ public class ToolCleaningSurface : MonoBehaviour
 
     private void RaycastCleaningSurface()
     {
-        if (surface.CleaningSurface != null)
+        switch (toolType)
         {
-            TryClean(surface.CleaningSurface, surface.TextureSurface);
+            case CollisionToolsType.Mesh:
+                if (surface.MudObject != null)
+                {
+                    TryDestroyMesh(surface.MudObject);
+                }
+                break;
+            case CollisionToolsType.Texture:
+                if (surface.CleaningSurface != null)
+                {
+                    TryClean(surface.CleaningSurface, surface.TextureSurface);
+                }
+                break;
         }
     }
 
@@ -37,6 +48,11 @@ public class ToolCleaningSurface : MonoBehaviour
     {
         // clean.CleanAt(textureCoord, brush);
         clean.CleanAt(textureCoord, brush, brushSize);
+    }
+
+    private void TryDestroyMesh(CleanMesh obj)
+    {
+        obj.DestroyMesh();
     }
 
     void OnDrawGizmos()

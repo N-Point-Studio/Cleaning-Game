@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class SurfaceDetection : MonoBehaviour
 {
+    public enum CollisionToolsType
+    {
+        Texture,
+        Mesh,
+    }
+
     [Header("References")]
     [SerializeField] private Transform rootTransform;
     [SerializeField] private Transform currentPointTransform;
@@ -12,11 +18,18 @@ public class SurfaceDetection : MonoBehaviour
     [SerializeField] private float rayLength = 10f;
     [SerializeField] private float offsetDistance = 0.05f;
     [SerializeField] private LayerMask dirtsLayerMask;
+    [SerializeField] private CollisionToolsType surfaceType = CollisionToolsType.Texture;
+
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
+
+    //clean surface
     public Clean CleaningSurface { get; private set; }
     public Vector2 TextureSurface { get; private set; }
+
+    //clean mesh
+    public CleanMesh MudObject { get; private set; }
 
     void Awake()
     {
@@ -36,19 +49,35 @@ public class SurfaceDetection : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(currentPointTransform.position, currentPointTransform.forward, out hit, rayLength, dirtsLayerMask))
         {
-            IsSurfaceDetected = true;
-            RaycastTipPos = hit.point;
-            RaycastTipNormal = hit.normal;
-            TextureSurface = hit.textureCoord;
-            var clean = hit.collider.GetComponent<Clean>();
-            CleaningSurface = clean;
+            switch (surfaceType)
+            {
+                case CollisionToolsType.Mesh:
+                    var mud = hit.collider.GetComponent<CleanMesh>();
+                    EssentialDetecting(hit);
+                    MudObject = mud;
+                    break;
+                case CollisionToolsType.Texture:
+                    var clean = hit.collider.GetComponent<Clean>();
+                    EssentialDetecting(hit);
+                    CleaningSurface = clean;
+                    break;
+            }
         }
         else
         {
             IsSurfaceDetected = false;
             RaycastTipPos = Vector3.positiveInfinity;
             CleaningSurface = null;
+            MudObject = null;
         }
+    }
+
+    private void EssentialDetecting(RaycastHit hit)
+    {
+        IsSurfaceDetected = true;
+        RaycastTipPos = hit.point;
+        RaycastTipNormal = hit.normal;
+        TextureSurface = hit.textureCoord;
     }
 
     private void OnDrawGizmos()
