@@ -9,6 +9,7 @@ public class DraggableObject : MonoBehaviour
     private float grabOffset;
     public bool isDragging = false;
     public bool isReturning = false;
+    public bool isTapping = false;
 
 
     private void Awake()
@@ -33,6 +34,7 @@ public class DraggableObject : MonoBehaviour
                 if (hit.transform == transform)
                 {
                     isDragging = true;
+                    isTapping = true;
                     isReturning = false;
                     TouchManager.Instance.TouchUsed(true);
                     if (surface != null) surface.isUsed = true;
@@ -47,6 +49,7 @@ public class DraggableObject : MonoBehaviour
         if (!TouchManager.Instance.isInteracting && isDragging)
         {
             isDragging = false;
+            isTapping = false;
             isReturning = true;
             TouchManager.Instance.TouchUsed(false);
         }
@@ -58,6 +61,7 @@ public class DraggableObject : MonoBehaviour
             {
                 isReturning = false;
                 isDragging = false;
+                isTapping = false;
                 // surface?.isUsed = false;
                 if (surface != null) surface.isUsed = false;
 

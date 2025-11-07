@@ -46,7 +46,7 @@ public class InspectableJar : MonoBehaviour
         if (TouchManager.Instance.isInteracting) return;
         if (!TouchManager.Instance.isClickedOn)
         {
-            Debug.Log("Rotate click " + TouchManager.Instance.isClickedOn);
+            // Debug.Log("Rotate click " + TouchManager.Instance.isClickedOn);
             isRotating = false;
             TouchManager.Instance.IsRotate(false);
 

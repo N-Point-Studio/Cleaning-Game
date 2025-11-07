@@ -8,12 +8,12 @@ public class Clean : MonoBehaviour
         Texture,
         Mesh,
     }
-    [SerializeField] private Texture2D _dirtMaskBase;
-    [SerializeField] private Material _material;
-    [SerializeField] private CollisionToolsType type = CollisionToolsType.Mesh;
+    public Texture2D _dirtMaskBase;
+    public Material _material;
+    // public CollisionToolsType type = CollisionToolsType.Mesh;
     private Texture2D _templateDirtMask;
 
-    private void Awake()
+    private void Start()
     {
         CreateTexture();
     }

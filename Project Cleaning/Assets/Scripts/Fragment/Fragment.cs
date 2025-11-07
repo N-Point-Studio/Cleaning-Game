@@ -9,11 +9,33 @@ public struct FragmentData
     public Material material;
 }
 
+[System.Serializable]
+public struct SurfaceData
+{
+    public enum CollisionToolsType
+    {
+        Texture,
+        Mesh,
+    }
+
+    public Texture2D mask;
+    public Material mat;
+    public int type;
+}
+
 [CreateAssetMenu(fileName = "New Artefact", menuName = "Artefact")]
 public class Fragment : ScriptableObject
 {
-    public Mesh finalModel;
-    public List<FragmentData> fragmentMeshes;
+    [Header("Information")]
     public string artifactName;
     public string history;
+
+    [Header("Mesh Model")]
+    public Mesh finalModel;
+    public List<FragmentData> fragmentMeshes;
+
+    [Header("Clean Mask")]
+    public Texture2D mask;
+    public Material mat;
+    public int type;
 }

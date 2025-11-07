@@ -1542,6 +1542,7 @@ GameObject:
   - component: {fileID: 895377111}
   - component: {fileID: 895377115}
   - component: {fileID: 895377116}
+  - component: {fileID: 895377117}
   m_Layer: 0
   m_Name: Fragment_Position_2
   m_TagString: Untagged
@@ -1566,7 +1567,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -1643,7 +1644,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 895377110}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -1653,6 +1654,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &895377116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1668,6 +1670,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &895377117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 895377110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!114 &903443229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1968,6 +1983,7 @@ GameObject:
   - component: {fileID: 960241006}
   - component: {fileID: 960241010}
   - component: {fileID: 960241011}
+  - component: {fileID: 960241012}
   m_Layer: 0
   m_Name: Fragment_Position_4
   m_TagString: Untagged
@@ -1992,7 +2008,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -2068,7 +2084,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 960241005}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -2078,6 +2094,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &960241011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2093,6 +2110,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &960241012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960241005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!1 &965357056
 GameObject:
   m_ObjectHideFlags: 0
@@ -2515,6 +2545,8 @@ MonoBehaviour:
   isInteracting: 0
   curSecondaryPos: {x: 0, y: 0, z: 0}
   isRotating: 0
+  isTapped: 0
+  tapPosition: {x: 0, y: 0}
   ZoomSpeed: 0
   isClickedOn: 0
 --- !u!4 &1181414296
@@ -2539,7 +2571,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1181414294}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 12aad418861f448dc94cdd3b1e7f27b7, type: 3}
   m_Name: 
@@ -2811,7 +2843,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1431975635
 Transform:
   m_ObjectHideFlags: 0
@@ -2845,6 +2877,7 @@ GameObject:
   - component: {fileID: 1457455709}
   - component: {fileID: 1457455713}
   - component: {fileID: 1457455714}
+  - component: {fileID: 1457455715}
   m_Layer: 0
   m_Name: Fragment_Position_5
   m_TagString: Untagged
@@ -2869,7 +2902,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -2945,7 +2978,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1457455708}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -2955,6 +2988,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &1457455714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2970,6 +3004,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &1457455715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1457455708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!114 &1483918135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3734,7 +3781,7 @@ MonoBehaviour:
   zoomSpeed: 5
   minZoom: 4.4
   maxZoom: 6.5
-  rotationRate: 0.05
+  rotationRate: 0.08
   xRotation: 1
   yRotation: 1
   invertX: 0
@@ -3829,6 +3876,7 @@ GameObject:
   - component: {fileID: 1862372470}
   - component: {fileID: 1862372474}
   - component: {fileID: 1862372475}
+  - component: {fileID: 1862372476}
   m_Layer: 0
   m_Name: Fragment_Position_3
   m_TagString: Untagged
@@ -3853,7 +3901,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -3930,7 +3978,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1862372469}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -3940,6 +3988,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &1862372475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3955,6 +4004,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &1862372476
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862372469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!1 &1894217734
 GameObject:
   m_ObjectHideFlags: 0
@@ -3969,6 +4031,7 @@ GameObject:
   - component: {fileID: 1894217735}
   - component: {fileID: 1894217739}
   - component: {fileID: 1894217740}
+  - component: {fileID: 1894217741}
   m_Layer: 0
   m_Name: Fragment_Position_1
   m_TagString: Untagged
@@ -3993,7 +4056,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -4070,7 +4133,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894217734}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -4080,6 +4143,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &1894217740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4095,6 +4159,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &1894217741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1894217734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!114 &1931734215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4327,6 +4404,7 @@ GameObject:
   - component: {fileID: 2060159661}
   - component: {fileID: 2060159665}
   - component: {fileID: 2060159666}
+  - component: {fileID: 2060159667}
   m_Layer: 0
   m_Name: Fragment_Position_6
   m_TagString: Untagged
@@ -4351,7 +4429,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -4427,7 +4505,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2060159660}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5bc6a36629044e39960cb21315ce88, type: 3}
   m_Name: 
@@ -4437,6 +4515,7 @@ MonoBehaviour:
   surface: {fileID: 0}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!114 &2060159666
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4452,6 +4531,19 @@ MonoBehaviour:
   gizmoType: 1
   size: 1
   color: {r: 0, g: 0.72492766, b: 1, a: 0.16470589}
+--- !u!114 &2060159667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060159660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
 --- !u!1001 &2099389376
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6779,6 +6871,7 @@ MonoBehaviour:
   surface: {fileID: 7972151268151671827}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!4 &4739649330586685646
 Transform:
   m_ObjectHideFlags: 0
@@ -6819,6 +6912,7 @@ MonoBehaviour:
   surface: {fileID: 641710189888862841}
   isDragging: 0
   isReturning: 0
+  isTapping: 0
 --- !u!4 &5059950785340148354
 Transform:
   m_ObjectHideFlags: 0

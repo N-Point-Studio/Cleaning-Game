@@ -1,25 +1,23 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AssembleManager : MonoBehaviour
 {
+    public static AssembleManager Instance;
+
     [Header("Artifact Data (ScriptableObject)")]
     public Fragment artefactData;
 
-    [Header("Slots untuk fragment (urutan harus sesuai dengan ScriptableObject)")]
+    [Header("Fragment Slots")]
     public List<Transform> fragmentSlots = new List<Transform>();
-    // Drag Fragment_position_1, Fragment_position_2, ... ke sini
 
     [Header("Inspect Center Position")]
     public Transform inspectCenter;
 
-    [Header("Attach Settings")]
-    public float snapDistance = 0.25f;
 
-    private List<FragmentController> fragments = new List<FragmentController>();
+    private readonly List<FragmentController> fragments = new List<FragmentController>();
     private FragmentController currentInspectTarget = null;
-
-    public static AssembleManager Instance;
 
     void Awake()
     {
@@ -35,13 +33,11 @@ public class AssembleManager : MonoBehaviour
     {
         if (artefactData == null)
         {
-            Debug.LogError("[AssembleManager] Missing artefactData!");
             return;
         }
 
         if (fragmentSlots.Count < artefactData.fragmentMeshes.Count)
         {
-            Debug.LogError("[AssembleManager] Slot count tidak cukup untuk fragment data!");
             return;
         }
 
@@ -50,95 +46,44 @@ public class AssembleManager : MonoBehaviour
         for (int i = 0; i < artefactData.fragmentMeshes.Count; i++)
         {
             Transform slot = fragmentSlots[i];
-
             FragmentData data = artefactData.fragmentMeshes[i];
-
-            // Create fragment object
             GameObject fragObj = new GameObject("Fragment_" + (i + 1));
             fragObj.transform.SetParent(slot);
             fragObj.transform.localPosition = Vector3.zero;
             fragObj.transform.localRotation = Quaternion.identity;
 
-            // Mesh and material
-            MeshFilter mf = fragObj.AddComponent<MeshFilter>();
-            mf.sharedMesh = data.mesh;
+            fragObj.layer = LayerMask.NameToLayer("Dirts");
 
-            MeshRenderer mr = fragObj.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = data.material;
+            fragObj.AddComponent<MeshFilter>().sharedMesh = data.mesh;
+            fragObj.AddComponent<MeshRenderer>().sharedMaterial = data.material;
+            fragObj.AddComponent<MeshCollider>();
 
-            // Add logic components
             FragmentController fc = fragObj.AddComponent<FragmentController>();
-            fragObj.AddComponent<FragmentDraggable>();
-            MeshCollider mc = fragObj.AddComponent<MeshCollider>();
-
-            // Auto attach point
-            GameObject attach = new GameObject("AttachPoint");
-            attach.transform.SetParent(fragObj.transform);
-            attach.transform.localPosition = Vector3.zero;
-            fc.attachPoint = attach.transform;
-
             fc.SaveInitialTransform();
+
+            Clean clean = fragObj.AddComponent<Clean>();
+            clean._dirtMaskBase = artefactData.mask;
+            clean._material = artefactData.mat;
+
             fragments.Add(fc);
         }
     }
 
-    public void Inspect(FragmentController selected)
+    public void InspectFragment(FragmentController newTarget)
     {
-        currentInspectTarget = selected;
-        selected.transform.position = inspectCenter.position;
-    }
-
-    public void TryAttach(FragmentController dragged)
-    {
-        if (currentInspectTarget == null || dragged == currentInspectTarget)
+        if (currentInspectTarget == null)
+        {
+            currentInspectTarget = newTarget;
+            currentInspectTarget.SetMoveStateInspect();
             return;
-
-        float dist = Vector3.Distance(
-            dragged.transform.position,
-            currentInspectTarget.attachPoint.position
-        );
-
-        if (dist <= snapDistance)
-        {
-            dragged.transform.position = currentInspectTarget.attachPoint.position;
-            dragged.transform.rotation = currentInspectTarget.attachPoint.rotation;
-            dragged.isAttached = true;
-
-            // Set next reference for chain attach
-            currentInspectTarget = dragged;
-            CheckCompletion();
         }
-    }
 
-    public void ResetFragment(FragmentController fc)
-    {
-        fc.ResetFragment();
-        if (currentInspectTarget == fc)
-            currentInspectTarget = null;
-    }
+        if (newTarget == currentInspectTarget) return;
 
-    void CheckCompletion()
-    {
-        foreach (var frag in fragments)
-        {
-            if (!frag.isAttached)
-                return;
-        }
-    }
+        currentInspectTarget.SetMoveStateReset();
 
-    void OnDrawGizmos()
-    {
-        if (inspectCenter == null || fragmentSlots == null)
-            return;
-
-        Gizmos.color = Color.yellow;
-
-        foreach (var slot in fragmentSlots)
-        {
-            if (slot == null) continue;
-            Gizmos.DrawLine(slot.position, inspectCenter.position);
-            Gizmos.DrawSphere(inspectCenter.position, 0.02f);
-        }
+        currentInspectTarget = newTarget;
+        newTarget.SetMoveStateInspect();
     }
 
 }

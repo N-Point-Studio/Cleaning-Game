@@ -20,7 +20,14 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     private Coroutine ZoomCoroutine;
     public Vector3 curSecondaryPos;
     public bool isRotating = false;
+    public bool isTapped = false;
+    public static event Action OnTapped;
+    public static event Action OnTapReleased;
 
+    public Vector2 tapPosition;
+
+
+    float touchDownTime;
     [SerializeField] private float ZoomSpeed;
 
     private void Awake()
@@ -46,6 +53,8 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         // Debug.Log("Position primary: " + curScreenPos);
         // Debug.Log("Position secondaty: " + curSecondaryPos);
         if (curScreenPos == Vector3.zero) return;
+        // Debug.Log("isTapped: " + isTapped);
+
         // ScreenSafeArea();
     }
 
@@ -77,17 +86,28 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     public void OnPress(InputAction.CallbackContext context)
     {
+        // if (context.started)
+        // {
+        //     touchDownTime = Time.time;
+        // }
         if (context.performed)
         {
-            Debug.Log("clicked: tap");
+            // Debug.Log("clicked: tap");
             isClickedOn = true;
         }
         else if (context.canceled)
         {
+            // if (Time.time - touchDownTime <= 0.25f)
+            // {
+            //     Debug.Log("Tap");
+            //     isTapped = true;
+            // }
+
             curScreenPos = Vector3.zero;
             isInteracting = false;
             isClickedOn = false;
-            Debug.Log("clicked: release");
+            isTapped = false;
+            // Debug.Log("clicked: release");
         }
     }
 
@@ -96,6 +116,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         if (isClickedOn)
         {
             curScreenPos = context.ReadValue<Vector2>();
+            tapPosition = context.ReadValue<Vector2>();
             // curScreenPos = new Vector3
         }
     }
@@ -109,11 +130,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public void IsRotate(bool isRotate)
     {
         isRotating = isRotate;
-    }
-
-    public void OnPrimaryFingerPos(InputAction.CallbackContext context)
-    {
-        // curSecondaryPos = context.ReadValue<Vector2>();
     }
 
     public void OnSecondaryFingerPos(InputAction.CallbackContext context)
@@ -134,38 +150,30 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         }
     }
 
-    private void ZoomBegin()
+    public void OnTap(InputAction.CallbackContext context)
     {
-        ZoomCoroutine = StartCoroutine(ZoomDetection());
-    }
-
-    private void ZoomEnding()
-    {
-        StopCoroutine(ZoomCoroutine);
-    }
-
-    IEnumerator ZoomDetection()
-    {
-        float previousDistance = 0, distance = 0;
-        while (true)
+        // if (context.performed)
+        // {
+        //     isTapped = true;
+        //     // Debug.Log("status performed: " + isTapped);
+        // }
+        // else if (context.canceled)
+        // {
+        //     isTapped = false;
+        //     // Debug.Log("status : " + isTapped);
+        // }
+        if (context.started)
         {
-            distance = Vector2.Distance(curScreenPos, curSecondaryPos);
-
-            if (distance > previousDistance)
-            {
-                Vector3 targetPos = mainCamera.transform.position;
-                targetPos.z -= 1;
-                mainCamera.transform.position = Vector3.Slerp(mainCamera.transform.position, targetPos, Time.deltaTime * ZoomSpeed);
-            }
-            else if (distance < previousDistance)
-            {
-                Vector3 targetPos = mainCamera.transform.position;
-                targetPos.z += 1;
-                mainCamera.transform.position = Vector3.Slerp(mainCamera.transform.position, targetPos, Time.deltaTime * ZoomSpeed);
-            }
-
-            previousDistance = distance;
-            yield return null;
+            Debug.Log("Tap mulai");
+            isTapped = true;
+            OnTapped?.Invoke();
+        }
+        else if (context.canceled)
+        {
+            Debug.Log("Tap selesai");
+            isTapped = false;
+            OnTapReleased?.Invoke();
         }
     }
+
 }
