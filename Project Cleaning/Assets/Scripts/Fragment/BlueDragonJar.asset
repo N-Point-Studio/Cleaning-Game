@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72883325ab56e40ed81ec2c481d7249b, type: 3}
+  m_Name: BlueDragonJar
+  m_EditorClassIdentifier: 
+  finalModel: {fileID: 7065439566198968859, guid: 3215ce60666d547999d265b42c8ca86e,
+    type: 3}
+  fragmentMeshes:
+  - mesh: {fileID: 6384826204913660374, guid: 3215ce60666d547999d265b42c8ca86e, type: 3}
+    material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
+  - mesh: {fileID: 7326876484358278166, guid: 3215ce60666d547999d265b42c8ca86e, type: 3}
+    material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
+  - mesh: {fileID: -5497565635206198435, guid: 3215ce60666d547999d265b42c8ca86e, type: 3}
+    material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
+  artifactName: Blue Dragon Jar
+  history: Guci apalah gatau

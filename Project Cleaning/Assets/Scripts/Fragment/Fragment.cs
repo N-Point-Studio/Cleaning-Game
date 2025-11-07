@@ -2,21 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Fragment : MonoBehaviour
+[System.Serializable]
+public struct FragmentData
 {
-    [SerializeField] private Clean clean;
-    [SerializeField] private DraggableObject drag;
-    public bool isAssembled = false;
+    public Mesh mesh;
+    public Material material;
+}
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
+[CreateAssetMenu(fileName = "New Artefact", menuName = "Artefact")]
+public class Fragment : ScriptableObject
+{
+    public Mesh finalModel;
+    public List<FragmentData> fragmentMeshes;
+    public string artifactName;
+    public string history;
 }

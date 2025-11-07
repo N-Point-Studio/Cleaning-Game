@@ -46,7 +46,10 @@ public class InspectableJar : MonoBehaviour
         if (TouchManager.Instance.isInteracting) return;
         if (!TouchManager.Instance.isClickedOn)
         {
+            Debug.Log("Rotate click " + TouchManager.Instance.isClickedOn);
             isRotating = false;
+            TouchManager.Instance.IsRotate(false);
+
             fingerOnObject = false;
             return;
         }
@@ -69,12 +72,18 @@ public class InspectableJar : MonoBehaviour
         if (moveDist > dragThreshold)
         {
             isRotating = true;
+            TouchManager.Instance.IsRotate(true);
+
         }
 
         if (isRotating)
         {
             RotateObject(curPos);
         }
+
+        // TouchManager.Instance.TouchUsed(isRotating);
+        // Debug.Log("Rotating: " + TouchManager.Instance.isRotating);
+        // TouchManager.Instance.IsRotate(isRotating);
     }
 
     private void RotateObject(Vector2 touchPos)

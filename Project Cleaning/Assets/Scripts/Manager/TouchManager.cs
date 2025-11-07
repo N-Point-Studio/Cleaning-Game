@@ -10,7 +10,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public Vector3 curScreenPos;
     private Camera mainCamera;
     public bool isInteracting = false;
-
     private float edgeOffset = 10f;
     private float screenWidth;
     private float screenHeight;
@@ -20,6 +19,8 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public static event Action ZoomEnd;
     private Coroutine ZoomCoroutine;
     public Vector3 curSecondaryPos;
+    public bool isRotating = false;
+
     [SerializeField] private float ZoomSpeed;
 
     private void Awake()
@@ -42,8 +43,8 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     void Update()
     {
-        Debug.Log("Position primary: " + curScreenPos);
-        Debug.Log("Position secondaty: " + curSecondaryPos);
+        // Debug.Log("Position primary: " + curScreenPos);
+        // Debug.Log("Position secondaty: " + curSecondaryPos);
         if (curScreenPos == Vector3.zero) return;
         // ScreenSafeArea();
     }
@@ -103,6 +104,11 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public void TouchUsed(bool isUsed)
     {
         isInteracting = isUsed;
+    }
+
+    public void IsRotate(bool isRotate)
+    {
+        isRotating = isRotate;
     }
 
     public void OnPrimaryFingerPos(InputAction.CallbackContext context)

@@ -39,7 +39,7 @@ public class SurfaceDetection : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log("is used? " + isUsed);
+        // Debug.Log("is used? " + isUsed);
         if (isUsed) PerformRaycast();
     }
 

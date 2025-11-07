@@ -4,7 +4,7 @@ public class DraggableObject : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
     [SerializeField] private Transform GrabPosition;
-    [SerializeField] private SurfaceDetection surface;
+    [SerializeField] private SurfaceDetection surface = null;
     private Vector3 initialPosition;
     private float grabOffset;
     public bool isDragging = false;
@@ -24,7 +24,8 @@ public class DraggableObject : MonoBehaviour
     {
 
         if (TouchManager.Instance == null) return;
-        if (!TouchManager.Instance.isInteracting)
+
+        if (!TouchManager.Instance.isInteracting && !TouchManager.Instance.isRotating)
         {
             Ray ray = mainCamera.ScreenPointToRay(TouchManager.Instance.curScreenPos);
             if (Physics.Raycast(ray, out RaycastHit hit))
@@ -34,7 +35,7 @@ public class DraggableObject : MonoBehaviour
                     isDragging = true;
                     isReturning = false;
                     TouchManager.Instance.TouchUsed(true);
-                    surface.isUsed = true;
+                    if (surface != null) surface.isUsed = true;
                 }
             }
         }
@@ -57,7 +58,9 @@ public class DraggableObject : MonoBehaviour
             {
                 isReturning = false;
                 isDragging = false;
-                surface.isUsed = false;
+                // surface?.isUsed = false;
+                if (surface != null) surface.isUsed = false;
+
 
             }
             return;
