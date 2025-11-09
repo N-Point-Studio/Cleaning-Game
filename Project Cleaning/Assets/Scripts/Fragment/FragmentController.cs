@@ -14,6 +14,16 @@ public class FragmentController : MonoBehaviour
         originalParent = transform.parent;
     }
 
+    private void OnEnable()
+    {
+        TouchManager.OnHoldPerformed += TryReturnToSlot;
+    }
+
+    private void OnDisable()
+    {
+        TouchManager.OnHoldPerformed -= TryReturnToSlot;
+    }
+
     public void SaveInitialTransform()
     {
         originalLocalPos = transform.localPosition;
@@ -80,5 +90,56 @@ public class FragmentController : MonoBehaviour
         transform.SetParent(originalParent);
         transform.localPosition = originalLocalPos;
         transform.localRotation = originalLocalRot;
+    }
+
+    public void SetMoveStateInspectToGroup(Transform group)
+    {
+        if (moveRoutine != null) StopCoroutine(moveRoutine);
+        moveRoutine = StartCoroutine(MoveToGroup(group));
+    }
+
+    IEnumerator MoveToGroup(Transform group)
+    {
+        Vector3 startPos = transform.position;
+        Quaternion startRot = transform.rotation;
+
+        Vector3 endPos = group.position;
+        Quaternion endRot = group.rotation;
+
+        float t = 0f;
+        float duration = 0.35f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+            transform.position = Vector3.Lerp(startPos, endPos, t);
+            transform.rotation = Quaternion.Slerp(startRot, endRot, t);
+            yield return null;
+        }
+
+        transform.SetParent(group, true);
+    }
+    void TryReturnToSlot()
+    {
+        Debug.Log("RETURN");
+        // Cek apakah fragment ini yang sedang dihold
+        Ray ray = Camera.main.ScreenPointToRay(TouchManager.Instance.tapPosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            if (hit.transform == transform)
+            {
+                ReturnToSlot();
+            }
+        }
+    }
+
+    public void ReturnToSlot()
+    {
+        // Lepas dari grup
+        if (transform.parent.GetComponent<FragmentGroup>() != null)
+            transform.parent.GetComponent<FragmentGroup>().Remove(this);
+
+        SetMoveStateReset();
     }
 }

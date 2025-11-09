@@ -7,17 +7,12 @@ public struct FragmentData
 {
     public Mesh mesh;
     public Material material;
+    public Vector3 correctPosition;
 }
 
 [System.Serializable]
 public struct SurfaceData
 {
-    public enum CollisionToolsType
-    {
-        Texture,
-        Mesh,
-    }
-
     public Texture2D mask;
     public Material mat;
     public int type;

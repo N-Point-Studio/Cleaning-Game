@@ -23,9 +23,10 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public bool isTapped = false;
     public static event Action OnTapped;
     public static event Action OnTapReleased;
-
     public Vector2 tapPosition;
 
+    public static event Action OnHoldPerformed;
+    public static event Action OnHoldReleased;
 
     float touchDownTime;
     [SerializeField] private float ZoomSpeed;
@@ -50,12 +51,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     void Update()
     {
-        // Debug.Log("Position primary: " + curScreenPos);
-        // Debug.Log("Position secondaty: " + curSecondaryPos);
         if (curScreenPos == Vector3.zero) return;
-        // Debug.Log("isTapped: " + isTapped);
-
-        // ScreenSafeArea();
     }
 
     public bool isClickedOn = false;
@@ -86,28 +82,16 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     public void OnPress(InputAction.CallbackContext context)
     {
-        // if (context.started)
-        // {
-        //     touchDownTime = Time.time;
-        // }
         if (context.performed)
         {
-            // Debug.Log("clicked: tap");
             isClickedOn = true;
         }
         else if (context.canceled)
         {
-            // if (Time.time - touchDownTime <= 0.25f)
-            // {
-            //     Debug.Log("Tap");
-            //     isTapped = true;
-            // }
-
             curScreenPos = Vector3.zero;
             isInteracting = false;
             isClickedOn = false;
             isTapped = false;
-            // Debug.Log("clicked: release");
         }
     }
 
@@ -117,7 +101,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         {
             curScreenPos = context.ReadValue<Vector2>();
             tapPosition = context.ReadValue<Vector2>();
-            // curScreenPos = new Vector3
         }
     }
 
@@ -152,16 +135,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     public void OnTap(InputAction.CallbackContext context)
     {
-        // if (context.performed)
-        // {
-        //     isTapped = true;
-        //     // Debug.Log("status performed: " + isTapped);
-        // }
-        // else if (context.canceled)
-        // {
-        //     isTapped = false;
-        //     // Debug.Log("status : " + isTapped);
-        // }
         if (context.started)
         {
             Debug.Log("Tap mulai");
@@ -176,4 +149,17 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         }
     }
 
+    public void OnHold(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Debug.Log("Hold");
+            OnHoldPerformed?.Invoke();
+        }
+        else if (context.canceled)
+        {
+            Debug.Log("Hold Released");
+            OnHoldReleased?.Invoke();
+        }
+    }
 }

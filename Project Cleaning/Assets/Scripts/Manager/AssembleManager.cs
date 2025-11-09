@@ -15,6 +15,8 @@ public class AssembleManager : MonoBehaviour
     [Header("Inspect Center Position")]
     public Transform inspectCenter;
 
+    private FragmentGroup currentGroup;
+
 
     private readonly List<FragmentController> fragments = new List<FragmentController>();
     private FragmentController currentInspectTarget = null;
@@ -84,6 +86,50 @@ public class AssembleManager : MonoBehaviour
 
         currentInspectTarget = newTarget;
         newTarget.SetMoveStateInspect();
+    }
+
+    public void InspectFragment1(FragmentController newTarget)
+    {
+        // Jika belum ada grup → buat grup baru
+        if (currentGroup == null)
+        {
+            currentGroup = new GameObject("FragmentGroup").AddComponent<FragmentGroup>();
+            currentGroup.transform.position = inspectCenter.position;
+            currentGroup.transform.rotation = inspectCenter.rotation;
+
+            currentGroup.Add(newTarget);
+            newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+            return;
+        }
+
+        // Jika fragment sudah dalam grup → cukup fokuskan kamera ke grup
+        if (currentGroup.Contains(newTarget)) return;
+
+        // Jika fragment lain di tap → tambahkan fragment itu ke grup
+        currentGroup.Add(newTarget);
+        newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+    }
+
+    public void TryAssembleFragment(FragmentController newTarget)
+    {
+        // Jika belum ada grup → buat grup baru
+        if (currentGroup == null)
+        {
+            currentGroup = new GameObject("FragmentGroup").AddComponent<FragmentGroup>();
+            currentGroup.transform.position = inspectCenter.position;
+            currentGroup.transform.rotation = inspectCenter.rotation;
+
+            currentGroup.Add(newTarget);
+            newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+            return;
+        }
+
+        // Jika fragment sudah dalam grup → cukup fokuskan kamera ke grup
+        if (currentGroup.Contains(newTarget)) return;
+
+        // Jika fragment lain di tap → tambahkan fragment itu ke grup
+        currentGroup.Add(newTarget);
+        newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
     }
 
 }
