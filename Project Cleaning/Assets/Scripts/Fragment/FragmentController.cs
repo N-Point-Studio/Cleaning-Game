@@ -44,6 +44,7 @@ public class FragmentController : MonoBehaviour
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
         GetComponent<InspectableJar>().enabled = false;
+
         AssembleManager.Instance.ResetInspect();
         moveRoutine = StartCoroutine(MoveBackToSlot());
     }
@@ -123,6 +124,7 @@ public class FragmentController : MonoBehaviour
 
         transform.SetParent(group, true);
     }
+
     void TryReturnToSlot()
     {
         if (inspect.isRotating && inspect.fingerOnObject) return;
@@ -132,18 +134,11 @@ public class FragmentController : MonoBehaviour
         {
             if (hit.transform == transform)
             {
+                if (transform.parent.GetComponent<FragmentGroup>() != null)
+                    transform.parent.GetComponent<FragmentGroup>().Remove(this);
                 SetMoveStateReset();
-                Debug.Log("ADA");
             }
         }
     }
 
-    public void ReturnToSlot()
-    {
-        // Lepas dari grup
-        if (transform.parent.GetComponent<FragmentGroup>() != null)
-            transform.parent.GetComponent<FragmentGroup>().Remove(this);
-
-        SetMoveStateReset();
-    }
 }

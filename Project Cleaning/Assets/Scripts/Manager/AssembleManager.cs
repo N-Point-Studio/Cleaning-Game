@@ -75,16 +75,16 @@ public class AssembleManager : MonoBehaviour
     {
         if (currentInspectTarget == null)
         {
-            Debug.Log("[LOG] currentInspectTarget null");
             currentInspectTarget = newTarget;
             currentInspectTarget.SetMoveStateInspect();
             return;
         }
 
-        if (newTarget == currentInspectTarget)
+        if (newTarget == currentInspectTarget) return;
+
+        if (currentGroup.members.Count != 0)
         {
-            Debug.Log("[LOG] newTarget == currentInspectTarget");
-            return;
+
         }
 
         currentInspectTarget.SetMoveStateReset();
@@ -100,20 +100,38 @@ public class AssembleManager : MonoBehaviour
 
     public void TryAssembleFragment(FragmentController newTarget)
     {
+        // Kalau belum ada group, buat group baru
         if (currentGroup == null)
         {
             currentGroup = new GameObject("FragmentGroup").AddComponent<FragmentGroup>();
             currentGroup.transform.position = inspectCenter.position;
             currentGroup.transform.rotation = inspectCenter.rotation;
+            currentGroup.transform.SetParent(inspectCenter, true);
 
-            currentGroup.Add(newTarget);
-            newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+            // Simpan di slot fragment yang sedang di-inspect
+            currentGroup.originalSlot = currentInspectTarget.transform.parent;
+        }
+
+
+        // Pastikan fragment yang currently di-inspect ikut masuk group
+        if (currentInspectTarget != null && !currentGroup.Contains(currentInspectTarget))
+        {
+            Debug.Log("HARUSNYA MASUK");
+            currentGroup.Add(currentInspectTarget);
+            currentInspectTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+        }
+
+        // Kalau newTarget sudah ada di dalam group, tidak perlu diproses
+        if (currentGroup.Contains(newTarget))
+        {
+            Debug.Log("Group already contains " + newTarget.name);
             return;
         }
 
-        if (currentGroup.Contains(newTarget)) return;
+        // Masukkan fragment baru ke group
         currentGroup.Add(newTarget);
         newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
     }
+
 
 }

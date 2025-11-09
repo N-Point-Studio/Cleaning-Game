@@ -79,9 +79,9 @@ public class FragmentSlot : MonoBehaviour
             // isCloseToAssemble = currentDistanceZ <= 2;
             // Debug.Log("CLOSE TO ASSEMBLE: " + isCloseToAssemble);
             FragmentController frag = GetComponentInChildren<FragmentController>();
-            if (frag != null) // kalau ada fragment
+            if (currentDistanceZ <= 2 && frag != null)
             {
-                // AssembleManager.Instance.TryAssembleFragment(frag);
+                AssembleManager.Instance.TryAssembleFragment(frag);
             }
 
             transform.position = new Vector3(

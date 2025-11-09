@@ -137,13 +137,11 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.started)
         {
-            Debug.Log("Tap mulai");
             isTapped = true;
             OnTapped?.Invoke();
         }
         else if (context.canceled)
         {
-            Debug.Log("Tap selesai");
             isTapped = false;
             OnTapReleased?.Invoke();
         }
@@ -153,12 +151,10 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
-            Debug.Log("Hold");
             OnHoldPerformed?.Invoke();
         }
         else if (context.canceled)
         {
-            Debug.Log("Hold Released");
             OnHoldReleased?.Invoke();
         }
     }
