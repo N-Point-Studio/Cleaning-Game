@@ -1,0 +1,47 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class FragmentReturningState : FragmentBaseState
+{
+    private float moveSpeed = 6f;
+    private Vector3 targetPosition;
+    private Quaternion targetRotation;
+
+    public FragmentReturningState(FragmentStateMachine stateMachine) : base(stateMachine)
+    {
+        targetPosition = stateMachine.initialPosition;
+        targetRotation = stateMachine.initialRotation;
+    }
+
+    public override void Enter()
+    {
+    }
+
+    public override void Tick(float dt)
+    {
+        stateMachine.transform.position = Vector3.Lerp(
+            stateMachine.transform.position,
+            targetPosition,
+            dt * moveSpeed
+        );
+
+        stateMachine.transform.rotation = Quaternion.Lerp(
+            stateMachine.transform.rotation,
+            targetRotation,
+            dt * moveSpeed
+        );
+
+        if (Vector3.Distance(stateMachine.transform.position, targetPosition) < 0.01f)
+        {
+            stateMachine.transform.position = targetPosition;
+            stateMachine.transform.rotation = targetRotation;
+            stateMachine.SwitchState(new FragmentIdleState(stateMachine));
+        }
+    }
+
+    public override void Exit()
+    {
+    }
+}
+

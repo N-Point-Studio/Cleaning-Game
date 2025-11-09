@@ -60,6 +60,9 @@ public class AssembleManager : MonoBehaviour
             fragObj.AddComponent<MeshRenderer>().sharedMaterial = data.material;
             fragObj.AddComponent<MeshCollider>();
 
+            fragObj.AddComponent<FragmentStateMachine>();
+
+
             FragmentController fc = fragObj.AddComponent<FragmentController>();
             fc.SaveInitialTransform();
 

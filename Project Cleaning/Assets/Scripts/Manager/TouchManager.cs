@@ -143,6 +143,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         else if (context.canceled)
         {
             isTapped = false;
+            Debug.Log("tap release");
             OnTapReleased?.Invoke();
         }
     }
