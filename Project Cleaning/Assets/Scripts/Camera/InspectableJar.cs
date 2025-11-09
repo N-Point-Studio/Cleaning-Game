@@ -9,16 +9,16 @@ public class InspectableJar : MonoBehaviour
     [SerializeField] private float maxZoom = 6.5f;
 
     [Header("Rotate Settings")]
-    [SerializeField] private float rotationRate = 3.0f;
+    [SerializeField] private float rotationRate = .08f;
     [SerializeField] private bool xRotation = true;
     [SerializeField] private bool yRotation = true;
     [SerializeField] private bool invertX = false;
-    [SerializeField] private bool invertY = false;
+    [SerializeField] private bool invertY = true;
 
-    private bool isRotating = false;
+    public bool isRotating = false;
     private float previousX;
     private float previousZ;
-    private bool fingerOnObject = false;
+    public bool fingerOnObject = false;
     private float dragThreshold = 5f;
 
     private Coroutine zoomRoutine;
@@ -46,7 +46,6 @@ public class InspectableJar : MonoBehaviour
         if (TouchManager.Instance.isInteracting) return;
         if (!TouchManager.Instance.isClickedOn)
         {
-            // Debug.Log("Rotate click " + TouchManager.Instance.isClickedOn);
             isRotating = false;
             TouchManager.Instance.IsRotate(false);
 
@@ -80,10 +79,6 @@ public class InspectableJar : MonoBehaviour
         {
             RotateObject(curPos);
         }
-
-        // TouchManager.Instance.TouchUsed(isRotating);
-        // Debug.Log("Rotating: " + TouchManager.Instance.isRotating);
-        // TouchManager.Instance.IsRotate(isRotating);
     }
 
     private void RotateObject(Vector2 touchPos)

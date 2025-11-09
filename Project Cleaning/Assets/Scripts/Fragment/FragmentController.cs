@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof(InspectableJar))]
 public class FragmentController : MonoBehaviour
 {
     private Transform originalParent;
@@ -8,10 +9,12 @@ public class FragmentController : MonoBehaviour
     private Quaternion originalLocalRot;
 
     private Coroutine moveRoutine;
+    private InspectableJar inspect;
 
     void Awake()
     {
         originalParent = transform.parent;
+        inspect = GetComponent<InspectableJar>();
     }
 
     private void OnEnable()
@@ -33,14 +36,15 @@ public class FragmentController : MonoBehaviour
     public void SetMoveStateInspect()
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
-
+        GetComponent<InspectableJar>().enabled = true;
         moveRoutine = StartCoroutine(MoveToInspect());
     }
 
     public void SetMoveStateReset()
     {
         if (moveRoutine != null) StopCoroutine(moveRoutine);
-
+        GetComponent<InspectableJar>().enabled = false;
+        AssembleManager.Instance.ResetInspect();
         moveRoutine = StartCoroutine(MoveBackToSlot());
     }
 
@@ -121,15 +125,15 @@ public class FragmentController : MonoBehaviour
     }
     void TryReturnToSlot()
     {
-        Debug.Log("RETURN");
-        // Cek apakah fragment ini yang sedang dihold
+        if (inspect.isRotating && inspect.fingerOnObject) return;
         Ray ray = Camera.main.ScreenPointToRay(TouchManager.Instance.tapPosition);
 
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             if (hit.transform == transform)
             {
-                ReturnToSlot();
+                SetMoveStateReset();
+                Debug.Log("ADA");
             }
         }
     }

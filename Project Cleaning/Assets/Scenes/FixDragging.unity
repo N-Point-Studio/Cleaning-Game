@@ -546,7 +546,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &191996619
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1682,7 +1681,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 895377115}
 --- !u!114 &903443229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1767,7 +1767,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &912739063
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2122,7 +2121,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 960241010}
 --- !u!1 &965357056
 GameObject:
   m_ObjectHideFlags: 0
@@ -2173,7 +2173,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &965357059
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2585,7 +2584,6 @@ MonoBehaviour:
   - {fileID: 1457455712}
   - {fileID: 2060159664}
   inspectCenter: {fileID: 1817246313}
-  snapDistance: 0.25
 --- !u!114 &1189313263
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3016,7 +3014,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 1457455713}
 --- !u!114 &1483918135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3237,7 +3236,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &1517554626
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3523,7 +3521,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &1612828276
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3696,7 +3693,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -4016,7 +4013,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 1862372474}
 --- !u!1 &1894217734
 GameObject:
   m_ObjectHideFlags: 0
@@ -4171,7 +4169,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 1894217739}
 --- !u!114 &1931734215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4256,7 +4255,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
-  type: 1
 --- !u!64 &2031888521
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4543,7 +4541,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0eca161e69ce944ad83011da94ac9df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attachPoint: {fileID: 0}
+  InspectPosition: {fileID: 1817246313}
+  drag: {fileID: 2060159665}
 --- !u!1001 &2099389376
 PrefabInstance:
   m_ObjectHideFlags: 0

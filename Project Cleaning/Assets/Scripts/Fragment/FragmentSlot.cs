@@ -52,7 +52,7 @@ public class FragmentSlot : MonoBehaviour
                 FragmentController frag = hit.transform.GetComponentInChildren<FragmentController>();
                 if (frag != null)
                 {
-                    // Debug.Log("Fragment yang di tap: " + frag.name);
+                    Debug.Log("Fragment yang di tap: " + frag.name);
                     AssembleManager.Instance.InspectFragment(frag);
                 }
             }

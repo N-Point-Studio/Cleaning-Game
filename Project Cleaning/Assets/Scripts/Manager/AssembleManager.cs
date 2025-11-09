@@ -75,12 +75,17 @@ public class AssembleManager : MonoBehaviour
     {
         if (currentInspectTarget == null)
         {
+            Debug.Log("[LOG] currentInspectTarget null");
             currentInspectTarget = newTarget;
             currentInspectTarget.SetMoveStateInspect();
             return;
         }
 
-        if (newTarget == currentInspectTarget) return;
+        if (newTarget == currentInspectTarget)
+        {
+            Debug.Log("[LOG] newTarget == currentInspectTarget");
+            return;
+        }
 
         currentInspectTarget.SetMoveStateReset();
 
@@ -88,31 +93,13 @@ public class AssembleManager : MonoBehaviour
         newTarget.SetMoveStateInspect();
     }
 
-    public void InspectFragment1(FragmentController newTarget)
+    public void ResetInspect()
     {
-        // Jika belum ada grup → buat grup baru
-        if (currentGroup == null)
-        {
-            currentGroup = new GameObject("FragmentGroup").AddComponent<FragmentGroup>();
-            currentGroup.transform.position = inspectCenter.position;
-            currentGroup.transform.rotation = inspectCenter.rotation;
-
-            currentGroup.Add(newTarget);
-            newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
-            return;
-        }
-
-        // Jika fragment sudah dalam grup → cukup fokuskan kamera ke grup
-        if (currentGroup.Contains(newTarget)) return;
-
-        // Jika fragment lain di tap → tambahkan fragment itu ke grup
-        currentGroup.Add(newTarget);
-        newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
+        currentInspectTarget = null;
     }
 
     public void TryAssembleFragment(FragmentController newTarget)
     {
-        // Jika belum ada grup → buat grup baru
         if (currentGroup == null)
         {
             currentGroup = new GameObject("FragmentGroup").AddComponent<FragmentGroup>();
@@ -124,10 +111,7 @@ public class AssembleManager : MonoBehaviour
             return;
         }
 
-        // Jika fragment sudah dalam grup → cukup fokuskan kamera ke grup
         if (currentGroup.Contains(newTarget)) return;
-
-        // Jika fragment lain di tap → tambahkan fragment itu ke grup
         currentGroup.Add(newTarget);
         newTarget.SetMoveStateInspectToGroup(currentGroup.transform);
     }
