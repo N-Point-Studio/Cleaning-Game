@@ -14,7 +14,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/ProcuduralAnimation.unity
     guid: 4e2a3a9dc70eb4bb59023680cb85c330
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/FixDragging.unity
     guid: 42bceba8709bb451eadb61671f8dfa1a
+  - enabled: 1
+    path: Assets/Scenes/Background & Lighting.unity
+    guid: 0051c374b68684fd2a817db47432225d
   m_configObjects: {}
