@@ -125,10 +125,12 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
+            Debug.Log("secondary performed");
             ZoomStart?.Invoke();
         }
         else if (context.canceled)
         {
+            Debug.Log("secondary canceled");
             ZoomEnd?.Invoke();
         }
     }

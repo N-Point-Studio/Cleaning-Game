@@ -13,11 +13,6 @@ public class FragmentStateMachine : StateMachine
     public Quaternion initialRotation { get; private set; }
     public static FragmentStateMachine CurrentInspecting;
 
-
-    // public float initialY;
-
-    // public Transform InspectPosition;
-
     private void Awake()
     {
         MainCamera = Camera.main;
@@ -32,24 +27,3 @@ public class FragmentStateMachine : StateMachine
         SwitchState(new FragmentIdleState(this));
     }
 }
-
-// public class FragmentStateMachine : StateMachine
-// {
-//     public static FragmentStateMachine CurrentInspecting;
-
-//     public FragmentInteraction interaction { get; private set; }
-// public Transform InspectPosition { get; set; }
-// public Vector3 initialPosition { get; private set; }
-// public Quaternion initialRotation { get; private set; }
-
-//     private void Start()
-//     {
-//         interaction = GetComponent<FragmentInteraction>();
-
-//         // Save starting transform for returning
-// initialPosition = transform.position;
-// initialRotation = transform.rotation;
-
-//         SwitchState(new FragmentIdleState(this));
-//     }
-// }

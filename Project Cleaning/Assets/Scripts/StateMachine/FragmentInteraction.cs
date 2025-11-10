@@ -14,7 +14,7 @@ public class FragmentInteraction : MonoBehaviour
     [Header("Movement Settings")]
     public float dragSpeed = 10f;
     public float rotateSpeed = 0.08f;
-    public float zoomSpeed = 0.01f;
+    public float zoomSpeed = 5f;
 
     private float returnSpeed = 10f;
 
@@ -29,9 +29,22 @@ public class FragmentInteraction : MonoBehaviour
     public bool isRotating = false;
     public bool isZooming = false;
 
+    [Header("Rotate Settings")]
+    [SerializeField] private float rotationRate = .08f;
+    [SerializeField] private bool xRotation = true;
+    [SerializeField] private bool yRotation = true;
+    [SerializeField] private bool invertX = false;
+    [SerializeField] private bool invertY = true;
+    [SerializeField] private float dragThreshold = 5f;
+    private bool fingerOnObject = false;
+    private float previousX;
+    private float previousY;
+
     private Vector2 previousTouchPos;
 
     private Coroutine zoomRoutine;
+    private float minZoom = 4.4f;
+    private float maxZoom = 6.5f;
 
     void Awake()
     {
@@ -43,24 +56,23 @@ public class FragmentInteraction : MonoBehaviour
     {
         TouchManager.OnTapped += HandleTap;
         TouchManager.OnHoldPerformed += HandleHold;
+        TouchManager.OnHoldReleased += HandleHoldRelease;
 
-        if (isZoomAvailable)
-        {
-            TouchManager.ZoomStart += StartZoom;
-            TouchManager.ZoomEnd += StopZoom;
-        }
+        // if (isZoomAvailable)
+        // {
+        TouchManager.ZoomStart += StartZoom;
+        TouchManager.ZoomEnd += StopZoom;
+        // }
     }
 
     private void OnDisable()
     {
         TouchManager.OnTapped -= HandleTap;
         TouchManager.OnHoldPerformed -= HandleHold;
+        TouchManager.OnHoldReleased -= HandleHoldRelease;
 
-        if (isZoomAvailable)
-        {
-            TouchManager.ZoomStart -= StartZoom;
-            TouchManager.ZoomEnd -= StopZoom;
-        }
+        TouchManager.ZoomStart -= StartZoom;
+        TouchManager.ZoomEnd -= StopZoom;
     }
 
     private void Start()
@@ -85,7 +97,7 @@ public class FragmentInteraction : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
             isTapping = true;
-            Debug.Log($"{name} TAP triggered.");
+            // Debug.Log($"{name} TAP triggered.");
             // Call inspect / select logic here
             // Example:
             // AssembleManager.Instance.InspectFragment(GetComponent<FragmentController>());
@@ -103,10 +115,17 @@ public class FragmentInteraction : MonoBehaviour
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
-            Debug.Log($"{name} HOLD triggered.");
+            isHolding = true;
+            // Debug.Log($"{name} HOLD triggered.");
+
             // Example:
             // GetComponent<FragmentController>().SetMoveStateReset();
         }
+    }
+
+    void HandleHoldRelease()
+    {
+        isHolding = false;
     }
 
     // -----------------------------------------------------
@@ -114,6 +133,9 @@ public class FragmentInteraction : MonoBehaviour
     // -----------------------------------------------------
     void HandleDrag()
     {
+        // if (isZoomAvailable) return;
+        if (isZooming) return;
+        Debug.Log("pos handle drag: ");
         // Start Drag
         if (!TouchManager.Instance.isInteracting && !isDragging)
         {
@@ -124,11 +146,14 @@ public class FragmentInteraction : MonoBehaviour
                 isReturning = false;
                 TouchManager.Instance.TouchUsed(true);
             }
+            Debug.Log("Target dragged start" + " " + name);
         }
         // Drag in progress
         else if (isDragging)
         {
             MoveOnScreen(TouchManager.Instance.curScreenPos, dragSpeed);
+            Debug.Log("Target dragging" + " " + name);
+
         }
 
         // Release drag
@@ -137,6 +162,8 @@ public class FragmentInteraction : MonoBehaviour
             isDragging = false;
             isReturning = true;
             TouchManager.Instance.TouchUsed(false);
+            Debug.Log("Target release dragged" + " " + name);
+
         }
 
         // Return to initial position when released
@@ -148,11 +175,14 @@ public class FragmentInteraction : MonoBehaviour
                 isReturning = false;
                 isDragging = false;
             }
+            Debug.Log("Target dragged return" + " " + name);
+
         }
     }
 
     private void MoveOnScreen(Vector2 screenPos, float speed)
     {
+        // if (isZoomAvailable) return;
         if (TouchManager.Instance.curScreenPos != Vector3.zero)
         {
             Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(
@@ -161,42 +191,82 @@ public class FragmentInteraction : MonoBehaviour
                 cam.WorldToScreenPoint(initialPosition).z
             ));
 
-            Vector3 target = new Vector3(worldPos.x, initialPosition.y, worldPos.z);
+            // Vector3 target = new Vector3(worldPos.x, initialPosition.y, worldPos.z);
+            Vector3 target = new Vector3(worldPos.x, transform.position.y, worldPos.z);
+
             transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
         }
-        else
-        {
-            MoveBack(speed);
-        }
+        // else
+        // {
+        //     MoveBack(speed);
+        // }
     }
 
     private void MoveBack(float speed)
     {
+        if (!isReturning) return;
         transform.position = Vector3.Lerp(transform.position, initialPosition, Time.deltaTime * speed);
     }
-
-
 
     // -----------------------------------------------------
     // ROTATE
     // -----------------------------------------------------
-    void HandleRotate()
+    public void HandleRotate()
     {
-        if (!TouchManager.Instance.isClickedOn) { isRotating = false; return; }
+        // Rotate hanya boleh jalan saat state Inspect
+        if (!isRotateAvailable) return;
 
-        Vector2 cur = TouchManager.Instance.curScreenPos;
-
-        if (!isRotating)
+        // Kalau tidak ada input tekan -> reset rotate state
+        if (!TouchManager.Instance.isClickedOn)
         {
-            isRotating = true;
-            previousTouchPos = cur;
+            isRotating = false;
+            fingerOnObject = false;
+            TouchManager.Instance.IsRotate(false);
             return;
         }
 
-        Vector2 delta = cur - previousTouchPos;
-        transform.Rotate(-delta.y * rotateSpeed, delta.x * rotateSpeed, 0, Space.World);
+        Vector2 curPos = TouchManager.Instance.curScreenPos;
+        Ray ray = cam.ScreenPointToRay(curPos);
 
-        previousTouchPos = cur;
+        // Check apakah user menyentuh object
+        if (!fingerOnObject)
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
+            {
+                fingerOnObject = true;
+                previousX = curPos.x;
+                previousY = curPos.y;
+                return;
+            }
+            return;
+        }
+
+        // Tentukan kapan rotate dimulai (setelah dragThreshold)
+        float moveDist = Vector2.Distance(new Vector2(previousX, previousY), curPos);
+        if (moveDist > dragThreshold)
+        {
+            isRotating = true;
+            TouchManager.Instance.IsRotate(true);
+        }
+
+        if (isRotating)
+            ApplyRotation(curPos);
+    }
+
+    private void ApplyRotation(Vector2 touchPos)
+    {
+        float deltaX = -(touchPos.y - previousY) * rotationRate;
+        float deltaY = -(touchPos.x - previousX) * rotationRate;
+
+        if (!yRotation) deltaX = 0;
+        if (!xRotation) deltaY = 0;
+        if (invertX) deltaY *= -1;
+        if (invertY) deltaX *= -1;
+
+        transform.Rotate(deltaX, 0, deltaY, Space.World);
+
+        previousX = touchPos.x;
+        previousY = touchPos.y;
     }
 
     // -----------------------------------------------------
@@ -205,24 +275,49 @@ public class FragmentInteraction : MonoBehaviour
     void StartZoom()
     {
         if (!isZoomAvailable) return;
+        isZooming = true;
+        isDragging = false;
+        isReturning = false;
+        Debug.Log("Is zooming? " + isZooming + " " + name);
         zoomRoutine = StartCoroutine(ZoomRoutine());
     }
 
     void StopZoom()
     {
+        isZooming = false;
+        Debug.Log("Is zooming? " + isZooming);
         if (zoomRoutine != null) StopCoroutine(zoomRoutine);
     }
 
     IEnumerator ZoomRoutine()
     {
-        float prevDist = 0;
+        float previousDistance = 0f, distance;
+
         while (true)
         {
-            float dist = Vector2.Distance(TouchManager.Instance.curScreenPos, TouchManager.Instance.curSecondaryPos);
-            float delta = dist - prevDist;
-            transform.position += transform.forward * (delta * zoomSpeed);
-            prevDist = dist;
+            distance = Vector2.Distance(TouchManager.Instance.curScreenPos, TouchManager.Instance.curSecondaryPos);
+            Debug.Log("Is Zooming Distance " + distance);
+
+            Vector3 targetPos = transform.position;
+
+            if (distance > previousDistance)
+                targetPos.y += 1f;
+            else if (distance < previousDistance)
+                targetPos.y -= 1f;
+
+            targetPos.y = Mathf.Clamp(targetPos.y, minZoom, maxZoom);
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * zoomSpeed);
+
+            Debug.Log("position of: " + name + "is " + transform.position);
+            Debug.Log("Target pos: " + targetPos.y);
+
+            previousDistance = distance;
             yield return null;
         }
+    }
+
+    public void HandleZoom()
+    {
+        if (!isZoomAvailable || !isZooming) return;
     }
 }

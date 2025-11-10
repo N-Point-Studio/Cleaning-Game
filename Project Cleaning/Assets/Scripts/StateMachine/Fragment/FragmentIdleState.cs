@@ -10,6 +10,11 @@ public class FragmentIdleState : FragmentBaseState
     {
         stateMachine.interaction.isTapAvailable = true;
         stateMachine.interaction.isDragAvailable = true;
+
+        // stateMachine.interaction.isHoldAvailable = false;
+        // stateMachine.interaction.isDragAvailable = false;
+        // stateMachine.interaction.isRotateAvailable = false;
+
     }
 
     public override void Tick(float dt)
@@ -18,7 +23,7 @@ public class FragmentIdleState : FragmentBaseState
         {
             // Debug.Log("idle is tapped");
             stateMachine.interaction.ResetTap();
-            stateMachine.SwitchState(new FragmentInspectState(stateMachine));
+            stateMachine.SwitchState(new FragmentMoveToInspectState(stateMachine));
         }
 
         if (stateMachine.interaction.isDragAvailable && stateMachine.interaction.isDragging)

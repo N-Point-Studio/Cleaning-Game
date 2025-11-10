@@ -14,9 +14,7 @@ public class FragmentReturningState : FragmentBaseState
         targetRotation = stateMachine.initialRotation;
     }
 
-    public override void Enter()
-    {
-    }
+    public override void Enter() { }
 
     public override void Tick(float dt)
     {
@@ -40,8 +38,6 @@ public class FragmentReturningState : FragmentBaseState
         }
     }
 
-    public override void Exit()
-    {
-    }
+    public override void Exit() { }
 }
 
