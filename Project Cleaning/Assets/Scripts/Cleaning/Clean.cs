@@ -18,9 +18,12 @@ public class Clean : MonoBehaviour
         CreateTexture();
     }
 
-    public void CleanAt(Vector2 textureCoord, Texture2D brush)
+    public bool CleanAt(Vector2 textureCoord, Texture2D brush)
     {
         Debug.Log("Clean at " + textureCoord);
+
+        bool didCleanAnything = false;
+
         int pixelX = (int)(textureCoord.x * _templateDirtMask.width);
         int pixelY = (int)(textureCoord.y * _templateDirtMask.height);
         for (int x = 0; x < brush.width; x++)
@@ -35,15 +38,30 @@ public class Clean : MonoBehaviour
                     Color pixelDirt = brush.GetPixel(x, y);
                     Color pixelDirtMask = _templateDirtMask.GetPixel(px, py);
 
+
+                    if (pixelDirtMask.g > 0.01f && pixelDirt.g < 1.0f)
+                    {
                     _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
+                    didCleanAnything = true;
+                    }
                 }
             }
         }
 
-        _templateDirtMask.Apply();
+        // BARU: Hanya panggil Apply() jika ada yang berubah (ini optimasi besar!)
+        if (didCleanAnything)
+        {
+            _templateDirtMask.Apply();
+        }
+
+        return didCleanAnything;
     }
-    public void CleanAt(Vector2 uv, Texture2D brush, float brushScale)
+
+    public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale)
     {
+        // BARU: Tambahkan flag untuk melacak perubahan
+        bool didCleanAnything = false;
+
         int centerX = (int)(uv.x * _templateDirtMask.width);
         int centerY = (int)(uv.y * _templateDirtMask.height);
 
@@ -65,11 +83,32 @@ public class Clean : MonoBehaviour
                 Color brushPixel = brush.GetPixelBilinear(u, v);
                 Color dirtPixel = _templateDirtMask.GetPixel(px, py);
 
-                _templateDirtMask.SetPixel(px, py, new Color(0, dirtPixel.g * brushPixel.g, 0));
+                if (x == 0 && y == 0)
+            {
+                Debug.Log("DEBUG: Nilai G Kotoran (dirtPixel.g) = " + dirtPixel.g);
+            }
+                
+                // BARU: Cek apakah piksel ini kotor DAN kuas mencoba membersihkannya
+                if (dirtPixel.g > 0.01f && brushPixel.g < 1.0f)
+                {
+                float newGreen = dirtPixel.g * brushPixel.g;
+                _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
+                didCleanAnything = true;
+
+                if (x == 0 && y == 0)
+                {
+                    Debug.LogWarning("--- MEMBERSIHKAN PIKSEL TENGAH! ---");
+                }
+                }
             }
         }
 
-        _templateDirtMask.Apply();
+        // BARU: Hanya panggil Apply() jika ada yang berubah
+        if (didCleanAnything)
+        {
+            _templateDirtMask.Apply();
+        }
+        return didCleanAnything;
     }
 
     private void CreateTexture()
@@ -83,8 +122,10 @@ public class Clean : MonoBehaviour
         _material.SetTexture("_DirtMask", _templateDirtMask);
     }
 
-    public void DestroyMesh()
+    public bool DestroyMesh()
     {
         Destroy(gameObject);
+        // Setiap kali dipanggil, kita anggap "berhasil"
+        return true;
     }
 }
