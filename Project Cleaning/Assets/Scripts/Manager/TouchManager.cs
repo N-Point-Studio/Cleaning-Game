@@ -20,6 +20,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     private Coroutine ZoomCoroutine;
     public Vector3 curSecondaryPos;
     public bool isRotating = false;
+    public bool isZooming = false;
     public bool isTapped = false;
     public static event Action OnTapped;
     public static event Action OnTapReleased;
@@ -113,6 +114,11 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public void IsRotate(bool isRotate)
     {
         isRotating = isRotate;
+    }
+
+    public void IsZoom(bool status)
+    {
+        isZooming = status;
     }
 
     public void OnSecondaryFingerPos(InputAction.CallbackContext context)

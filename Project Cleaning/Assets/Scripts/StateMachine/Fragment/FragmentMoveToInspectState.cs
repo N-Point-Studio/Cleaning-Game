@@ -10,7 +10,6 @@ public class FragmentMoveToInspectState : FragmentBaseState
 
     public override void Enter()
     {
-        // Jika ada fragment lain yang sedang di-inspect, kembalikan dulu
         if (FragmentStateMachine.CurrentInspecting != null &&
             FragmentStateMachine.CurrentInspecting != stateMachine)
         {
@@ -19,8 +18,6 @@ public class FragmentMoveToInspectState : FragmentBaseState
         }
 
         FragmentStateMachine.CurrentInspecting = stateMachine;
-
-        // --- Tambahan: set parent ke InspectPosition ---
         stateMachine.transform.SetParent(stateMachine.InspectPosition);
     }
 
