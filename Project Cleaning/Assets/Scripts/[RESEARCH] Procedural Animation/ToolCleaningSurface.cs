@@ -16,8 +16,12 @@ public class ToolCleaningSurface : MonoBehaviour
     [SerializeField] float raycastRange = 5f;
     [SerializeField] private LayerMask dirtsLayerMask;
     [SerializeField] private Texture2D brush;
-    [SerializeField] private SurfaceDetection surface;
     [SerializeField] private float brushSize;
+
+    [Header("References")]
+    [SerializeField] private SurfaceDetection surface;
+    // --- BARU: Tambahkan slot untuk Particle System ---
+    [SerializeField] private ParticleSystem cleaningVFX;
 
     [Header("Audio Settings")]
     [Tooltip("Seberapa jauh alat harus bergerak (dalam meter) dalam satu frame untuk dianggap 'bergerak' dan membunyikan audio.")]
@@ -36,6 +40,9 @@ public class ToolCleaningSurface : MonoBehaviour
     private Vector3 lastFramePosition;
     private bool isMoving = false;
 
+    // --- BARU: Variabel untuk menyimpan rate emisi ---
+    private float vfxEmissionRate;
+
     // BARU: Awake dipanggil sebelum Start
     void Awake()
     {
@@ -44,6 +51,23 @@ public class ToolCleaningSurface : MonoBehaviour
         if (surface == null)
         {
             Debug.LogError("SurfaceDetection belum di-assign di ToolCleaningSurface!");
+        }
+
+        // --- BARU: Cek null untuk VFX ---
+        if (cleaningVFX == null)
+        {
+            Debug.LogError("CleaningVFX belum di-assign di Inspector!");
+        }
+        else
+        {
+            // --- LOGIKA AWAKE BARU ---
+            // 1. Simpan rate emisi (misal: 20) yang Anda atur di Inspector
+            vfxEmissionRate = cleaningVFX.emission.rateOverTime.constant;
+
+            // 2. Set rate emisi ke 0 saat game dimulai
+            // Ini adalah cara yang BENAR untuk mengubah struct:
+            var emissionModule = cleaningVFX.emission;
+            emissionModule.rateOverTime = 0f;
         }
 
         // --- BARU: Inisialisasi posisi awal ---
@@ -56,7 +80,7 @@ public class ToolCleaningSurface : MonoBehaviour
 
         CheckForMovement();
         RaycastCleaningSurface();
-        HandleAudio();
+        HandleEffects();
     }
 
     // --- FUNGSI BARU ---
@@ -82,13 +106,13 @@ public class ToolCleaningSurface : MonoBehaviour
             case CollisionToolsType.Mesh:
                 if (surface.MudObject != null)
                 {
-                    isActivelyCleaning = TryDestroyMesh(surface.MudObject);;
+                    isActivelyCleaning = TryDestroyMesh(surface.MudObject);
                 }
                 break;
             case CollisionToolsType.Texture:
                 if (surface.CleaningSurface != null)
                 {
-                    isActivelyCleaning = TryClean(surface.CleaningSurface, surface.TextureSurface);;
+                    isActivelyCleaning = TryClean(surface.CleaningSurface, surface.TextureSurface);
                 }
                 break;
         }
@@ -106,12 +130,15 @@ public class ToolCleaningSurface : MonoBehaviour
     }
 
 // Logika audio dipindah ke fungsi terpisah
-    private void HandleAudio()
+    private void HandleEffects()
     {
-        Debug.Log("HandleAudio Check: isActivelyCleaning = " + isActivelyCleaning + " | isMoving = " + isMoving);
+        // Debug.Log("HandleAudio Check: isActivelyCleaning = " + isActivelyCleaning + " | isMoving = " + isMoving);
+        
+        // Kondisi utama kita
+        bool conditionsMet = isActivelyCleaning && isMoving;
         
         // Kita hanya perlu mengecek kondisi "PLAY"
-        if (isActivelyCleaning && isMoving)
+        if (conditionsMet)
         {
             // Jika membersihkan DAN bergerak, DAN suaranya TIDAK sedang diputar...
             if (!cleaningAudioSource.isPlaying)
@@ -119,6 +146,23 @@ public class ToolCleaningSurface : MonoBehaviour
                 // ...maka putar suaranya SATU KALI.
                 // Karena 'Loop' sudah mati, ini akan memainkan klip sampai selesai.
                 cleaningAudioSource.Play();
+            }
+        }
+
+        if (cleaningVFX != null) 
+        {
+            // Kita HARUS menyimpan struct ke variabel lokal dulu
+            var emissionModule = cleaningVFX.emission; 
+
+            if (conditionsMet)
+            {
+                // Jika kondisi terpenuhi, set rate ke nilai aslinya (misal: 20)
+                emissionModule.rateOverTime = vfxEmissionRate;
+            }
+            else
+            {
+                // Jika kondisi TIDAK terpenuhi, set rate ke 0
+                emissionModule.rateOverTime = 0f;
             }
         }
     }
