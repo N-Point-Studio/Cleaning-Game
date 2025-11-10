@@ -32,3 +32,60 @@ public interface IInspectable
     /// </summary>
     Transform GetInspectionTarget();
 }
+
+
+// private void Update()
+//     {
+//         if (TouchManager.Instance.isInteracting) return;
+//         if (!TouchManager.Instance.isClickedOn)
+//         {
+//             isRotating = false;
+//             TouchManager.Instance.IsRotate(false);
+
+//             fingerOnObject = false;
+//             return;
+//         }
+
+//         Vector2 curPos = TouchManager.Instance.curScreenPos;
+//         Ray ray = cam.ScreenPointToRay(curPos);
+
+//         if (!fingerOnObject)
+//         {
+//             if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
+//             {
+//                 fingerOnObject = true;
+//                 previousX = curPos.x;
+//                 previousZ = curPos.y;
+//                 return;
+//             }
+//             return;
+//         }
+//         float moveDist = Vector2.Distance(new Vector2(previousX, previousZ), curPos);
+//         if (moveDist > dragThreshold)
+//         {
+//             isRotating = true;
+//             TouchManager.Instance.IsRotate(true);
+
+//         }
+
+//         if (isRotating)
+//         {
+//             RotateObject(curPos);
+//         }
+//     }
+
+//     private void RotateObject(Vector2 touchPos)
+//     {
+//         float deltaX = -(touchPos.y - previousZ) * rotationRate;
+//         float deltaY = -(touchPos.x - previousX) * rotationRate;
+
+//         if (!yRotation) deltaX = 0;
+//         if (!xRotation) deltaY = 0;
+//         if (invertX) deltaY *= -1;
+//         if (invertY) deltaX *= -1;
+
+//         transform.Rotate(deltaX, 0, deltaY, Space.World);
+
+//         previousX = touchPos.x;
+//         previousZ = touchPos.y;
+//     }

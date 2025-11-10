@@ -11,15 +11,15 @@ public class FragmentInspectState : FragmentBaseState
 
     public override void Enter()
     {
-        stateMachine.interaction.isRotateAvailable = true;
-        stateMachine.interaction.isZoomAvailable = true;
+        // stateMachine.interaction.isRotateAvailable = true;
+        // stateMachine.interaction.isZoomAvailable = true;
         stateMachine.interaction.isHoldAvailable = true;
     }
 
 
     public override void Tick(float dt)
     {
-        stateMachine.interaction.HandleRotate();
+        // stateMachine.interaction.HandleRotate();
 
         if (stateMachine.interaction.isHolding)
         {
@@ -30,8 +30,8 @@ public class FragmentInspectState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.interaction.isRotateAvailable = false;
-        stateMachine.interaction.isZoomAvailable = false;
+        // stateMachine.interaction.isRotateAvailable = false;
+        // stateMachine.interaction.isZoomAvailable = false;
         stateMachine.interaction.isHoldAvailable = false;
 
         if (FragmentStateMachine.CurrentInspecting == stateMachine)

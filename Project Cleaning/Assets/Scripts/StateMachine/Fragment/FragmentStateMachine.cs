@@ -9,9 +9,12 @@ public class FragmentStateMachine : StateMachine
     public FragmentInteraction interaction { get; private set; }
     public Camera MainCamera { get; private set; }
     public Transform InspectPosition;
+    public Transform CorrectPosition;
     public Vector3 initialPosition { get; private set; }
     public Quaternion initialRotation { get; private set; }
     public static FragmentStateMachine CurrentInspecting;
+    public Transform clusterRoot; // null = tidak di-cluster
+    public bool IsInCluster => clusterRoot != null;
 
     private void Awake()
     {

@@ -8,7 +8,6 @@ public class FragmentIdleState : FragmentBaseState
     public FragmentIdleState(FragmentStateMachine stateMachine) : base(stateMachine) { }
     private bool dragJustStarted = false;
     private float initialDistanceZ;
-    private bool isCloseToAssemble = false;
 
 
     public override void Enter()
@@ -40,25 +39,31 @@ public class FragmentIdleState : FragmentBaseState
 
     public void MoveTowardInspect()
     {
-        // Debug.Log("Position: " + stateMachine.transform.position);
         if (stateMachine.interaction.isDragging && !dragJustStarted)
         {
             dragJustStarted = true;
-            initialDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.InspectPosition.position.z);
+            initialDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.CorrectPosition.position.z);
         }
 
         if (stateMachine.interaction.isDragging)
         {
-            float currentDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.InspectPosition.position.z);
+            float currentDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.CorrectPosition.position.z);
             if (initialDistanceZ <= 0.001f) return;
 
             float progress = Mathf.InverseLerp(initialDistanceZ, 0f, currentDistanceZ);
             float t = 1f - progress;
 
-            float newY = Mathf.Lerp(stateMachine.initialPosition.y, stateMachine.InspectPosition.position.y, 1 - t);
+            float newY = Mathf.Lerp(stateMachine.initialPosition.y, stateMachine.CorrectPosition.position.y, 1 - t);
 
-            //gabungin di sini
-            isCloseToAssemble = currentDistanceZ <= 1;
+            if (FragmentStateMachine.CurrentInspecting != null && stateMachine != FragmentStateMachine.CurrentInspecting)
+            {
+                float zDist = Mathf.Abs(stateMachine.transform.position.z - stateMachine.CorrectPosition.position.z);
+                if (zDist < 0.5f)
+                {
+                    stateMachine.SwitchState(new FragmentAssembledState(stateMachine, FragmentStateMachine.CurrentInspecting));
+                    return;
+                }
+            }
 
 
             stateMachine.transform.position = new Vector3(stateMachine.transform.position.x, newY, stateMachine.transform.position.z);
@@ -67,7 +72,6 @@ public class FragmentIdleState : FragmentBaseState
         if (!stateMachine.interaction.isDragging && dragJustStarted)
         {
             dragJustStarted = false;
-            isCloseToAssemble = false;
         }
     }
 }

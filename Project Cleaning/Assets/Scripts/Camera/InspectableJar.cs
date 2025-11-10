@@ -18,9 +18,9 @@ public class InspectableJar : MonoBehaviour
     public bool isRotating = false;
     private float previousX;
     private float previousZ;
-    public bool fingerOnObject = false;
+    private bool hasInitializedTouch = false;
     private float dragThreshold = 5f;
-
+    public bool fingerOnObject = false;
     private Coroutine zoomRoutine;
     private Camera cam;
 
@@ -44,41 +44,39 @@ public class InspectableJar : MonoBehaviour
     private void Update()
     {
         if (TouchManager.Instance.isInteracting) return;
+
         if (!TouchManager.Instance.isClickedOn)
         {
             isRotating = false;
+            hasInitializedTouch = false;
             TouchManager.Instance.IsRotate(false);
-
-            fingerOnObject = false;
             return;
         }
 
         Vector2 curPos = TouchManager.Instance.curScreenPos;
-        Ray ray = cam.ScreenPointToRay(curPos);
 
-        if (!fingerOnObject)
+        if (!hasInitializedTouch)
         {
-            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
-            {
-                fingerOnObject = true;
-                previousX = curPos.x;
-                previousZ = curPos.y;
-                return;
-            }
+            previousX = curPos.x;
+            previousZ = curPos.y;
+            hasInitializedTouch = true;
             return;
         }
+
         float moveDist = Vector2.Distance(new Vector2(previousX, previousZ), curPos);
         if (moveDist > dragThreshold)
         {
             isRotating = true;
             TouchManager.Instance.IsRotate(true);
-
         }
 
         if (isRotating)
         {
             RotateObject(curPos);
         }
+
+        previousX = curPos.x;
+        previousZ = curPos.y;
     }
 
     private void RotateObject(Vector2 touchPos)
@@ -92,11 +90,7 @@ public class InspectableJar : MonoBehaviour
         if (invertY) deltaX *= -1;
 
         transform.Rotate(deltaX, 0, deltaY, Space.World);
-
-        previousX = touchPos.x;
-        previousZ = touchPos.y;
     }
-
 
     private void StartZoom()
     {

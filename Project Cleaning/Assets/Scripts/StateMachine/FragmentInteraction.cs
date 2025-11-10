@@ -8,12 +8,12 @@ public class FragmentInteraction : MonoBehaviour
     public bool isTapAvailable = false;
     public bool isDragAvailable = false;
     public bool isHoldAvailable = false;
-    public bool isRotateAvailable = false;
-    public bool isZoomAvailable = false;
+    // public bool isRotateAvailable = false;
+    // public bool isZoomAvailable = false;
 
     [Header("Movement Settings")]
     public float dragSpeed = 10f;
-    public float rotateSpeed = 0.08f;
+    // public float rotateSpeed = 0.08f;
     public float zoomSpeed = 5f;
 
     private float returnSpeed = 10f;
@@ -30,17 +30,17 @@ public class FragmentInteraction : MonoBehaviour
     public bool isZooming = false;
 
     [Header("Rotate Settings")]
-    [SerializeField] private float rotationRate = .08f;
-    [SerializeField] private bool xRotation = true;
-    [SerializeField] private bool yRotation = true;
-    [SerializeField] private bool invertX = false;
-    [SerializeField] private bool invertY = true;
-    [SerializeField] private float dragThreshold = 5f;
-    private bool fingerOnObject = false;
-    private float previousX;
-    private float previousY;
+    // [SerializeField] private float rotationRate = .08f;
+    // [SerializeField] private bool xRotation = true;
+    // [SerializeField] private bool yRotation = true;
+    // [SerializeField] private bool invertX = false;
+    // [SerializeField] private bool invertY = true;
+    // [SerializeField] private float dragThreshold = 5f;
+    // private bool fingerOnObject = false;
+    // private float previousX;
+    // private float previousY;
 
-    private Vector2 previousTouchPos;
+    // private Vector2 previousTouchPos;
 
     private Coroutine zoomRoutine;
     private float minZoom = 4.4f;
@@ -57,8 +57,8 @@ public class FragmentInteraction : MonoBehaviour
         TouchManager.OnTapped += HandleTap;
         TouchManager.OnHoldPerformed += HandleHold;
         TouchManager.OnHoldReleased += HandleHoldRelease;
-        TouchManager.ZoomStart += StartZoom;
-        TouchManager.ZoomEnd += StopZoom;
+        // TouchManager.ZoomStart += StartZoom;
+        // TouchManager.ZoomEnd += StopZoom;
     }
 
     private void OnDisable()
@@ -66,8 +66,8 @@ public class FragmentInteraction : MonoBehaviour
         TouchManager.OnTapped -= HandleTap;
         TouchManager.OnHoldPerformed -= HandleHold;
         TouchManager.OnHoldReleased -= HandleHoldRelease;
-        TouchManager.ZoomStart -= StartZoom;
-        TouchManager.ZoomEnd -= StopZoom;
+        // TouchManager.ZoomStart -= StartZoom;
+        // TouchManager.ZoomEnd -= StopZoom;
     }
 
     private void Start()
@@ -78,7 +78,7 @@ public class FragmentInteraction : MonoBehaviour
     void Update()
     {
         if (isDragAvailable) HandleDrag();
-        if (isRotateAvailable) HandleRotate();
+        // if (isRotateAvailable) HandleRotate();
     }
 
     // -----------------------------------------------------
@@ -189,114 +189,114 @@ public class FragmentInteraction : MonoBehaviour
     // -----------------------------------------------------
     // ROTATE
     // -----------------------------------------------------
-    public void HandleRotate()
-    {
-        // Rotate hanya boleh jalan saat state Inspect
-        if (TouchManager.Instance.isInteracting) return;
-        if (!isRotateAvailable) return;
+    // public void HandleRotate()
+    // {
+    //     // Rotate hanya boleh jalan saat state Inspect
+    //     if (TouchManager.Instance.isInteracting) return;
+    //     if (!isRotateAvailable) return;
 
-        // Jika sedang melakukan zoom, jangan rotate, tapi tetap biarkan zoom jalan
-        if (isZooming) return;
-        // if (!isRotateAvailable) return;
+    //     // Jika sedang melakukan zoom, jangan rotate, tapi tetap biarkan zoom jalan
+    //     if (isZooming) return;
+    //     // if (!isRotateAvailable) return;
 
-        // Kalau tidak ada input tekan -> reset rotate state
-        if (!TouchManager.Instance.isClickedOn)
-        {
-            isRotating = false;
-            fingerOnObject = false;
-            TouchManager.Instance.IsRotate(false);
-            return;
-        }
+    //     // Kalau tidak ada input tekan -> reset rotate state
+    //     if (!TouchManager.Instance.isClickedOn)
+    //     {
+    //         isRotating = false;
+    //         fingerOnObject = false;
+    //         TouchManager.Instance.IsRotate(false);
+    //         return;
+    //     }
 
-        Vector2 curPos = TouchManager.Instance.curScreenPos;
-        Ray ray = cam.ScreenPointToRay(curPos);
+    //     Vector2 curPos = TouchManager.Instance.curScreenPos;
+    //     Ray ray = cam.ScreenPointToRay(curPos);
 
-        // Check apakah user menyentuh object
-        if (!fingerOnObject)
-        {
-            if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
-            {
-                fingerOnObject = true;
-                previousX = curPos.x;
-                previousY = curPos.y;
-                return;
-            }
-            return;
-        }
+    //     // Check apakah user menyentuh object
+    //     if (!fingerOnObject)
+    //     {
+    //         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
+    //         {
+    //             fingerOnObject = true;
+    //             previousX = curPos.x;
+    //             previousY = curPos.y;
+    //             return;
+    //         }
+    //         return;
+    //     }
 
-        // Tentukan kapan rotate dimulai (setelah dragThreshold)
-        float moveDist = Vector2.Distance(new Vector2(previousX, previousY), curPos);
-        if (moveDist > dragThreshold)
-        {
-            isRotating = true;
-            TouchManager.Instance.IsRotate(true);
-        }
+    //     // Tentukan kapan rotate dimulai (setelah dragThreshold)
+    //     float moveDist = Vector2.Distance(new Vector2(previousX, previousY), curPos);
+    //     if (moveDist > dragThreshold)
+    //     {
+    //         isRotating = true;
+    //         TouchManager.Instance.IsRotate(true);
+    //     }
 
-        if (isRotating)
-            ApplyRotation(curPos);
-    }
+    //     if (isRotating)
+    //         ApplyRotation(curPos);
+    // }
 
-    private void ApplyRotation(Vector2 touchPos)
-    {
-        float deltaX = -(touchPos.y - previousY) * rotationRate;
-        float deltaY = -(touchPos.x - previousX) * rotationRate;
+    // private void ApplyRotation(Vector2 touchPos)
+    // {
+    //     float deltaX = -(touchPos.y - previousY) * rotationRate;
+    //     float deltaY = -(touchPos.x - previousX) * rotationRate;
 
-        if (!yRotation) deltaX = 0;
-        if (!xRotation) deltaY = 0;
-        if (invertX) deltaY *= -1;
-        if (invertY) deltaX *= -1;
+    //     if (!yRotation) deltaX = 0;
+    //     if (!xRotation) deltaY = 0;
+    //     if (invertX) deltaY *= -1;
+    //     if (invertY) deltaX *= -1;
 
-        transform.Rotate(deltaX, 0, deltaY, Space.World);
+    //     transform.Rotate(deltaX, 0, deltaY, Space.World);
 
-        previousX = touchPos.x;
-        previousY = touchPos.y;
-    }
+    //     previousX = touchPos.x;
+    //     previousY = touchPos.y;
+    // }
 
     // -----------------------------------------------------
     // ZOOM
     // -----------------------------------------------------
-    void StartZoom()
-    {
-        if (!isZoomAvailable) return;
-        isZooming = true;
-        isDragging = false;
-        isReturning = false;
-        Debug.Log("START Is zooming? " + isZooming + " isDragging: " + isDragging + " isReturning: " + isReturning);
-        zoomRoutine = StartCoroutine(ZoomRoutine());
-    }
+    // void StartZoom()
+    // {
+    //     if (!isZoomAvailable) return;
+    //     isZooming = true;
+    //     isDragging = false;
+    //     isReturning = false;
+    //     Debug.Log("START Is zooming? " + isZooming + " isDragging: " + isDragging + " isReturning: " + isReturning);
+    //     zoomRoutine = StartCoroutine(ZoomRoutine());
+    // }
 
-    void StopZoom()
-    {
-        isZooming = false;
-        Debug.Log("STOP Is zooming? " + isZooming + " isDragging: " + isDragging + " isReturning: " + isReturning);
-        if (zoomRoutine != null) StopCoroutine(zoomRoutine);
-    }
+    // void StopZoom()
+    // {
+    //     isZooming = false;
+    //     Debug.Log("STOP Is zooming? " + isZooming + " isDragging: " + isDragging + " isReturning: " + isReturning);
+    //     if (zoomRoutine != null) StopCoroutine(zoomRoutine);
+    // }
 
-    IEnumerator ZoomRoutine()
-    {
-        while (true)
-        {
-            // Target naik 2 unit dari posisi sekarang
-            float targetY = transform.position.y + 2f;
+    // IEnumerator ZoomRoutine()
+    // {
+    //     while (true)
+    //     {
+    //         // Target naik 2 unit dari posisi sekarang
+    //         float targetY = transform.position.y + 2f;
 
-            // Clamp biar tetap dalam range zoom
-            targetY = Mathf.Clamp(targetY, minZoom, maxZoom);
+    //         // Clamp biar tetap dalam range zoom
+    //         targetY = Mathf.Clamp(targetY, minZoom, maxZoom);
 
-            // Buat target vector baru
-            Vector3 targetPos = new Vector3(transform.position.x, targetY, transform.position.z);
+    //         // Buat target vector baru
+    //         Vector3 targetPos = new Vector3(transform.position.x, targetY, transform.position.z);
 
-            // Lerp menuju target
-            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * zoomSpeed);
+    //         // Lerp menuju target
+    //         transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * zoomSpeed);
 
-            Debug.Log($"[ZOOM DEBUG] From Y: {transform.position.y} → Target Y: {targetY}");
+    //         Debug.Log($"[ZOOM DEBUG] From Y: {transform.position.y} → Target Y: {targetY}");
 
-            yield return null;
-        }
-    }
+    //         yield return null;
+    //     }
+    // }
 
 
-    public void HandleZoom()
-    {
-        if (!isZoomAvailable || !isZooming) return;
-    }
+    // public void HandleZoom()
+    // {
+    //     if (!isZoomAvailable || !isZooming) return;
+    // }
 }
