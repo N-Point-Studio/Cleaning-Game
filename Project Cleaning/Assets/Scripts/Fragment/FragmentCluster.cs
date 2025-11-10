@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Menyimpan kumpulan fragment yang sudah menyatu menjadi satu kesatuan.
-/// </summary>
 public class FragmentCluster : MonoBehaviour
 {
     [Header("Cluster Info")]
