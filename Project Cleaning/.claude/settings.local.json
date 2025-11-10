@@ -35,7 +35,10 @@
       "Read(//Users/alvinreyvaldo/Documents/**)",
       "Bash(cat:*)",
       "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_bge1Ea/**)",
-      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_HiOYkx/**)"
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_HiOYkx/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_75BuKI/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_qINnV1/**)",
+      "Read(//var/folders/p_/kgz32t5x29v8tycp03s8kmb40000gn/T/TemporaryItems/NSIRD_screencaptureui_IqgodN/**)"
     ],
     "deny": [],
     "ask": []
