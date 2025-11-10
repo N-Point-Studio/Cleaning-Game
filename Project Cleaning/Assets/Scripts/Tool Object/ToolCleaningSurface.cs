@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(AudioSource))]
 public class ToolCleaningSurface : MonoBehaviour
 {
     public enum CollisionToolsType
@@ -11,39 +10,25 @@ public class ToolCleaningSurface : MonoBehaviour
         Mesh,
     }
 
-    [Header("Tool Settings")]
     [SerializeField] private CollisionToolsType toolType = CollisionToolsType.Texture;
     [SerializeField] float raycastRange = 5f;
     [SerializeField] private LayerMask dirtsLayerMask;
     [SerializeField] private Texture2D brush;
-    [SerializeField] private float brushSize;
-
-    [Header("References")]
     [SerializeField] private SurfaceDetection surface;
-    // --- BARU: Tambahkan slot untuk Particle System ---
-    [SerializeField] private ParticleSystem cleaningVFX;
-
-    [Header("Audio Settings")]
-    [Tooltip("Seberapa jauh alat harus bergerak (dalam meter) dalam satu frame untuk dianggap 'bergerak' dan membunyikan audio.")]
-    [SerializeField] private float movementThreshold = 0.01f; // 1 milimeter
-
+    [SerializeField] private float brushSize;
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
 
-    // BARU: Variabel untuk menyimpan komponen Audio Source
     private AudioSource cleaningAudioSource;
+    [SerializeField] private ParticleSystem cleaningVFX;
+    private bool isActivelyCleaning = false;
 
-    // NAMA VARIABEL DIGANTI agar lebih jelas
-    private bool isActivelyCleaning = false; // Melacak status pembersihan AKTIF
-
-    // --- BARU: Variabel untuk melacak gerakan ---
     private Vector3 lastFramePosition;
     private bool isMoving = false;
-
-    // --- BARU: Variabel untuk menyimpan rate emisi ---
     private float vfxEmissionRate;
+    [SerializeField] private float movementThreshold = 0.01f; // 1 milimeter
 
-    // BARU: Awake dipanggil sebelum Start
+
     void Awake()
     {
         // Ambil komponen AudioSource yang ada di objek ini
@@ -77,13 +62,11 @@ public class ToolCleaningSurface : MonoBehaviour
     void Update()
     {
         if (surface == null) return;
-
-        CheckForMovement();
         RaycastCleaningSurface();
         HandleEffects();
+        CheckForMovement();
     }
 
-    // --- FUNGSI BARU ---
     private void CheckForMovement()
     {
         // Hitung jarak alat bergerak sejak frame terakhir
@@ -98,45 +81,41 @@ public class ToolCleaningSurface : MonoBehaviour
 
     private void RaycastCleaningSurface()
     {
-        // Setel ulang status ke false setiap frame
-        isActivelyCleaning = false;
-
         switch (toolType)
         {
             case CollisionToolsType.Mesh:
                 if (surface.MudObject != null)
                 {
-                    isActivelyCleaning = TryDestroyMesh(surface.MudObject);
+                    TryDestroyMesh(surface.MudObject);
                 }
                 break;
             case CollisionToolsType.Texture:
                 if (surface.CleaningSurface != null)
                 {
-                    isActivelyCleaning = TryClean(surface.CleaningSurface, surface.TextureSurface);
+                    TryClean(surface.CleaningSurface, surface.TextureSurface);
                 }
                 break;
         }
     }
 
-    private bool TryClean(Clean clean, Vector2 textureCoord)
+    private void TryClean(Clean clean, Vector2 textureCoord)
     {
         // clean.CleanAt(textureCoord, brush);
-        return clean.CleanAt(textureCoord, brush, brushSize);
+        clean.CleanAt(textureCoord, brush, brushSize);
     }
 
-    private bool TryDestroyMesh(CleanMesh obj)
+    private void TryDestroyMesh(CleanMesh obj)
     {
-        return obj.DestroyMesh();
+        obj.DestroyMesh();
     }
 
-// Logika audio dipindah ke fungsi terpisah
     private void HandleEffects()
     {
         // Debug.Log("HandleAudio Check: isActivelyCleaning = " + isActivelyCleaning + " | isMoving = " + isMoving);
-        
+
         // Kondisi utama kita
         bool conditionsMet = isActivelyCleaning && isMoving;
-        
+
         // Kita hanya perlu mengecek kondisi "PLAY"
         if (conditionsMet)
         {
@@ -149,10 +128,10 @@ public class ToolCleaningSurface : MonoBehaviour
             }
         }
 
-        if (cleaningVFX != null) 
+        if (cleaningVFX != null)
         {
             // Kita HARUS menyimpan struct ke variabel lokal dulu
-            var emissionModule = cleaningVFX.emission; 
+            var emissionModule = cleaningVFX.emission;
 
             if (conditionsMet)
             {
@@ -166,6 +145,7 @@ public class ToolCleaningSurface : MonoBehaviour
             }
         }
     }
+
     void OnDrawGizmos()
     {
         Gizmos.color = Color.black;
