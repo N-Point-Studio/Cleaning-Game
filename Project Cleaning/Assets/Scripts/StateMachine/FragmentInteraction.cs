@@ -68,7 +68,7 @@ public class FragmentInteraction : MonoBehaviour
 
     void HandleHold()
     {
-        if (isRotating) return;
+        if (TouchManager.Instance.isRotating) return;
         if (!isHoldAvailable) return;
 
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);

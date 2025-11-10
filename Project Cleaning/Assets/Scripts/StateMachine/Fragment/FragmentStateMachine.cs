@@ -13,15 +13,15 @@ public class FragmentStateMachine : StateMachine
     public Vector3 initialPosition { get; private set; }
     public Quaternion initialRotation { get; private set; }
     public static FragmentStateMachine CurrentInspecting;
-    public Transform clusterRoot; // null = tidak di-cluster
-    public bool IsInCluster => clusterRoot != null;
+    public Transform clusterRoot;
+    public bool IsClusterRoot => clusterRoot != null && clusterRoot.GetComponent<FragmentCluster>()?.fragments[0] == this;
+
 
     private void Awake()
     {
         MainCamera = Camera.main;
         initialPosition = transform.position;
         initialRotation = transform.rotation;
-        // initialY = transform.position.y;
     }
 
     private void Start()

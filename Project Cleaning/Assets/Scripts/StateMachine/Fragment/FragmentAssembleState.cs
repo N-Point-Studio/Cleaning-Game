@@ -4,68 +4,53 @@ using UnityEngine;
 
 public class FragmentAssembledState : FragmentBaseState
 {
-    private FragmentStateMachine other;
+    private FragmentStateMachine targetFragment;
 
-    public FragmentAssembledState(FragmentStateMachine self, FragmentStateMachine other) : base(self)
+    public FragmentAssembledState(FragmentStateMachine stateMachine, FragmentStateMachine target)
+        : base(stateMachine)
     {
-        this.other = other;
+        targetFragment = target;
     }
 
     public override void Enter()
     {
-        Transform rootA = stateMachine.clusterRoot;
-        Transform rootB = other.clusterRoot;
+        Transform clusterTransform;
 
-        // CASE 1: Kedua belum punya cluster → buat baru
-        if (rootA == null && rootB == null)
+        if (targetFragment.clusterRoot != null)
         {
-            Transform newRoot = new GameObject("Cluster").transform;
-            newRoot.position = stateMachine.CorrectPosition.position;
-
-            stateMachine.transform.SetParent(newRoot, true);
-            other.transform.SetParent(newRoot, true);
-
-            stateMachine.clusterRoot = newRoot;
-            other.clusterRoot = newRoot;
+            clusterTransform = targetFragment.clusterRoot;
         }
-        // CASE 2: Only self has cluster → join other into self cluster
-        else if (rootA != null && rootB == null)
+        else
         {
-            other.transform.SetParent(rootA, true);
-            other.clusterRoot = rootA;
-        }
-        // CASE 3: Only other has cluster → join self into other cluster
-        else if (rootA == null && rootB != null)
-        {
-            stateMachine.transform.SetParent(rootB, true);
-            stateMachine.clusterRoot = rootB;
-        }
-        // CASE 4: Both have clusters → merge clusters
-        else if (rootA != rootB)
-        {
-            // pindahkan semua child dari rootB ke rootA
-            while (rootB.childCount > 0)
-            {
-                Transform child = rootB.GetChild(0);
-                child.SetParent(rootA, true);
-                child.GetComponent<FragmentStateMachine>().clusterRoot = rootA;
-            }
-            GameObject.Destroy(rootB.gameObject);
+            GameObject cluster = new GameObject("Cluster_" + targetFragment.name);
+            clusterTransform = cluster.transform;
+            clusterTransform.position = targetFragment.transform.position;
+            clusterTransform.rotation = targetFragment.transform.rotation;
+            targetFragment.transform.SetParent(clusterTransform);
+            targetFragment.clusterRoot = clusterTransform;
         }
 
-        // jadikan cluster ini sebagai yang diinspect
+        if (targetFragment.transform.parent != clusterTransform)
+            targetFragment.transform.SetParent(clusterTransform);
+
+        stateMachine.transform.SetParent(clusterTransform);
+
+        stateMachine.transform.position = stateMachine.CorrectPosition.position;
+        stateMachine.transform.rotation = stateMachine.CorrectPosition.rotation;
+
+        targetFragment.transform.position = targetFragment.CorrectPosition.position;
+        targetFragment.transform.rotation = targetFragment.CorrectPosition.rotation;
+
+        stateMachine.clusterRoot = clusterTransform;
+
+        stateMachine.SwitchState(new FragmentInspectState(stateMachine));
+
+        Debug.Log($"{stateMachine.name} attached to cluster {clusterTransform.name}");
+
         FragmentStateMachine.CurrentInspecting = stateMachine;
     }
 
-    public override void Tick(float dt)
-    {
-        // kalau salah satu hold → keluar dari cluster
-        if (stateMachine.interaction.isHolding)
-            stateMachine.SwitchState(new FragmentUnassembleState(stateMachine));
-
-        if (other.interaction.isHolding)
-            other.SwitchState(new FragmentUnassembleState(other));
-    }
+    public override void Tick(float deltaTime) { }
 
     public override void Exit() { }
 }
