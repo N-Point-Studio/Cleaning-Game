@@ -16,8 +16,9 @@ public class CleanMesh : MonoBehaviour
 
     }
 
-    public void DestroyMesh()
+    public bool DestroyMesh()
     {
         Destroy(gameObject);
+        return true;
     }
 }
