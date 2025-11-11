@@ -762,8 +762,8 @@ MonoBehaviour:
   setTo25Percent: 0
   setTo50Percent: 0
   setTo75Percent: 0
-  setTo100Percent: 1
-  setToZero: 0
+  setTo100Percent: 0
+  setToZero: 1
 --- !u!1 &1867928687
 GameObject:
   m_ObjectHideFlags: 0
