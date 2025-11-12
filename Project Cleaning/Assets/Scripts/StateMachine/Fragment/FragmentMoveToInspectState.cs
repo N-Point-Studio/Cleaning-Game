@@ -12,29 +12,38 @@ public class FragmentMoveToInspectState : FragmentBaseState
     {
         stateMachine.CurrentStatus = "Move To Inspect";
 
-        if (FragmentStateMachine.CurrentInspecting != null &&
-            FragmentStateMachine.CurrentInspecting != stateMachine)
+        if (AssembleManager.Instance.CurrentFragmentInspected != null &&
+            AssembleManager.Instance.CurrentFragmentInspected != stateMachine)
         {
-            FragmentStateMachine.CurrentInspecting.SwitchState(
-                new FragmentReturningState(FragmentStateMachine.CurrentInspecting));
+            AssembleManager.Instance.CurrentFragmentInspected.SwitchState(
+                new FragmentReturningState(AssembleManager.Instance.CurrentFragmentInspected));
         }
 
-        FragmentStateMachine.CurrentInspecting = stateMachine;
-        stateMachine.transform.SetParent(stateMachine.InspectPosition);
+        // FragmentStateMachine.CurrentInspecting = stateMachine;
+
+        stateMachine.transform.SetParent(AssembleManager.Instance.InspectPosition);
         stateMachine.Interaction.isReturning = false;
+
+        if (AssembleManager.Instance.CurrentClusterInspected != null)
+        {
+            AssembleManager.Instance.CurrentClusterInspected.SwitchState(new ClusterReturningState(AssembleManager.Instance.CurrentClusterInspected));
+        }
+
+        AssembleManager.Instance.SetCurrentInspectFragment(stateMachine);
+        AssembleManager.Instance.SetCurrentInspectCluster(null);
     }
 
     public override void Tick(float dt)
     {
         stateMachine.transform.position = Vector3.Lerp(
             stateMachine.transform.position,
-            stateMachine.InspectPosition.position,
+            AssembleManager.Instance.InspectPosition.position,
             dt * moveSpeed
         );
 
-        if (Vector3.Distance(stateMachine.transform.position, stateMachine.InspectPosition.position) < 0.01f)
+        if (Vector3.Distance(stateMachine.transform.position, AssembleManager.Instance.InspectPosition.position) < 0.01f)
         {
-            stateMachine.transform.position = stateMachine.InspectPosition.position;
+            stateMachine.transform.position = AssembleManager.Instance.InspectPosition.position;
             stateMachine.SwitchState(new FragmentInspectState(stateMachine));
         }
     }

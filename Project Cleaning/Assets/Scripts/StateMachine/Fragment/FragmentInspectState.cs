@@ -14,6 +14,8 @@ public class FragmentInspectState : FragmentBaseState
         stateMachine.CurrentStatus = "Inspect";
 
         stateMachine.Interaction.isHoldAvailable = true;
+        // AssembleManager.Instance.SetCurrentInspectCluster(null);
+
     }
 
 
@@ -30,8 +32,11 @@ public class FragmentInspectState : FragmentBaseState
     {
         stateMachine.Interaction.isHoldAvailable = false;
 
-        if (FragmentStateMachine.CurrentInspecting == stateMachine)
-            FragmentStateMachine.CurrentInspecting = null;
+        if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
+        {
+            // FragmentStateMachine.CurrentInspecting = null;
+            AssembleManager.Instance.SetCurrentInspectFragment(null);
+        }
     }
 
     private void Holding()
