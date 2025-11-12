@@ -31,7 +31,7 @@ public class FragmentsManager : MonoBehaviour
             allFragments.AddRange(fragments);
         }
 
-        UpdateProgress();
+        // UpdateProgress();
     }
 
     public void AddFragment(FragmentStateMachine frag)
@@ -41,7 +41,7 @@ public class FragmentsManager : MonoBehaviour
             allFragments.Add(frag);
         }
 
-        UpdateProgress();
+        // UpdateProgress();
     }
 
     public void RemoveFragment(FragmentStateMachine frag)
@@ -51,7 +51,7 @@ public class FragmentsManager : MonoBehaviour
             allFragments.Remove(frag);
         }
 
-        UpdateProgress();
+        // UpdateProgress();
     }
 
     public bool IsContained(FragmentStateMachine frag)
@@ -59,26 +59,26 @@ public class FragmentsManager : MonoBehaviour
         return allFragments.Contains(frag);
     }
 
-    public void UpdateProgress()
-    {
-        int total = allFragments.Count;
-        if (total == 0)
-        {
-            progressPercentage = 0f;
-            return;
-        }
+    // public void UpdateProgress()
+    // {
+    //     int total = allFragments.Count;
+    //     if (total == 0)
+    //     {
+    //         progressPercentage = 0f;
+    //         return;
+    //     }
 
-        int assembledCount = 0;
+    //     int assembledCount = 0;
 
-        foreach (var frag in allFragments)
-        {
-            if (frag.clusterRoot != null)
-            {
-                assembledCount++;
-            }
-        }
+    //     foreach (var frag in allFragments)
+    //     {
+    //         if (frag.clusterRoot != null)
+    //         {
+    //             assembledCount++;
+    //         }
+    //     }
 
-        progressPercentage = (float)assembledCount / total * 100f;
-        Debug.Log("Progress assemble: " + progressPercentage);
-    }
+    //     progressPercentage = (float)assembledCount / total * 100f;
+    //     Debug.Log("Progress assemble: " + progressPercentage);
+    // }
 }

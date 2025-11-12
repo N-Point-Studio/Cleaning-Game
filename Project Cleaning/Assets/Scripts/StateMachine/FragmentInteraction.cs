@@ -49,7 +49,7 @@ public class FragmentInteraction : MonoBehaviour
         initialPosition = transform.position;
     }
 
-    void Update()
+    private void FixedUpdate()
     {
         if (isDragAvailable) HandleDrag();
     }
@@ -64,13 +64,16 @@ public class FragmentInteraction : MonoBehaviour
             isTapping = true;
         }
     }
-    public void ResetTap() => isTapping = false;
+    public void ResetTap()
+    {
+        TouchManager.Instance.isTapped = false;
+        isTapping = false;
+    }
 
     void HandleHold()
     {
-        if (TouchManager.Instance.isRotating) return;
+        if (TouchManager.Instance.isRotating || TouchManager.Instance.isDragging) return;
         if (!isHoldAvailable) return;
-
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
@@ -95,6 +98,7 @@ public class FragmentInteraction : MonoBehaviour
                 isDragging = true;
                 isReturning = false;
                 TouchManager.Instance.TouchUsed(true);
+                TouchManager.Instance.SetIsDrag(true);
             }
         }
 
@@ -108,6 +112,7 @@ public class FragmentInteraction : MonoBehaviour
             isDragging = false;
             isReturning = true;
             TouchManager.Instance.TouchUsed(false);
+            TouchManager.Instance.SetIsDrag(false);
         }
 
         if (isReturning)
@@ -117,6 +122,7 @@ public class FragmentInteraction : MonoBehaviour
             {
                 isReturning = false;
                 isDragging = false;
+                TouchManager.Instance.SetIsDrag(false);
             }
         }
     }

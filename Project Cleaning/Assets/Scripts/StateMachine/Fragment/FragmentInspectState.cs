@@ -11,24 +11,58 @@ public class FragmentInspectState : FragmentBaseState
 
     public override void Enter()
     {
-        stateMachine.interaction.isHoldAvailable = true;
+        stateMachine.Interaction.isHoldAvailable = true;
     }
 
 
     public override void Tick(float dt)
     {
-        if (stateMachine.interaction.isHolding)
+        if (stateMachine.Interaction.isHolding)
         {
-            stateMachine.SwitchState(new FragmentReturningState(stateMachine));
+            Holding();
         }
     }
 
-
     public override void Exit()
     {
-        stateMachine.interaction.isHoldAvailable = false;
+        stateMachine.Interaction.isHoldAvailable = false;
 
         if (FragmentStateMachine.CurrentInspecting == stateMachine)
             FragmentStateMachine.CurrentInspecting = null;
+    }
+
+    private void Holding()
+    {
+        var connectedList = stateMachine.StateMachineConnected;
+        if (connectedList != null && connectedList.Count > 0)
+        {
+            if (connectedList.Count == 1)
+            {
+                var single = connectedList[0];
+                if (single != null)
+                {
+                    single.SwitchState(new FragmentMoveToInspectState(single));
+                }
+            }
+            else
+            {
+                FragmentStateMachine parent = connectedList[0];
+                if (parent != null)
+                {
+
+                    foreach (var frag in connectedList)
+                    {
+                        if (frag == parent) continue;
+
+                        frag.transform.SetParent(parent.transform);
+                    }
+                    parent.SwitchState(new FragmentMoveToInspectState(parent));
+                }
+            }
+        }
+        else
+        {
+            stateMachine.SwitchState(new FragmentReturningState(stateMachine));
+        }
     }
 }

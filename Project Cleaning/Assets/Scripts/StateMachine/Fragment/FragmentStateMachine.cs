@@ -3,30 +3,49 @@ using System.Collections.Generic;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 
-
+[RequireComponent(typeof(FragmentInteraction))]
 public class FragmentStateMachine : StateMachine
 {
-    public FragmentInteraction interaction { get; private set; }
+    public enum FragmentStatus
+    {
+        Parent,
+        Attached
+    }
+
+    public List<AssemblyTarget> assemblyTargets = new List<AssemblyTarget>();
+    public List<FragmentStateMachine> StateMachineConnected = new List<FragmentStateMachine>();
+    public FragmentInteraction Interaction { get; private set; }
     public Camera MainCamera { get; private set; }
     public Transform InspectPosition;
-    public Transform CorrectPosition;
-    public Vector3 initialPosition { get; private set; }
-    public Quaternion initialRotation { get; private set; }
-    public static FragmentStateMachine CurrentInspecting;
-    public Transform clusterRoot;
-    public bool IsClusterRoot => clusterRoot != null && clusterRoot.GetComponent<FragmentCluster>()?.fragments[0] == this;
+    public Vector3 InitialPosition { get; private set; }
+    public Quaternion InitialRotation { get; private set; }
 
+    public static FragmentStateMachine CurrentInspecting;
 
     private void Awake()
     {
         MainCamera = Camera.main;
-        initialPosition = transform.position;
-        initialRotation = transform.rotation;
+        InitialPosition = transform.position;
+        InitialRotation = transform.rotation;
     }
 
     private void Start()
     {
-        interaction = GetComponent<FragmentInteraction>();
+        Interaction = GetComponent<FragmentInteraction>();
         SwitchState(new FragmentIdleState(this));
+    }
+
+    public bool TryGetAssemblyTarget(FragmentStateMachine other, out Transform correctPos)
+    {
+        foreach (var target in assemblyTargets)
+        {
+            if (target.targetFragment == other)
+            {
+                correctPos = target.correctPosition;
+                return true;
+            }
+        }
+        correctPos = null;
+        return false;
     }
 }

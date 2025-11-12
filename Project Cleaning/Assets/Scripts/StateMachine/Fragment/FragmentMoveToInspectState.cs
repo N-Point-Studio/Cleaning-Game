@@ -19,6 +19,7 @@ public class FragmentMoveToInspectState : FragmentBaseState
 
         FragmentStateMachine.CurrentInspecting = stateMachine;
         stateMachine.transform.SetParent(stateMachine.InspectPosition);
+        stateMachine.Interaction.isReturning = false;
     }
 
     public override void Tick(float dt)

@@ -13,7 +13,7 @@ public abstract class StateMachine : MonoBehaviour
         currentState?.Enter();
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         currentState?.Tick(Time.deltaTime);
     }

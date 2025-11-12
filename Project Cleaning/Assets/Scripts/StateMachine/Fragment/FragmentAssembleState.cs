@@ -14,43 +14,81 @@ public class FragmentAssembledState : FragmentBaseState
 
     public override void Enter()
     {
-        Transform clusterTransform;
+        stateMachine.Interaction.isHoldAvailable = true;
 
-        if (targetFragment.clusterRoot != null)
+        if (targetFragment.StateMachineConnected.Count == 0 && stateMachine.StateMachineConnected.Count == 0)
         {
-            clusterTransform = targetFragment.clusterRoot;
-        }
-        else
-        {
-            GameObject cluster = new GameObject("Cluster_" + targetFragment.name);
-            clusterTransform = cluster.transform;
-            clusterTransform.position = targetFragment.transform.position;
-            clusterTransform.rotation = targetFragment.transform.rotation;
-            targetFragment.transform.SetParent(clusterTransform);
-            targetFragment.clusterRoot = clusterTransform;
+            targetFragment.StateMachineConnected.Add(stateMachine);
+            stateMachine.transform.SetParent(targetFragment.transform);
+            if (targetFragment.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
+            {
+                stateMachine.transform.position = correctPos.position;
+                stateMachine.transform.rotation = correctPos.rotation;
+            }
         }
 
-        if (targetFragment.transform.parent != clusterTransform)
-            targetFragment.transform.SetParent(clusterTransform);
+        else if (targetFragment.StateMachineConnected.Count > 0 && stateMachine.StateMachineConnected.Count == 0)
+        {
+            targetFragment.StateMachineConnected.Add(stateMachine);
+            Transform parent = targetFragment.transform;
+            stateMachine.transform.SetParent(parent);
+            if (targetFragment.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
+            {
+                stateMachine.transform.position = correctPos.position;
+                stateMachine.transform.rotation = correctPos.rotation;
+            }
+        }
 
-        stateMachine.transform.SetParent(clusterTransform);
+        else if (stateMachine.StateMachineConnected.Count > 0)
+        {
+            foreach (var connected in stateMachine.StateMachineConnected)
+            {
+                targetFragment.StateMachineConnected.Add(connected);
+                Transform parent = targetFragment.transform;
+                connected.transform.SetParent(parent);
+                if (targetFragment.TryGetAssemblyTarget(connected, out Transform correctPos))
+                {
+                    connected.transform.position = correctPos.position;
+                    connected.transform.rotation = correctPos.rotation;
+                }
+            }
 
-        stateMachine.transform.position = stateMachine.CorrectPosition.position;
-        stateMachine.transform.rotation = stateMachine.CorrectPosition.rotation;
+            if (!targetFragment.StateMachineConnected.Contains(stateMachine))
+            {
+                targetFragment.StateMachineConnected.Add(stateMachine);
+                stateMachine.transform.SetParent(targetFragment.transform);
 
-        targetFragment.transform.position = targetFragment.CorrectPosition.position;
-        targetFragment.transform.rotation = targetFragment.CorrectPosition.rotation;
-
-        stateMachine.clusterRoot = clusterTransform;
-
-        stateMachine.SwitchState(new FragmentInspectState(stateMachine));
-
-        Debug.Log($"{stateMachine.name} attached to cluster {clusterTransform.name}");
-
-        FragmentStateMachine.CurrentInspecting = stateMachine;
+                if (targetFragment.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
+                {
+                    stateMachine.transform.position = correctPos.position;
+                    stateMachine.transform.rotation = correctPos.rotation;
+                }
+            }
+            stateMachine.StateMachineConnected.Clear();
+        }
     }
 
-    public override void Tick(float deltaTime) { }
+    public override void Tick(float deltaTime)
+    {
+        if (stateMachine.Interaction.isHolding && targetFragment.Interaction.isHoldAvailable)
+        {
+            ReturnFragment();
+        }
+    }
 
-    public override void Exit() { }
+    public override void Exit()
+    {
+        stateMachine.Interaction.isHoldAvailable = false;
+    }
+
+    private void ReturnFragment()
+    {
+        if (targetFragment != null && targetFragment.StateMachineConnected.Contains(stateMachine))
+        {
+            targetFragment.StateMachineConnected.Remove(stateMachine);
+        }
+
+        stateMachine.transform.SetParent(null);
+        stateMachine.SwitchState(new FragmentReturningState(stateMachine));
+    }
 }
