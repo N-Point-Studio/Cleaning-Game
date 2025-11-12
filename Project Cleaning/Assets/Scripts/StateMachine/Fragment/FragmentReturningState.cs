@@ -16,6 +16,8 @@ public class FragmentReturningState : FragmentBaseState
 
     public override void Enter()
     {
+        stateMachine.CurrentStatus = "Returning";
+
         stateMachine.transform.SetParent(null);
     }
 

@@ -14,6 +14,8 @@ public class FragmentStateMachine : StateMachine
 
     public List<AssemblyTarget> assemblyTargets = new List<AssemblyTarget>();
     public List<FragmentStateMachine> StateMachineConnected = new List<FragmentStateMachine>();
+    public FragmentStateMachine[] ListOfStateMachineConnected;
+
     public FragmentInteraction Interaction { get; private set; }
     public Camera MainCamera { get; private set; }
     public Transform InspectPosition;
@@ -21,6 +23,8 @@ public class FragmentStateMachine : StateMachine
     public Quaternion InitialRotation { get; private set; }
 
     public static FragmentStateMachine CurrentInspecting;
+    public FragmentStateMachine ParentFragment { get; private set; }
+    public string CurrentStatus;
 
     private void Awake()
     {
@@ -48,4 +52,13 @@ public class FragmentStateMachine : StateMachine
         correctPos = null;
         return false;
     }
+
+    public void SetParentFragment(FragmentStateMachine parent)
+    {
+        ParentFragment = parent;
+        transform.SetParent(parent != null ? parent.transform : null);
+        if (parent != null && !parent.StateMachineConnected.Contains(this))
+            parent.StateMachineConnected.Add(this);
+    }
+
 }

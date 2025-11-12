@@ -766,7 +766,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &333296866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1148,9 +1148,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   assemblyTargets: []
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 0}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 0}
+  CurrentStatus: 
 --- !u!114 &744525516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1630,9 +1630,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   assemblyTargets: []
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 0}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 0}
+  CurrentStatus: 
 --- !u!114 &861655646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1820,9 +1820,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   assemblyTargets: []
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 0}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 0}
+  CurrentStatus: 
 --- !u!114 &953247760
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2148,105 +2148,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1289679710
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1289679713}
-  - component: {fileID: 1289679712}
-  - component: {fileID: 1289679711}
-  - component: {fileID: 1289679714}
-  m_Layer: 0
-  m_Name: Cluster
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!23 &1289679711
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289679710}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1289679712
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289679710}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &1289679713
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289679710}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1921920093}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1289679714
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289679710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea64df746271a4be294ae8fa4addb19d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fragments: []
-  initialPosition: {x: 0, y: 0, z: 0}
-  initialRotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1305766869
 GameObject:
   m_ObjectHideFlags: 0
@@ -2463,7 +2364,7 @@ Light:
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 5000
+  m_ColorTemperature: 6546
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -2707,8 +2608,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 4.4, z: -2.3500001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 1289679713}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1991166024 stripped
@@ -6985,9 +6885,9 @@ MonoBehaviour:
   - targetFragment: {fileID: 5881770624165154721}
     correctPosition: {fileID: 2021428099}
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 1921920093}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 1289679713}
+  CurrentStatus: 
 --- !u!1 &3391712193996143753
 GameObject:
   m_ObjectHideFlags: 0
@@ -10299,9 +10199,9 @@ MonoBehaviour:
   - targetFragment: {fileID: 3391657867658584603}
     correctPosition: {fileID: 1634874344}
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 1921920093}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 1289679713}
+  CurrentStatus: 
 --- !u!1 &5891997605874748693
 GameObject:
   m_ObjectHideFlags: 0
@@ -13898,9 +13798,9 @@ MonoBehaviour:
   - targetFragment: {fileID: 5881770624165154721}
     correctPosition: {fileID: 115419783}
   StateMachineConnected: []
+  ListOfStateMachineConnected: []
   InspectPosition: {fileID: 1921920093}
-  collider: {fileID: 0}
-  clusterRoot: {fileID: 1289679713}
+  CurrentStatus: 
 --- !u!1 &8763545515707742849
 GameObject:
   m_ObjectHideFlags: 0
@@ -14154,7 +14054,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gizmoType: 1
   size: 0.6
-  color: {r: 0, g: 0.21110582, b: 1, a: 0.41960785}
+  color: {r: 0, g: 0.21110582, b: 1, a: 0}
 --- !u!114 &8950936760401401779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14287,8 +14187,8 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 143977695}
   - {fileID: 1488645362}
-  - {fileID: 1004210525}
   - {fileID: 333296869}
+  - {fileID: 1004210525}
   - {fileID: 3258457218114337667}
   - {fileID: 417712253508545572}
   - {fileID: 2069992555283040519}

@@ -10,6 +10,8 @@ public class FragmentMoveToInspectState : FragmentBaseState
 
     public override void Enter()
     {
+        stateMachine.CurrentStatus = "Move To Inspect";
+
         if (FragmentStateMachine.CurrentInspecting != null &&
             FragmentStateMachine.CurrentInspecting != stateMachine)
         {

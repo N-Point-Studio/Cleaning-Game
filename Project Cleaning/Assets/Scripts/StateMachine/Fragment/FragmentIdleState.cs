@@ -12,6 +12,8 @@ public class FragmentIdleState : FragmentBaseState
 
     public override void Enter()
     {
+        stateMachine.CurrentStatus = "Idle";
+
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
 
@@ -69,30 +71,41 @@ public class FragmentIdleState : FragmentBaseState
             float progress = Mathf.InverseLerp(initialDistanceZ, 0f, currentDistanceZ);
             float t = 1f - progress;
 
+            // posisi
             float newY = Mathf.Lerp(stateMachine.InitialPosition.y, stateMachine.InspectPosition.position.y, 1 - t);
-            if (FragmentStateMachine.CurrentInspecting != null && stateMachine != FragmentStateMachine.CurrentInspecting)
+            Vector3 targetPos = new Vector3(stateMachine.transform.position.x, newY + 2, stateMachine.transform.position.z);
+            stateMachine.transform.position = Vector3.Lerp(stateMachine.transform.position, targetPos, Time.deltaTime * stateMachine.Interaction.dragSpeed);
+
+            if (currentDistanceZ < 2.0f)
             {
-                float zDist = Mathf.Abs(stateMachine.transform.position.z - FragmentStateMachine.CurrentInspecting.transform.position.z);
-                if (zDist < 1.5f)
+                if (potentialTarget != null && potentialTarget.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
                 {
-                    potentialTarget = FragmentStateMachine.CurrentInspecting;
+                    stateMachine.transform.rotation = Quaternion.Slerp(
+                        stateMachine.transform.rotation,
+                        correctPos.rotation,
+                        Time.deltaTime * 5f
+                    );
                 }
                 else
                 {
-                    potentialTarget = null;
+                    stateMachine.transform.rotation = Quaternion.Slerp(
+                        stateMachine.transform.rotation,
+                        stateMachine.InspectPosition.rotation,
+                        Time.deltaTime * 5f
+                    );
                 }
+            }
+
+            if (FragmentStateMachine.CurrentInspecting != null && stateMachine != FragmentStateMachine.CurrentInspecting)
+            {
+                float zDist = Mathf.Abs(stateMachine.transform.position.z - FragmentStateMachine.CurrentInspecting.transform.position.z);
+                potentialTarget = zDist < 1.5f ? FragmentStateMachine.CurrentInspecting : null;
             }
             else if (currentDistanceZ < 1f)
             {
                 stateMachine.SwitchState(new FragmentMoveToInspectState(stateMachine));
                 TouchManager.Instance.SetIsDrag(false);
             }
-
-            stateMachine.transform.position = Vector3.Lerp(
-                stateMachine.transform.position,
-                new Vector3(stateMachine.transform.position.x, newY + 2, stateMachine.transform.position.z),
-                Time.deltaTime * stateMachine.Interaction.dragSpeed
-            );
         }
     }
 }
