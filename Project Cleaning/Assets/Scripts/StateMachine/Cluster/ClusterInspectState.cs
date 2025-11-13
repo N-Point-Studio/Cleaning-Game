@@ -8,6 +8,8 @@ public class ClusterInspectState : ClusterBaseState
 
     public override void Enter()
     {
+        Debug.Log("Cluster state: inspect");
+
         stateMachine.SetClusterState(ClusterState.Inspect);
         stateMachine.BoxCollider.enabled = false;
 

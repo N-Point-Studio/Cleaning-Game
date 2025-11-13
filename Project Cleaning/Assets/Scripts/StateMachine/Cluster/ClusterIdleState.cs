@@ -9,6 +9,7 @@ public class ClusterIdleState : ClusterBaseState
     public override void Enter()
     {
         stateMachine.SetClusterState(ClusterState.Idle);
+        Debug.Log("Cluster state: Idle");
 
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
@@ -19,15 +20,21 @@ public class ClusterIdleState : ClusterBaseState
         if (stateMachine.Interaction.isTapping && stateMachine.Interaction.isTapAvailable)
         {
             stateMachine.Interaction.ResetTap();
-            //pindah ke moveToInspect
             stateMachine.SwitchState(new ClusterMoveToInspect(stateMachine));
             return;
+        }
+
+        if (stateMachine.Interaction.isDragAvailable && stateMachine.Interaction.isDragging)
+        {
+            // MoveTowardInspect();
         }
     }
 
     public override void Exit()
     {
+        TouchManager.Instance.SetIsDrag(false);
         stateMachine.Interaction.isTapAvailable = false;
         stateMachine.Interaction.isDragAvailable = false;
+        // stateMachine.Interaction.isDragging = false;
     }
 }

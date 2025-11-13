@@ -9,6 +9,7 @@ public class FragmentIdleState : FragmentBaseState
     private bool dragJustStarted = false;
     private float initialDistanceZ;
     private FragmentStateMachine potentialTarget;
+    private ClusterStateMachine potentialCluster;
 
     public override void Enter()
     {
@@ -43,8 +44,14 @@ public class FragmentIdleState : FragmentBaseState
 
             if (potentialTarget != null)
             {
-                stateMachine.SwitchState(new FragmentAssembledState(stateMachine, potentialTarget));
+                stateMachine.SwitchState(new FragmentAssembledState(stateMachine));
                 potentialTarget = null;
+                TouchManager.Instance.SetIsDrag(false);
+            }
+            else if (potentialCluster != null)
+            {
+                stateMachine.SwitchState(new FragmentAssembledState(stateMachine));
+                potentialCluster = null;
                 TouchManager.Instance.SetIsDrag(false);
             }
         }
@@ -107,7 +114,12 @@ public class FragmentIdleState : FragmentBaseState
                 potentialTarget = zDist < 1.5f ? AssembleManager.Instance.CurrentFragmentInspected : null;
                 // AssembleManager.Instance.SetCurrentInspectFragment(potentialTarget);
             }
-            else if (currentDistanceZ < 1f)
+            else if (AssembleManager.Instance.CurrentClusterInspected != null)
+            {
+                float zDist = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.CurrentClusterInspected.transform.position.z);
+                potentialCluster = zDist < 1.5f ? AssembleManager.Instance.CurrentClusterInspected : null;
+            }
+            else if (currentDistanceZ < 1f && AssembleManager.Instance.CurrentClusterInspected == null && AssembleManager.Instance.CurrentFragmentInspected == null)
             {
                 stateMachine.SwitchState(new FragmentMoveToInspectState(stateMachine));
                 TouchManager.Instance.SetIsDrag(false);

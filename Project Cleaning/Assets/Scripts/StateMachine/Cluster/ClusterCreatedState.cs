@@ -7,6 +7,8 @@ public class ClusterCreatedState : ClusterBaseState
     public ClusterCreatedState(ClusterStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        Debug.Log("Cluster state: created");
+
         stateMachine.SetClusterState(ClusterState.Created);
         stateMachine.BoxCollider.enabled = false;
 
@@ -16,6 +18,8 @@ public class ClusterCreatedState : ClusterBaseState
         stateMachine.SetInitialPosition(stateMachine.connectedFragments[0].InitialPosition,
         stateMachine.connectedFragments[0].InitialRotation
         );
+
+        stateMachine.Interaction.SetInitialPos(stateMachine.connectedFragments[0].InitialPosition);
 
         Debug.Log("initial position dari " + stateMachine.connectedFragments[0].name + " adalah " + stateMachine.connectedFragments[0].InitialPosition);
     }

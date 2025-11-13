@@ -6835,6 +6835,13 @@ MonoBehaviour:
   InspectPosition: {fileID: 1921920093}
   CurrentFragmentInspected: {fileID: 0}
   CurrentClusterInspected: {fileID: 0}
+  assemblyTargets:
+  - targetFragment: {fileID: 8752626124831225193}
+    correctPosition: {fileID: 1412949351}
+  - targetFragment: {fileID: 3391657867658584603}
+    correctPosition: {fileID: 1729860586}
+  - targetFragment: {fileID: 5881770624165154721}
+    correctPosition: {fileID: 515794649}
 --- !u!114 &1181414298
 MonoBehaviour:
   m_ObjectHideFlags: 0

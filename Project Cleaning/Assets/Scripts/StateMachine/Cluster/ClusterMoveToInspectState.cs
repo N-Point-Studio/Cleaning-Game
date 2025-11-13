@@ -7,6 +7,8 @@ public class ClusterMoveToInspect : ClusterBaseState
     public ClusterMoveToInspect(ClusterStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        Debug.Log("Cluster state: Move to inspect");
+
         stateMachine.SetClusterState(ClusterState.MoveToInspect);
 
         var manager = stateMachine.assembleManager;
@@ -21,6 +23,7 @@ public class ClusterMoveToInspect : ClusterBaseState
         AssembleManager.Instance.SetCurrentInspectCluster(stateMachine);
 
         stateMachine.transform.SetParent(manager.InspectPosition);
+        stateMachine.Interaction.isReturning = false;
     }
 
     public override void Tick(float deltaTime)

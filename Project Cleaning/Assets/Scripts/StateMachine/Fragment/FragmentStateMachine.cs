@@ -25,6 +25,7 @@ public class FragmentStateMachine : StateMachine
     private void Start()
     {
         Interaction = GetComponent<FragmentInteraction>();
+        Interaction.SetInitialPos(InitialPosition);
         SwitchState(new FragmentIdleState(this));
     }
 
