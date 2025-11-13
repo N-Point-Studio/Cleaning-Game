@@ -18,6 +18,7 @@ public class ClusterIdleState : ClusterBaseState
 
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
+        stateMachine.Interaction.isHoldAvailable = false;
     }
 
     public override void Tick(float deltaTime)
@@ -54,8 +55,7 @@ public class ClusterIdleState : ClusterBaseState
     public override void Exit()
     {
         TouchManager.Instance.SetIsDrag(false);
-        stateMachine.Interaction.isTapAvailable = false;
-        stateMachine.Interaction.isDragAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
         stateMachine.Interaction.isDragging = false;
 
         potentialFragmentTarget = null;

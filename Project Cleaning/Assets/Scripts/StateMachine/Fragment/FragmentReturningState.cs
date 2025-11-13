@@ -16,6 +16,7 @@ public class FragmentReturningState : FragmentBaseState
 
     public override void Enter()
     {
+        stateMachine.Interaction.DisableAllInteraction();
         stateMachine.CurrentStatus = "Returning";
         stateMachine.transform.SetParent(null);
 

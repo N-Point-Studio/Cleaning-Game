@@ -17,6 +17,7 @@ public class FragmentIdleState : FragmentBaseState
 
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
+        stateMachine.Interaction.isHoldAvailable = false;
 
     }
 
@@ -59,8 +60,7 @@ public class FragmentIdleState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.Interaction.isTapAvailable = false;
-        stateMachine.Interaction.isDragAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
         stateMachine.Interaction.isDragging = false;
         potentialTarget = null;
         TouchManager.Instance.SetIsDrag(false);

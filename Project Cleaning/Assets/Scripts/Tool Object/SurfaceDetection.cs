@@ -11,23 +11,16 @@ public class SurfaceDetection : MonoBehaviour
     }
 
     [Header("References")]
-    [SerializeField] private Transform rootTransform;
     [SerializeField] private Transform currentPointTransform;
-
     [Header("Raycast Settings")]
     [SerializeField] private float rayLength = 10f;
-    [SerializeField] private float offsetDistance = 0.05f;
     [SerializeField] private LayerMask dirtsLayerMask;
     [SerializeField] private CollisionToolsType surfaceType = CollisionToolsType.Texture;
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
-
-    //clean surface
     public Clean CleaningSurface { get; private set; }
     public Vector2 TextureSurface { get; private set; }
-
-    //clean mesh
     public CleanMesh MudObject { get; private set; }
 
     public bool isUsed = false;
@@ -41,12 +34,19 @@ public class SurfaceDetection : MonoBehaviour
     {
         // Debug.Log("is used? " + isUsed);
         if (isUsed) PerformRaycast();
+        Debug.Log("[surface] from here: " + IsSurfaceDetected);
     }
 
     private void PerformRaycast()
     {
         if (currentPointTransform == null)
             return;
+
+        if (!TouchManager.Instance.isClickedOn)
+        {
+            IsSurfaceDetected = false;
+            return;
+        }
 
         RaycastHit hit;
         if (Physics.Raycast(currentPointTransform.position, currentPointTransform.forward, out hit, rayLength, dirtsLayerMask))

@@ -7,6 +7,8 @@ public class ClusterMoveToInspect : ClusterBaseState
     public ClusterMoveToInspect(ClusterStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.Interaction.DisableAllInteraction();
+
         Debug.Log("Cluster state: Move to inspect");
 
         stateMachine.SetClusterState(ClusterState.MoveToInspect);
@@ -43,5 +45,6 @@ public class ClusterMoveToInspect : ClusterBaseState
 
     public override void Exit()
     {
+        stateMachine.Interaction.DisableAllInteraction();
     }
 }

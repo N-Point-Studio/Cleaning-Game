@@ -10,6 +10,8 @@ public class FragmentMoveToInspectState : FragmentBaseState
 
     public override void Enter()
     {
+        stateMachine.Interaction.DisableAllInteraction();
+
         stateMachine.CurrentStatus = "Move To Inspect";
 
         if (AssembleManager.Instance.CurrentFragmentInspected != null &&

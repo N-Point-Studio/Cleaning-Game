@@ -9,6 +9,8 @@ public class ClusterInspectState : ClusterBaseState
     public override void Enter()
     {
         Debug.Log("Cluster state: inspect");
+        stateMachine.Interaction.DisableAllInteraction();
+
 
         stateMachine.SetClusterState(ClusterState.Inspect);
         stateMachine.BoxCollider.enabled = false;
@@ -26,11 +28,7 @@ public class ClusterInspectState : ClusterBaseState
     public override void Exit()
     {
         stateMachine.BoxCollider.enabled = true;
-
-        // foreach (var frag in stateMachine.connectedFragments)
-        // {
-        //     frag.Interaction.isHoldAvailable = false;
-        // }
+        stateMachine.Interaction.DisableAllInteraction();
     }
 
 }

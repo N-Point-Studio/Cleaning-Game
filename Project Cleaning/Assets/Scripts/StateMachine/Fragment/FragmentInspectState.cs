@@ -14,6 +14,8 @@ public class FragmentInspectState : FragmentBaseState
         stateMachine.CurrentStatus = "Inspect";
 
         stateMachine.Interaction.isHoldAvailable = true;
+        stateMachine.Interaction.isTapAvailable = false;
+        stateMachine.Interaction.isDragAvailable = false;
 
         // AssembleManager.Instance.SetCurrentInspectCluster(null);
 
@@ -23,7 +25,7 @@ public class FragmentInspectState : FragmentBaseState
     public override void Tick(float dt)
     {
         Debug.Log("inspect" + stateMachine.name + " containing: " + stateMachine.StateMachineConnected.Count);
-        if (stateMachine.Interaction.isHolding)
+        if (stateMachine.Interaction.isHolding && !TouchManager.Instance.isInteracting)
         {
             Holding();
         }
@@ -31,7 +33,8 @@ public class FragmentInspectState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.Interaction.isHoldAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
+
 
         if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
         {

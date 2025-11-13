@@ -31,6 +31,8 @@ public class Tool : MonoBehaviour
             StickToSurface();
         else
             ReturnToInitial();
+
+        Debug.Log("[surface]: " + name + " adalah " + surfaceDetection.IsSurfaceDetected);
     }
 
     private void StickToSurface()

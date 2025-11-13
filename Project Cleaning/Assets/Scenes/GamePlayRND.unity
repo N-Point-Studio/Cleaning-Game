@@ -12800,10 +12800,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09fa450b59961489cbcf469d38ec0101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rootTransform: {fileID: 0}
   currentPointTransform: {fileID: 4739649330586685646}
   rayLength: 4.2
-  offsetDistance: 0.05
   dirtsLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -21824,10 +21822,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09fa450b59961489cbcf469d38ec0101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rootTransform: {fileID: 0}
   currentPointTransform: {fileID: 5059950785340148354}
   rayLength: 4.2
-  offsetDistance: 0.05
   dirtsLayerMask:
     serializedVersion: 2
     m_Bits: 384

@@ -19,6 +19,8 @@ public class FragmentAttachedState : FragmentBaseState
     {
         stateMachine.CurrentStatus = "Attached";
         stateMachine.Interaction.isHoldAvailable = true;
+        stateMachine.Interaction.isTapAvailable = false;
+        stateMachine.Interaction.isDragAvailable = false;
         moveRoutine = stateMachine.StartCoroutine(MoveToCorrectPosition());
     }
 
@@ -32,7 +34,7 @@ public class FragmentAttachedState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.Interaction.isHoldAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
     }
 
     private void Holding()

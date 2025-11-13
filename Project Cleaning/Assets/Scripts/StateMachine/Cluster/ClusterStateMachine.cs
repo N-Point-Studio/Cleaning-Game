@@ -78,12 +78,6 @@ public class ClusterStateMachine : StateMachine
         {
             connectedFragments.Remove(fragment);
             fragment.SwitchState(new FragmentUnassembleState(fragment));
-
-
-            // if (connectedFragments.Count >= 1)
-            // {
-            // SetInitialPosition(connectedFragments.First<FragmentStateMachine>().InitialPosition, connectedFragments.First<FragmentStateMachine>().InitialRotation);
-            // }
         }
     }
 
@@ -93,6 +87,13 @@ public class ClusterStateMachine : StateMachine
         {
             Destroy(gameObject);
         }
+    }
+
+    public void DisableAllInteraction()
+    {
+        Interaction.isDragAvailable = false;
+        Interaction.isTapAvailable = false;
+        Interaction.isHoldAvailable = false;
     }
 
 }

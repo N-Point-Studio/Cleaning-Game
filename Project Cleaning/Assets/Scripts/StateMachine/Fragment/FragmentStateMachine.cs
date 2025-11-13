@@ -42,4 +42,11 @@ public class FragmentStateMachine : StateMachine
         correctPos = null;
         return false;
     }
+
+    public void DisableAllInteraction()
+    {
+        Interaction.isDragAvailable = false;
+        Interaction.isTapAvailable = false;
+        Interaction.isHoldAvailable = false;
+    }
 }
