@@ -173,4 +173,18 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             OnHoldReleased?.Invoke();
         }
     }
+
+    private void OnDrawGizmos()
+    {
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera == null || curScreenPos == Vector3.zero) return;
+
+        // Konversi screen → world (z diatur agar terlihat di depan kamera)
+        Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y, 50f));
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(worldPos, 0.1f);
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(mainCamera.transform.position, worldPos);
+    }
 }

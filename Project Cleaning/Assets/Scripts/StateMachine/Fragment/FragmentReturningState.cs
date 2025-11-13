@@ -17,8 +17,12 @@ public class FragmentReturningState : FragmentBaseState
     public override void Enter()
     {
         stateMachine.CurrentStatus = "Returning";
-
         stateMachine.transform.SetParent(null);
+
+        if (AssembleManager.Instance.CurrentClusterInspected != null)
+        {
+            AssembleManager.Instance.CurrentClusterInspected.DestroyingCluster();
+        }
     }
 
     public override void Tick(float dt)

@@ -86,6 +86,11 @@ public class FragmentInteraction : MonoBehaviour
         isHolding = false;
     }
 
+    public void SetInitialPos(Vector3 pos)
+    {
+        initialPosition = pos;
+    }
+
     void HandleDrag()
     {
         if (TouchManager.Instance.isRotating || TouchManager.Instance.isZooming) return;

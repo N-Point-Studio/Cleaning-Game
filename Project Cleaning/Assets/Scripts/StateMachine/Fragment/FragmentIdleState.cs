@@ -9,6 +9,7 @@ public class FragmentIdleState : FragmentBaseState
     private bool dragJustStarted = false;
     private float initialDistanceZ;
     private FragmentStateMachine potentialTarget;
+    private ClusterStateMachine potentialCluster;
 
     public override void Enter()
     {
@@ -25,6 +26,10 @@ public class FragmentIdleState : FragmentBaseState
         {
             stateMachine.Interaction.ResetTap();
             stateMachine.SwitchState(new FragmentMoveToInspectState(stateMachine));
+
+            if (AssembleManager.Instance.CurrentClusterInspected != null)
+                AssembleManager.Instance.CurrentClusterInspected.SwitchState(new ClusterReturningState(AssembleManager.Instance.CurrentClusterInspected));
+
             return;
         }
 
@@ -39,8 +44,14 @@ public class FragmentIdleState : FragmentBaseState
 
             if (potentialTarget != null)
             {
-                stateMachine.SwitchState(new FragmentAssembledState(stateMachine, potentialTarget));
+                stateMachine.SwitchState(new FragmentAssembledState(stateMachine));
                 potentialTarget = null;
+                TouchManager.Instance.SetIsDrag(false);
+            }
+            else if (potentialCluster != null)
+            {
+                stateMachine.SwitchState(new FragmentAssembledState(stateMachine));
+                potentialCluster = null;
                 TouchManager.Instance.SetIsDrag(false);
             }
         }
@@ -60,19 +71,19 @@ public class FragmentIdleState : FragmentBaseState
         if (stateMachine.Interaction.isDragging && !dragJustStarted)
         {
             dragJustStarted = true;
-            initialDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.InspectPosition.position.z);
+            initialDistanceZ = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.InspectPosition.position.z);
         }
 
         if (stateMachine.Interaction.isDragging)
         {
-            float currentDistanceZ = Mathf.Abs(stateMachine.transform.position.z - stateMachine.InspectPosition.position.z);
+            float currentDistanceZ = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.InspectPosition.position.z);
             if (initialDistanceZ <= 0.001f) return;
 
             float progress = Mathf.InverseLerp(initialDistanceZ, 0f, currentDistanceZ);
             float t = 1f - progress;
 
             // posisi
-            float newY = Mathf.Lerp(stateMachine.InitialPosition.y, stateMachine.InspectPosition.position.y, 1 - t);
+            float newY = Mathf.Lerp(stateMachine.InitialPosition.y, AssembleManager.Instance.InspectPosition.position.y, 1 - t);
             Vector3 targetPos = new Vector3(stateMachine.transform.position.x, newY + 2, stateMachine.transform.position.z);
             stateMachine.transform.position = Vector3.Lerp(stateMachine.transform.position, targetPos, Time.deltaTime * stateMachine.Interaction.dragSpeed);
 
@@ -90,18 +101,23 @@ public class FragmentIdleState : FragmentBaseState
                 {
                     stateMachine.transform.rotation = Quaternion.Slerp(
                         stateMachine.transform.rotation,
-                        stateMachine.InspectPosition.rotation,
+                        AssembleManager.Instance.InspectPosition.transform.rotation,
                         Time.deltaTime * 5f
                     );
                 }
             }
 
-            if (FragmentStateMachine.CurrentInspecting != null && stateMachine != FragmentStateMachine.CurrentInspecting)
+            if (AssembleManager.Instance.CurrentFragmentInspected != null && stateMachine != AssembleManager.Instance.CurrentFragmentInspected)
             {
-                float zDist = Mathf.Abs(stateMachine.transform.position.z - FragmentStateMachine.CurrentInspecting.transform.position.z);
-                potentialTarget = zDist < 1.5f ? FragmentStateMachine.CurrentInspecting : null;
+                float zDist = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.CurrentFragmentInspected.transform.position.z);
+                potentialTarget = zDist < 1.5f ? AssembleManager.Instance.CurrentFragmentInspected : null;
             }
-            else if (currentDistanceZ < 1f)
+            else if (AssembleManager.Instance.CurrentClusterInspected != null)
+            {
+                float zDist = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.CurrentClusterInspected.transform.position.z);
+                potentialCluster = zDist < 1.5f ? AssembleManager.Instance.CurrentClusterInspected : null;
+            }
+            else if (currentDistanceZ < 1f && AssembleManager.Instance.CurrentClusterInspected == null && AssembleManager.Instance.CurrentFragmentInspected == null)
             {
                 stateMachine.SwitchState(new FragmentMoveToInspectState(stateMachine));
                 TouchManager.Instance.SetIsDrag(false);
