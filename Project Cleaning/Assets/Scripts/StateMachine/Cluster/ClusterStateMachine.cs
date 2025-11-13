@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(FragmentInteraction), typeof(BoxCollider))]
@@ -77,6 +78,12 @@ public class ClusterStateMachine : StateMachine
         {
             connectedFragments.Remove(fragment);
             fragment.SwitchState(new FragmentUnassembleState(fragment));
+
+
+            // if (connectedFragments.Count >= 1)
+            // {
+            // SetInitialPosition(connectedFragments.First<FragmentStateMachine>().InitialPosition, connectedFragments.First<FragmentStateMachine>().InitialRotation);
+            // }
         }
     }
 

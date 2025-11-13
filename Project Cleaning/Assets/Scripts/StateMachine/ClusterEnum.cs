@@ -9,5 +9,6 @@ public enum ClusterState
     MoveToInspect,
     Inspect,
     Return,
+    Assemble,
     Unassembled,
 }

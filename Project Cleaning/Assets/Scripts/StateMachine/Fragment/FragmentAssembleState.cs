@@ -69,25 +69,4 @@ public class FragmentAssembledState : FragmentBaseState
             AssembleManager.Instance.SetCurrentInspectFragment(null);
         }
     }
-
-    private IEnumerator SmoothMoveCoroutine(Transform fragment, Transform target)
-    {
-        Vector3 startPos = fragment.localPosition;
-        Quaternion startRot = fragment.localRotation;
-        Vector3 targetPos = target.localPosition;
-        Quaternion targetRot = target.localRotation;
-
-        float t = 0f;
-
-        while (t < 1f)
-        {
-            t += Time.deltaTime * assembleSpeed;
-            fragment.localPosition = Vector3.Lerp(startPos, targetPos, t);
-            fragment.localRotation = Quaternion.Slerp(startRot, targetRot, t * rotationSpeed / assembleSpeed);
-            yield return null;
-        }
-
-        fragment.localPosition = targetPos;
-        fragment.localRotation = targetRot;
-    }
 }

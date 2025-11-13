@@ -101,7 +101,6 @@ public class FragmentIdleState : FragmentBaseState
                 {
                     stateMachine.transform.rotation = Quaternion.Slerp(
                         stateMachine.transform.rotation,
-                        // stateMachine.InspectPosition.rotation,
                         AssembleManager.Instance.InspectPosition.transform.rotation,
                         Time.deltaTime * 5f
                     );
@@ -112,7 +111,6 @@ public class FragmentIdleState : FragmentBaseState
             {
                 float zDist = Mathf.Abs(stateMachine.transform.position.z - AssembleManager.Instance.CurrentFragmentInspected.transform.position.z);
                 potentialTarget = zDist < 1.5f ? AssembleManager.Instance.CurrentFragmentInspected : null;
-                // AssembleManager.Instance.SetCurrentInspectFragment(potentialTarget);
             }
             else if (AssembleManager.Instance.CurrentClusterInspected != null)
             {

@@ -24,7 +24,7 @@ public class FragmentAttachedState : FragmentBaseState
 
     public override void Tick(float deltaTime)
     {
-        if (stateMachine.Interaction.isHolding)
+        if (stateMachine.Interaction.isHolding && !TouchManager.Instance.isInteracting)
         {
             Holding();
         }
@@ -37,11 +37,8 @@ public class FragmentAttachedState : FragmentBaseState
 
     private void Holding()
     {
-        Debug.Log("Holding the attach " + stateMachine.name);
         if (AssembleManager.Instance.CurrentClusterInspected == null) return;
-        Debug.Log("ADA KOK");
         AssembleManager.Instance.CurrentClusterInspected.RemovingFragment(stateMachine);
-        // stateMachine.SwitchState(new FragmentReturningState(stateMachine));
     }
 
     private IEnumerator MoveToCorrectPosition()
