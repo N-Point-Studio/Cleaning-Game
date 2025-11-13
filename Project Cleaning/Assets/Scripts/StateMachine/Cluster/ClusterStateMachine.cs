@@ -26,10 +26,6 @@ public class ClusterStateMachine : StateMachine
     private void Awake()
     {
         Camera = Camera.main;
-
-        // //temporary
-        // InitialPosition = transform.position;
-        // InitialRotation = transform.rotation;
     }
 
     private void Start()
@@ -38,7 +34,6 @@ public class ClusterStateMachine : StateMachine
         BoxCollider = GetComponent<BoxCollider>();
         BoxCollider.size = new Vector3(2.5f, 2.5f, 2.5f);
         SwitchState(new ClusterCreatedState(this));
-        // SwitchState(new ClusterIdleState(this));
     }
 
     public void SetClusterState(ClusterState state)
@@ -73,6 +68,23 @@ public class ClusterStateMachine : StateMachine
         {
             connectedFragments.Add(fragment);
             fragment.transform.SetParent(this.transform);
+        }
+    }
+
+    public void RemovingFragment(FragmentStateMachine fragment)
+    {
+        if (connectedFragments.Contains(fragment))
+        {
+            connectedFragments.Remove(fragment);
+            fragment.SwitchState(new FragmentUnassembleState(fragment));
+        }
+    }
+
+    public void DestroyingCluster()
+    {
+        if (connectedFragments.Count <= 0)
+        {
+            Destroy(gameObject);
         }
     }
 
