@@ -26,7 +26,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Gameplay.unity
     guid: f1a58f56f834f466ebb6dafe07796f6f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/GamePlayFixing.unity
     guid: 16cd3f1dba04844c6b9468cccc11cd39
+  - enabled: 1
+    path: Assets/Scenes/Start Game.unity
+    guid: efa3397073daf4a56aa5fd9fbc198f36
   m_configObjects: {}
