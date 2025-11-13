@@ -41,7 +41,7 @@ public class InspectableJar : MonoBehaviour
         TouchManager.ZoomEnd -= StopZoom;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (TouchManager.Instance.isInteracting) return;
 

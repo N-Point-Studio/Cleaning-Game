@@ -10,12 +10,14 @@ public class FragmentReturningState : FragmentBaseState
 
     public FragmentReturningState(FragmentStateMachine stateMachine) : base(stateMachine)
     {
-        targetPosition = stateMachine.initialPosition;
-        targetRotation = stateMachine.initialRotation;
+        targetPosition = stateMachine.InitialPosition;
+        targetRotation = stateMachine.InitialRotation;
     }
 
     public override void Enter()
     {
+        stateMachine.CurrentStatus = "Returning";
+
         stateMachine.transform.SetParent(null);
     }
 

@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class FragmentAssembledState : FragmentBaseState
 {
     private FragmentStateMachine targetFragment;
+    private float assembleSpeed = 5f;
+    private float rotationSpeed = 10f;
 
     public FragmentAssembledState(FragmentStateMachine stateMachine, FragmentStateMachine target)
         : base(stateMachine)
@@ -14,43 +17,90 @@ public class FragmentAssembledState : FragmentBaseState
 
     public override void Enter()
     {
-        Transform clusterTransform;
+        stateMachine.CurrentStatus = "Assembled";
+        stateMachine.Interaction.isHoldAvailable = true;
+        stateMachine.Interaction.isReturning = false;
 
-        if (targetFragment.clusterRoot != null)
+        if (targetFragment.StateMachineConnected.Count == 0 && stateMachine.StateMachineConnected.Count == 0)
         {
-            clusterTransform = targetFragment.clusterRoot;
-        }
-        else
-        {
-            GameObject cluster = new GameObject("Cluster_" + targetFragment.name);
-            clusterTransform = cluster.transform;
-            clusterTransform.position = targetFragment.transform.position;
-            clusterTransform.rotation = targetFragment.transform.rotation;
-            targetFragment.transform.SetParent(clusterTransform);
-            targetFragment.clusterRoot = clusterTransform;
+            targetFragment.StateMachineConnected.Add(stateMachine);
+            stateMachine.transform.SetParent(targetFragment.transform);
+            MoveSmoothlyToTarget(stateMachine, targetFragment);
         }
 
-        if (targetFragment.transform.parent != clusterTransform)
-            targetFragment.transform.SetParent(clusterTransform);
+        else if (targetFragment.StateMachineConnected.Count > 0 && stateMachine.StateMachineConnected.Count == 0)
+        {
+            targetFragment.StateMachineConnected.Add(stateMachine);
+            stateMachine.transform.SetParent(targetFragment.transform);
+            MoveSmoothlyToTarget(stateMachine, targetFragment);
+        }
 
-        stateMachine.transform.SetParent(clusterTransform);
+        else if (stateMachine.StateMachineConnected.Count > 0)
+        {
+            if (!targetFragment.StateMachineConnected.Contains(stateMachine))
+            {
+                targetFragment.StateMachineConnected.Add(stateMachine);
+                stateMachine.transform.SetParent(targetFragment.transform);
+                MoveSmoothlyToTarget(stateMachine, targetFragment);
+            }
+            var connectedCopy = new List<FragmentStateMachine>(stateMachine.StateMachineConnected);
 
-        stateMachine.transform.position = stateMachine.CorrectPosition.position;
-        stateMachine.transform.rotation = stateMachine.CorrectPosition.rotation;
+            foreach (var connected in connectedCopy)
+            {
+                targetFragment.StateMachineConnected.Add(connected);
+                connected.transform.SetParent(targetFragment.transform);
+                MoveSmoothlyToTarget(connected, targetFragment);
+            }
 
-        targetFragment.transform.position = targetFragment.CorrectPosition.position;
-        targetFragment.transform.rotation = targetFragment.CorrectPosition.rotation;
-
-        stateMachine.clusterRoot = clusterTransform;
-
-        stateMachine.SwitchState(new FragmentInspectState(stateMachine));
-
-        Debug.Log($"{stateMachine.name} attached to cluster {clusterTransform.name}");
-
-        FragmentStateMachine.CurrentInspecting = stateMachine;
+            stateMachine.StateMachineConnected.Clear();
+        }
     }
 
-    public override void Tick(float deltaTime) { }
+    public override void Tick(float deltaTime)
+    {
+        if (stateMachine.Interaction.isHolding)
+        {
+            ReturnFragment();
+        }
+    }
 
-    public override void Exit() { }
+    public override void Exit()
+    {
+        stateMachine.Interaction.isHoldAvailable = false;
+    }
+
+    private void ReturnFragment()
+    {
+        targetFragment.StateMachineConnected.Remove(stateMachine);
+        stateMachine.transform.SetParent(null);
+        stateMachine.SwitchState(new FragmentReturningState(stateMachine));
+    }
+
+    private void MoveSmoothlyToTarget(FragmentStateMachine fragment, FragmentStateMachine target)
+    {
+        if (target.TryGetAssemblyTarget(fragment, out Transform correctPos))
+        {
+            fragment.StartCoroutine(SmoothMoveCoroutine(fragment.transform, correctPos));
+        }
+    }
+
+    private IEnumerator SmoothMoveCoroutine(Transform fragment, Transform target)
+    {
+        Vector3 startPos = fragment.position;
+        Quaternion startRot = fragment.rotation;
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime * assembleSpeed;
+
+            fragment.position = Vector3.Lerp(startPos, target.position, t);
+            fragment.rotation = Quaternion.Slerp(startRot, target.rotation, t * rotationSpeed / assembleSpeed);
+
+            yield return null;
+        }
+
+        fragment.position = target.position;
+        fragment.rotation = target.rotation;
+    }
 }

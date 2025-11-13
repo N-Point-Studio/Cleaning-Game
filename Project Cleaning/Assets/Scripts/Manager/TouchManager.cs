@@ -10,6 +10,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public Vector3 curScreenPos;
     private Camera mainCamera;
     public bool isInteracting = false;
+    public bool isDragging = false;
     private float edgeOffset = 10f;
     private float screenWidth;
     private float screenHeight;
@@ -119,6 +120,11 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public void IsZoom(bool status)
     {
         isZooming = status;
+    }
+
+    public void SetIsDrag(bool status)
+    {
+        isDragging = status;
     }
 
     public void OnSecondaryFingerPos(InputAction.CallbackContext context)
