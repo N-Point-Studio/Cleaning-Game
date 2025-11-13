@@ -14,7 +14,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/ProcuduralAnimation.unity
     guid: 4e2a3a9dc70eb4bb59023680cb85c330
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/FixDragging.unity
     guid: 42bceba8709bb451eadb61671f8dfa1a
   - enabled: 0
@@ -26,4 +26,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Gameplay.unity
     guid: f1a58f56f834f466ebb6dafe07796f6f
+  - enabled: 1
+    path: Assets/Scenes/Testing.unity
+    guid: c071dde9484414e419018139d53a5212
   m_configObjects: {}
