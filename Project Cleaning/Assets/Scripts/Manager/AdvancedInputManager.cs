@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using DG.Tweening;
 
 /// <summary>
@@ -22,8 +23,9 @@ public class AdvancedInputManager : MonoBehaviour
     [SerializeField] private float maxDragSpeed = 2f;
 
     [Header("UI Controls")]
-    [SerializeField] private UnityEngine.UI.Button startExplorationButton;
-    [SerializeField] private UnityEngine.UI.Button swipeRightButton;
+    [SerializeField] private UnityEngine.UI.Image startExplorationImage;
+    [SerializeField] private UnityEngine.UI.Image additionalImage1;
+    [SerializeField] private UnityEngine.UI.Image additionalImage2;
 
     [Header("Exploration Settings")]
     [SerializeField] private Vector3 explorationPosition = new Vector3(-4.35f, 3.851f, -1.48f);
@@ -38,12 +40,15 @@ public class AdvancedInputManager : MonoBehaviour
     [SerializeField] private float buttonFadeDuration = 0.5f;
     [SerializeField] private float buttonScaleDuration = 0.3f;
 
-    [Header("Swipe Right Settings")]
-    [SerializeField] private Vector3 swipeRightPosition = new Vector3(-2.50f, 3.851f, -1.48f);
+    [Header("Swipe Detection Settings")]
+    [SerializeField] private float swipeThreshold = 50f; // Minimum distance for swipe detection
+    [SerializeField] private float maxSwipeTime = 1f; // Maximum time for valid swipe
     [SerializeField] private float swipeTransitionDuration = 0.6f;
 
-    [Header("Debug")]
-    [SerializeField] private bool showDebugInfo = true;
+    [Header("Pinch Detection Settings")]
+    [SerializeField] private float pinchThreshold = 30f; // Minimum distance change for pinch
+    [SerializeField] private float maxPinchTime = 2f; // Maximum time for valid pinch
+
 
     // Core components
     private Camera playerCamera;
@@ -52,6 +57,14 @@ public class AdvancedInputManager : MonoBehaviour
     // Game state
     private GameMode currentGameMode = GameMode.Initial;
     private CameraDragSystem cameraDragSystem;
+
+    // Swipe system
+    private SwipeDetectionSystem swipeDetectionSystem;
+    private PinchDetectionSystem pinchDetectionSystem;
+
+    // Predefined camera positions for swipe navigation
+    private readonly float[] cameraXPositions = { -4.35f, -2.5f, -0.5f };
+    private int currentPositionIndex = 0; // Start at -4.35f (exploration position)
 
     // Exploration state
     private Vector3 originalCameraPosition;
@@ -92,10 +105,6 @@ public class AdvancedInputManager : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        if (showDebugInfo) DrawDebugInfo();
-    }
 
     #endregion
 
@@ -117,6 +126,8 @@ public class AdvancedInputManager : MonoBehaviour
     private void InitializeComponents()
     {
         cameraDragSystem = new CameraDragSystem(cameraDragSensitivity, cameraDragSmoothing, maxDragSpeed);
+        swipeDetectionSystem = new SwipeDetectionSystem(swipeThreshold, maxSwipeTime);
+        pinchDetectionSystem = new PinchDetectionSystem(pinchThreshold, maxPinchTime);
     }
 
     private void SetupCameraController()
@@ -130,16 +141,63 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void SetupUI()
     {
-        if (startExplorationButton != null)
+        if (startExplorationImage != null)
         {
-            startExplorationButton.onClick.AddListener(StartExplorationMode);
+            SetupImageClickDetection(startExplorationImage, StartExplorationMode);
         }
 
-        if (swipeRightButton != null)
+        // Setup additional images - no click detection needed, just for visual transition
+        if (additionalImage1 != null)
         {
-            swipeRightButton.onClick.AddListener(SwipeRight);
-            // Hide swipe right button initially
-            swipeRightButton.gameObject.SetActive(false);
+            additionalImage1.raycastTarget = false; // These are decorative only
+        }
+        if (additionalImage2 != null)
+        {
+            additionalImage2.raycastTarget = false; // These are decorative only
+        }
+    }
+
+    /// <summary>
+    /// Setup click detection for UI Image using EventTrigger
+    /// </summary>
+    private void SetupImageClickDetection(Image targetImage, System.Action onClickAction)
+    {
+        // Get or add EventTrigger component
+        EventTrigger eventTrigger = targetImage.GetComponent<EventTrigger>();
+        if (eventTrigger == null)
+        {
+            eventTrigger = targetImage.gameObject.AddComponent<EventTrigger>();
+        }
+
+        // Create click event
+        EventTrigger.Entry clickEvent = new EventTrigger.Entry();
+        clickEvent.eventID = EventTriggerType.PointerClick;
+        clickEvent.callback.AddListener((data) => { onClickAction?.Invoke(); });
+
+        // Add event to trigger
+        eventTrigger.triggers.Add(clickEvent);
+
+        // Ensure the image can receive raycast events
+        targetImage.raycastTarget = true;
+
+        Debug.Log($"Click detection setup for image: {targetImage.name}");
+    }
+
+    /// <summary>
+    /// Enable/disable click detection for UI Image
+    /// </summary>
+    private void SetImageClickable(Image targetImage, bool clickable)
+    {
+        if (targetImage != null)
+        {
+            targetImage.raycastTarget = clickable;
+
+            // Also enable/disable EventTrigger if it exists
+            EventTrigger eventTrigger = targetImage.GetComponent<EventTrigger>();
+            if (eventTrigger != null)
+            {
+                eventTrigger.enabled = clickable;
+            }
         }
     }
 
@@ -181,6 +239,7 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (Input.touchCount == 1)
         {
+            // Single finger touch - handle swipe or drag
             Touch touch = Input.GetTouch(0);
 
             switch (touch.phase)
@@ -199,6 +258,29 @@ public class AdvancedInputManager : MonoBehaviour
                     break;
             }
         }
+        else if (Input.touchCount == 2)
+        {
+            // Two finger touch - handle pinch
+            Touch touch1 = Input.GetTouch(0);
+            Touch touch2 = Input.GetTouch(1);
+
+            // Check if either finger just started
+            if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
+            {
+                HandlePinchDown();
+            }
+            // Check if both fingers are moving
+            else if ((touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved))
+            {
+                HandlePinchDrag();
+            }
+            // Check if either finger ended
+            else if (touch1.phase == TouchPhase.Ended || touch2.phase == TouchPhase.Ended ||
+                     touch1.phase == TouchPhase.Canceled || touch2.phase == TouchPhase.Canceled)
+            {
+                HandlePinchUp();
+            }
+        }
     }
 
     private void HandleInputDown(Vector2 screenPosition)
@@ -211,8 +293,11 @@ public class AdvancedInputManager : MonoBehaviour
                 break;
 
             case GameMode.Exploration:
-                // Di exploration mode, hanya bisa click object
-                HandleExplorationModeClick(screenPosition);
+                // Check for object click first, if none then start swipe detection
+                if (!CheckForObjectClick(screenPosition))
+                {
+                    swipeDetectionSystem.StartSwipe(screenPosition);
+                }
                 break;
 
             case GameMode.Zoom:
@@ -232,6 +317,11 @@ public class AdvancedInputManager : MonoBehaviour
             // Hanya di zoom mode yang bisa camera drag
             cameraDragSystem.UpdateDrag(screenPosition, cameraController);
         }
+        else if (currentGameMode == GameMode.Exploration)
+        {
+            // Update swipe detection during drag
+            swipeDetectionSystem.UpdateSwipe(screenPosition);
+        }
     }
 
     private void HandleInputUp()
@@ -239,6 +329,125 @@ public class AdvancedInputManager : MonoBehaviour
         if (currentGameMode == GameMode.Zoom)
         {
             cameraDragSystem.EndDrag();
+        }
+        else if (currentGameMode == GameMode.Exploration)
+        {
+            // Check if swipe was completed
+            var swipeResult = swipeDetectionSystem.EndSwipe();
+            if (swipeResult.IsValid)
+            {
+                HandleSwipeGesture(swipeResult.Direction);
+            }
+        }
+    }
+
+    private void HandlePinchDown()
+    {
+        switch (currentGameMode)
+        {
+            case GameMode.Initial:
+                // No pinch handling in initial mode
+                break;
+
+            case GameMode.Exploration:
+                // Start pinch detection for entering zoom mode
+                pinchDetectionSystem.StartPinch();
+                Debug.Log("Pinch started in exploration mode");
+                break;
+
+            case GameMode.Zoom:
+                // Start pinch detection for exiting zoom mode
+                pinchDetectionSystem.StartPinch();
+                Debug.Log("Pinch started in zoom mode");
+                break;
+        }
+    }
+
+    private void HandlePinchDrag()
+    {
+        // Update pinch tracking in both exploration and zoom modes
+        if (currentGameMode == GameMode.Exploration || currentGameMode == GameMode.Zoom)
+        {
+            pinchDetectionSystem.UpdatePinch();
+        }
+    }
+
+    private void HandlePinchUp()
+    {
+        // Handle pinch up in both exploration and zoom modes
+        if (currentGameMode == GameMode.Exploration || currentGameMode == GameMode.Zoom)
+        {
+            // Check if pinch was completed
+            var pinchResult = pinchDetectionSystem.EndPinch();
+            if (pinchResult.IsValid)
+            {
+                HandlePinchGesture(pinchResult.Direction);
+            }
+        }
+    }
+
+    private void HandlePinchGesture(PinchDirection direction)
+    {
+        Debug.Log($"Pinch gesture detected: {direction}");
+
+        switch (currentGameMode)
+        {
+            case GameMode.Exploration:
+                if (direction == PinchDirection.In)
+                {
+                    // Pinch in while in exploration mode - enter zoom mode
+                    EnterZoomModeAtCenter();
+                }
+                else
+                {
+                    Debug.Log("Pinch out while in exploration mode ignored");
+                }
+                break;
+
+            case GameMode.Zoom:
+                if (direction == PinchDirection.Out)
+                {
+                    // Pinch out while in zoom mode - return to exploration
+                    ReturnToExplorationMode();
+                }
+                else
+                {
+                    Debug.Log("Pinch in while in zoom mode ignored");
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Enter zoom mode at center of current camera view (no specific object target)
+    /// </summary>
+    private void EnterZoomModeAtCenter()
+    {
+        Debug.Log("Entering Zoom Mode via pinch gesture");
+
+        currentGameMode = GameMode.Zoom;
+
+        // Set focus target to current camera position (center view)
+        Vector3 currentPosition = cameraController.transform.position;
+        Vector3 focusPosition = currentPosition + cameraController.transform.forward * 2f; // Focus slightly ahead
+
+        // Create temporary focus target
+        GameObject tempFocus = new GameObject("TempFocusTarget");
+        tempFocus.transform.position = focusPosition;
+
+        cameraController.SetFocusTarget(tempFocus.transform);
+        cameraController.SwitchState(cameraController.focusState);
+
+        // Clean up temp object after a delay
+        StartCoroutine(CleanupTempFocusTarget(tempFocus, 0.1f));
+    }
+
+    private System.Collections.IEnumerator CleanupTempFocusTarget(GameObject tempTarget, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (tempTarget != null)
+        {
+            Destroy(tempTarget);
         }
     }
 
@@ -255,10 +464,20 @@ public class AdvancedInputManager : MonoBehaviour
 
         Debug.Log("Starting Exploration Mode with elegant transition");
 
-        // Disable button immediately to prevent multiple clicks
-        if (startExplorationButton != null)
+        // Disable image click immediately to prevent multiple clicks
+        if (startExplorationImage != null)
         {
-            startExplorationButton.interactable = false;
+            SetImageClickable(startExplorationImage, false);
+        }
+
+        // Disable additional images as well (even though they don't have click detection)
+        if (additionalImage1 != null)
+        {
+            additionalImage1.raycastTarget = false;
+        }
+        if (additionalImage2 != null)
+        {
+            additionalImage2.raycastTarget = false;
         }
 
         // Start elegant button fade out and scale animation
@@ -266,42 +485,73 @@ public class AdvancedInputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Elegant button transition with fade out and scale effect
+    /// Elegant image transition with fade out and scale effect for all 3 images
     /// </summary>
     private System.Collections.IEnumerator ElegantButtonTransition()
     {
-        if (startExplorationButton != null)
+        // Create list of images to animate
+        var imagesToAnimate = new System.Collections.Generic.List<UnityEngine.UI.Image>();
+
+        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
+        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
+        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
+
+        // Setup canvas groups and store original scales
+        var canvasGroups = new System.Collections.Generic.List<CanvasGroup>();
+        var transforms = new System.Collections.Generic.List<Transform>();
+        var originalScales = new System.Collections.Generic.List<Vector3>();
+
+        foreach (var image in imagesToAnimate)
         {
-            // Get button components
-            CanvasGroup buttonCanvasGroup = startExplorationButton.GetComponent<CanvasGroup>();
-            if (buttonCanvasGroup == null)
+            // Get or create canvas group
+            CanvasGroup imageCanvasGroup = image.GetComponent<CanvasGroup>();
+            if (imageCanvasGroup == null)
             {
-                buttonCanvasGroup = startExplorationButton.gameObject.AddComponent<CanvasGroup>();
+                imageCanvasGroup = image.gameObject.AddComponent<CanvasGroup>();
             }
 
-            Transform buttonTransform = startExplorationButton.transform;
-            Vector3 originalScale = buttonTransform.localScale;
-
-            // Create elegant fade out and scale animation
-            Sequence buttonSequence = DOTween.Sequence();
-
-            // Scale down with bounce effect
-            buttonSequence.Append(buttonTransform.DOScale(originalScale * 0.8f, buttonScaleDuration * 0.5f).SetEase(Ease.OutBack));
-            buttonSequence.Join(buttonCanvasGroup.DOFade(0.3f, buttonScaleDuration * 0.5f));
-
-            // Final fade out and scale to zero
-            buttonSequence.Append(buttonTransform.DOScale(0f, buttonFadeDuration).SetEase(Ease.InBack));
-            buttonSequence.Join(buttonCanvasGroup.DOFade(0f, buttonFadeDuration));
-
-            // Wait for button animation to complete
-            yield return buttonSequence.WaitForCompletion();
-
-            // Hide button completely
-            startExplorationButton.gameObject.SetActive(false);
+            canvasGroups.Add(imageCanvasGroup);
+            transforms.Add(image.transform);
+            originalScales.Add(image.transform.localScale);
         }
 
-        // Small delay for dramatic effect
-        yield return new WaitForSeconds(0.2f);
+        // Create master sequence with staggered warm animations
+        Sequence masterSequence = DOTween.Sequence();
+
+        for (int i = 0; i < imagesToAnimate.Count; i++)
+        {
+            float delay = i * 0.15f; // Stagger each image by 0.15 seconds for cozy effect
+
+            // Individual image animation sequence
+            Sequence imageSequence = DOTween.Sequence();
+
+            // Warm bounce down effect
+            imageSequence.Append(transforms[i].DOScale(originalScales[i] * 0.85f, buttonScaleDuration * 0.6f)
+                .SetEase(Ease.OutBack));
+            imageSequence.Join(canvasGroups[i].DOFade(0.4f, buttonScaleDuration * 0.6f)
+                .SetEase(Ease.OutSine));
+
+            // Gentle final fade out with smooth scaling
+            imageSequence.Append(transforms[i].DOScale(0f, buttonFadeDuration * 1.2f)
+                .SetEase(Ease.InSine));
+            imageSequence.Join(canvasGroups[i].DOFade(0f, buttonFadeDuration * 1.2f)
+                .SetEase(Ease.InSine));
+
+            // Add to master sequence with delay
+            masterSequence.Insert(delay, imageSequence);
+        }
+
+        // Wait for all animations to complete
+        yield return masterSequence.WaitForCompletion();
+
+        // Hide all images completely
+        foreach (var image in imagesToAnimate)
+        {
+            image.gameObject.SetActive(false);
+        }
+
+        // Small cozy pause for dramatic effect
+        yield return new WaitForSeconds(0.3f);
 
         // Now start exploration mode
         BeginExplorationMode();
@@ -313,6 +563,7 @@ public class AdvancedInputManager : MonoBehaviour
     private void BeginExplorationMode()
     {
         currentGameMode = GameMode.Exploration;
+        currentPositionIndex = 0; // Reset to exploration position (-4.35f)
 
         // Store original camera position
         originalCameraPosition = cameraController.transform.position;
@@ -340,10 +591,13 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (currentGameMode != GameMode.Zoom) return;
 
-        Debug.Log("Returning to Exploration Mode");
+        Debug.Log($"Returning to Exploration Mode - Position Index: {currentPositionIndex}");
 
         currentGameMode = GameMode.Exploration;
-        AnimateToExplorationPosition();
+
+        // Return to the last exploration position based on currentPositionIndex
+        float targetX = cameraXPositions[currentPositionIndex];
+        AnimateToPosition(targetX);
     }
 
     /// <summary>
@@ -361,128 +615,163 @@ public class AdvancedInputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Show start button again with elegant fade in effect
+    /// Show all images again with elegant fade in effect
     /// </summary>
     private System.Collections.IEnumerator ShowStartButtonElegantly()
     {
-        // Hide swipe right button first
-        if (swipeRightButton != null)
-        {
-            swipeRightButton.gameObject.SetActive(false);
-        }
-
         // Wait for camera animation to near completion
         yield return new WaitForSeconds(returnTransitionDuration * 0.7f);
 
-        if (startExplorationButton != null)
+        // Create list of images to animate back in
+        var imagesToAnimate = new System.Collections.Generic.List<UnityEngine.UI.Image>();
+
+        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
+        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
+        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
+
+        // Show all images but make them invisible initially
+        var canvasGroups = new System.Collections.Generic.List<CanvasGroup>();
+        var transforms = new System.Collections.Generic.List<Transform>();
+
+        foreach (var image in imagesToAnimate)
         {
-            // Show button but invisible
-            startExplorationButton.gameObject.SetActive(true);
+            // Show image but invisible
+            image.gameObject.SetActive(true);
 
             // Get or create canvas group
-            CanvasGroup buttonCanvasGroup = startExplorationButton.GetComponent<CanvasGroup>();
-            if (buttonCanvasGroup == null)
+            CanvasGroup imageCanvasGroup = image.GetComponent<CanvasGroup>();
+            if (imageCanvasGroup == null)
             {
-                buttonCanvasGroup = startExplorationButton.gameObject.AddComponent<CanvasGroup>();
+                imageCanvasGroup = image.gameObject.AddComponent<CanvasGroup>();
             }
 
-            Transform buttonTransform = startExplorationButton.transform;
+            canvasGroups.Add(imageCanvasGroup);
+            transforms.Add(image.transform);
 
             // Set initial state (invisible and small)
-            buttonCanvasGroup.alpha = 0f;
-            buttonTransform.localScale = Vector3.zero;
-
-            // Enable button interaction
-            startExplorationButton.interactable = true;
-
-            // Create elegant fade in and scale animation
-            Sequence showButtonSequence = DOTween.Sequence();
-
-            // Scale up with bounce effect and fade in
-            showButtonSequence.Append(buttonTransform.DOScale(Vector3.one, buttonFadeDuration).SetEase(Ease.OutBack));
-            showButtonSequence.Join(buttonCanvasGroup.DOFade(1f, buttonFadeDuration));
-
-            yield return showButtonSequence.WaitForCompletion();
-
-            Debug.Log("Start button elegantly restored");
+            imageCanvasGroup.alpha = 0f;
+            image.transform.localScale = Vector3.zero;
         }
-    }
 
-    /// <summary>
-    /// Show swipe right button with elegant entrance
-    /// </summary>
-    private System.Collections.IEnumerator ShowSwipeRightButtonElegantly()
-    {
-        if (swipeRightButton == null) yield break;
-
-        // Small delay for better timing
-        yield return new WaitForSeconds(0.3f);
-
-        // Show button but invisible
-        swipeRightButton.gameObject.SetActive(true);
-
-        // Get or create canvas group
-        CanvasGroup buttonCanvasGroup = swipeRightButton.GetComponent<CanvasGroup>();
-        if (buttonCanvasGroup == null)
+        // Enable click interaction for main button only
+        if (startExplorationImage != null)
         {
-            buttonCanvasGroup = swipeRightButton.gameObject.AddComponent<CanvasGroup>();
+            SetImageClickable(startExplorationImage, true);
         }
 
-        Transform buttonTransform = swipeRightButton.transform;
+        // Create master sequence for warm, cozy fade-in animations
+        Sequence masterRestoreSequence = DOTween.Sequence();
 
-        // Set initial state (invisible and small)
-        buttonCanvasGroup.alpha = 0f;
-        buttonTransform.localScale = Vector3.zero;
-
-        // Enable button interaction
-        swipeRightButton.interactable = true;
-
-        // Create elegant slide in from right animation
-        Vector3 originalPosition = buttonTransform.localPosition;
-        Vector3 startPosition = originalPosition + new Vector3(200f, 0, 0); // Slide from right
-        buttonTransform.localPosition = startPosition;
-
-        // Create elegant entrance sequence
-        Sequence showSwipeSequence = DOTween.Sequence();
-
-        // Slide in and scale up simultaneously
-        showSwipeSequence.Append(buttonTransform.DOLocalMove(originalPosition, buttonFadeDuration).SetEase(Ease.OutBack));
-        showSwipeSequence.Join(buttonTransform.DOScale(Vector3.one, buttonFadeDuration).SetEase(Ease.OutBack));
-        showSwipeSequence.Join(buttonCanvasGroup.DOFade(1f, buttonFadeDuration));
-
-        yield return showSwipeSequence.WaitForCompletion();
-
-        Debug.Log("Swipe right button elegantly shown");
-    }
-
-    /// <summary>
-    /// PUBLIC METHOD: Swipe camera to right position (dipanggil dari button)
-    /// </summary>
-    public void SwipeRight()
-    {
-        if (currentGameMode != GameMode.Exploration)
+        for (int i = 0; i < imagesToAnimate.Count; i++)
         {
-            Debug.Log("Swipe right only available in Exploration mode");
-            return;
+            float delay = i * 0.2f; // Stagger each image for a warm, cozy appearance
+
+            // Individual image restore sequence
+            Sequence imageRestoreSequence = DOTween.Sequence();
+
+            // Gentle bounce in with warm easing
+            imageRestoreSequence.Append(transforms[i].DOScale(Vector3.one * 1.05f, buttonFadeDuration * 0.7f)
+                .SetEase(Ease.OutBack));
+            imageRestoreSequence.Join(canvasGroups[i].DOFade(1f, buttonFadeDuration * 0.7f)
+                .SetEase(Ease.OutSine));
+
+            // Settle to final size with soft bounce
+            imageRestoreSequence.Append(transforms[i].DOScale(Vector3.one, buttonFadeDuration * 0.3f)
+                .SetEase(Ease.OutSine));
+
+            // Add to master sequence with delay
+            masterRestoreSequence.Insert(delay, imageRestoreSequence);
         }
 
-        Debug.Log("Swiping camera to right position");
-        AnimateToSwipeRightPosition();
+        yield return masterRestoreSequence.WaitForCompletion();
+
+        Debug.Log("All images elegantly restored with warm, cozy transition");
     }
+
+
 
     #endregion
 
     #region Click Handling
 
-    private void HandleExplorationModeClick(Vector2 screenPosition)
+    /// <summary>
+    /// Handle swipe gesture in exploration mode
+    /// </summary>
+    private void HandleSwipeGesture(SwipeDirection direction)
     {
-        if (CheckForObjectClick(screenPosition))
-        {
-            // Object clicked, sudah handled di CheckForObjectClick
-            return;
-        }
+        Debug.Log($"Swipe gesture detected: {direction}");
 
-        Debug.Log("Background clicked in exploration mode - no action");
+        switch (direction)
+        {
+            case SwipeDirection.Right:
+                PerformSwipeLeft(); // Swipe right gesture moves camera left (lower index)
+                break;
+            case SwipeDirection.Left:
+                PerformSwipeRight(); // Swipe left gesture moves camera right (higher index)
+                break;
+            default:
+                Debug.Log($"Swipe direction {direction} not handled in exploration mode");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Perform swipe right gesture - move to next position in array (higher index)
+    /// </summary>
+    private void PerformSwipeRight()
+    {
+        Debug.Log($"PerformSwipeRight called - Current index: {currentPositionIndex}, Current X: {GetCurrentXPosition()}");
+
+        // Check if we can move right (higher index = more to the right)
+        if (currentPositionIndex < cameraXPositions.Length - 1)
+        {
+            currentPositionIndex++;
+            float targetX = cameraXPositions[currentPositionIndex];
+            AnimateToPosition(targetX);
+            Debug.Log($"Swiped right - Moving to position index {currentPositionIndex}, X: {targetX}");
+        }
+        else
+        {
+            Debug.Log("Cannot swipe right - already at rightmost position");
+        }
+    }
+
+    /// <summary>
+    /// Perform swipe left gesture - move to previous position in array (lower index)
+    /// </summary>
+    private void PerformSwipeLeft()
+    {
+        Debug.Log($"PerformSwipeLeft called - Current index: {currentPositionIndex}, Current X: {GetCurrentXPosition()}");
+
+        // Check if we can move left (lower index = more to the left)
+        if (currentPositionIndex > 0)
+        {
+            currentPositionIndex--;
+            float targetX = cameraXPositions[currentPositionIndex];
+            AnimateToPosition(targetX);
+            Debug.Log($"Swiped left - Moving to position index {currentPositionIndex}, X: {targetX}");
+        }
+        else
+        {
+            Debug.Log("Cannot swipe left - already at leftmost position");
+        }
+    }
+
+    /// <summary>
+    /// Animate camera to specific X position
+    /// </summary>
+    private void AnimateToPosition(float xPosition)
+    {
+        if (cameraController == null) return;
+
+        Vector3 targetPosition = new Vector3(xPosition, explorationPosition.y, explorationPosition.z);
+
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(cameraController.transform.DOMove(targetPosition, swipeTransitionDuration).SetEase(Ease.OutCubic));
+
+        sequence.OnComplete(() => {
+            Debug.Log($"Camera moved to X position: {xPosition}");
+        });
     }
 
     private bool CheckForObjectClick(Vector2 screenPosition)
@@ -546,17 +835,9 @@ public class AdvancedInputManager : MonoBehaviour
 
         yield return cozySequence.WaitForCompletion();
 
-        // Show swipe right button after smooth transition
-        StartCoroutine(ShowSwipeRightButtonElegantly());
-
-        Debug.Log("Cozy camera transition completed");
+        Debug.Log("Cozy camera transition completed - Swipe gestures now active");
     }
 
-    private void AnimateToExplorationPosition()
-    {
-        // Legacy method - now just calls the elegant version
-        StartCoroutine(ElegantCameraTransitionToExploration());
-    }
 
     private void AnimateToOriginalPosition()
     {
@@ -571,18 +852,6 @@ public class AdvancedInputManager : MonoBehaviour
         });
     }
 
-    private void AnimateToSwipeRightPosition()
-    {
-        if (cameraController == null) return;
-
-        Sequence sequence = DOTween.Sequence();
-        sequence.Append(cameraController.transform.DOMove(swipeRightPosition, swipeTransitionDuration).SetEase(Ease.OutCubic));
-        sequence.Join(cameraController.transform.DORotate(explorationRotation, swipeTransitionDuration).SetEase(Ease.OutCubic));
-
-        sequence.OnComplete(() => {
-            Debug.Log("Swipe right position reached - camera moved to the right");
-        });
-    }
 
     #endregion
 
@@ -591,59 +860,8 @@ public class AdvancedInputManager : MonoBehaviour
     public GameMode GetCurrentMode() => currentGameMode;
     public bool IsInZoomMode() => currentGameMode == GameMode.Zoom;
     public bool IsInExplorationMode() => currentGameMode == GameMode.Exploration;
-
-    // Swipe camera methods
-    public void SwipeRightCamera() => SwipeRight();
-
-    #endregion
-
-    #region Debug
-
-    private void DrawDebugInfo()
-    {
-        GUILayout.BeginArea(new Rect(10, 10, 350, 200));
-
-        GUILayout.Label($"Game Mode: {currentGameMode}");
-        GUILayout.Label($"Camera State: {cameraController?.currentState?.GetType().Name ?? "None"}");
-        GUILayout.Label($"Camera Drag: {(currentGameMode == GameMode.Zoom ? "ENABLED" : "DISABLED")}");
-        GUILayout.Label($"Drag Speed: {cameraDragSystem.GetCurrentSpeed():F2}");
-        GUILayout.Label($"Focused Object: {cameraController?.currentFocusTarget?.name ?? "None"}");
-
-        GUILayout.Space(10);
-
-        // Control buttons
-        if (currentGameMode == GameMode.Initial)
-        {
-            if (GUILayout.Button("Start Exploration"))
-            {
-                StartExplorationMode();
-            }
-        }
-        else if (currentGameMode == GameMode.Exploration)
-        {
-            if (GUILayout.Button("Swipe Right"))
-            {
-                SwipeRight();
-            }
-            if (GUILayout.Button("Exit to Initial"))
-            {
-                ExitToInitialMode();
-            }
-        }
-        else if (currentGameMode == GameMode.Zoom)
-        {
-            if (GUILayout.Button("Return to Exploration"))
-            {
-                ReturnToExplorationMode();
-            }
-            if (GUILayout.Button("Exit to Initial"))
-            {
-                ExitToInitialMode();
-            }
-        }
-
-        GUILayout.EndArea();
-    }
+    public float GetCurrentXPosition() => cameraXPositions[currentPositionIndex];
+    public int GetCurrentPositionIndex() => currentPositionIndex;
 
     #endregion
 }
@@ -760,6 +978,313 @@ public class CameraDragSystem
     // Debug info
     public float GetCurrentSpeed() => currentVelocity.magnitude;
     public Vector3 GetCurrentVelocity() => currentVelocity;
+}
+
+#endregion
+
+#region Swipe Detection System
+
+/// <summary>
+/// Enum for swipe directions
+/// </summary>
+public enum SwipeDirection
+{
+    None,
+    Left,
+    Right,
+    Up,
+    Down
+}
+
+/// <summary>
+/// Result of swipe detection
+/// </summary>
+public struct SwipeResult
+{
+    public bool IsValid;
+    public SwipeDirection Direction;
+    public Vector2 StartPosition;
+    public Vector2 EndPosition;
+    public float Distance;
+    public float Duration;
+}
+
+/// <summary>
+/// System for detecting swipe gestures
+/// </summary>
+public class SwipeDetectionSystem
+{
+    private readonly float swipeThreshold;
+    private readonly float maxSwipeTime;
+
+    // Swipe state
+    private bool isTracking;
+    private Vector2 startPosition;
+    private float startTime;
+
+    public SwipeDetectionSystem(float threshold, float maxTime)
+    {
+        swipeThreshold = threshold;
+        maxSwipeTime = maxTime;
+        isTracking = false;
+    }
+
+    /// <summary>
+    /// Start swipe detection
+    /// </summary>
+    public void StartSwipe(Vector2 position)
+    {
+        isTracking = true;
+        startPosition = position;
+        startTime = Time.time;
+        Debug.Log($"Swipe detection started at: {position}");
+    }
+
+    /// <summary>
+    /// Update swipe tracking (optional, for continuous tracking)
+    /// </summary>
+    public void UpdateSwipe(Vector2 currentPosition)
+    {
+        if (!isTracking) return;
+
+        // Optional: could add continuous tracking logic here
+        // For now, we'll just track the duration
+        float currentDuration = Time.time - startTime;
+        if (currentDuration > maxSwipeTime)
+        {
+            // Timeout - cancel swipe
+            isTracking = false;
+            Debug.Log("Swipe timed out");
+        }
+    }
+
+    /// <summary>
+    /// End swipe detection and return result
+    /// </summary>
+    public SwipeResult EndSwipe()
+    {
+        var result = new SwipeResult();
+
+        if (!isTracking)
+        {
+            result.IsValid = false;
+            return result;
+        }
+
+        // Get end position from input
+        Vector2 endPosition = GetCurrentInputPosition();
+        float duration = Time.time - startTime;
+
+        // Reset tracking
+        isTracking = false;
+
+        // Calculate swipe properties
+        Vector2 swipeVector = endPosition - startPosition;
+        float distance = swipeVector.magnitude;
+
+        result.StartPosition = startPosition;
+        result.EndPosition = endPosition;
+        result.Distance = distance;
+        result.Duration = duration;
+
+        // Check if swipe meets threshold requirements
+        if (distance < swipeThreshold || duration > maxSwipeTime)
+        {
+            result.IsValid = false;
+            Debug.Log($"Swipe invalid - Distance: {distance:F1}, Duration: {duration:F2}s");
+            return result;
+        }
+
+        // Determine swipe direction
+        if (Mathf.Abs(swipeVector.x) > Mathf.Abs(swipeVector.y))
+        {
+            // Horizontal swipe - CORRECTED LOGIC
+            result.Direction = swipeVector.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
+        }
+        else
+        {
+            // Vertical swipe
+            result.Direction = swipeVector.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
+        }
+
+        result.IsValid = true;
+        Debug.Log($"Swipe detected: {result.Direction}, Distance: {distance:F1}, Duration: {duration:F2}s");
+
+        return result;
+    }
+
+    /// <summary>
+    /// Get current input position (works for both mouse and touch)
+    /// </summary>
+    private Vector2 GetCurrentInputPosition()
+    {
+        if (Input.touchCount > 0)
+        {
+            return Input.GetTouch(0).position;
+        }
+        else
+        {
+            return Input.mousePosition;
+        }
+    }
+
+    /// <summary>
+    /// Check if currently tracking a swipe
+    /// </summary>
+    public bool IsTracking() => isTracking;
+}
+
+#endregion
+
+#region Pinch Detection System
+
+/// <summary>
+/// Enum for pinch directions
+/// </summary>
+public enum PinchDirection
+{
+    None,
+    In,     // Pinch in (zoom in)
+    Out     // Pinch out (zoom out)
+}
+
+/// <summary>
+/// Result of pinch detection
+/// </summary>
+public struct PinchResult
+{
+    public bool IsValid;
+    public PinchDirection Direction;
+    public float StartDistance;
+    public float EndDistance;
+    public float DistanceChange;
+    public float Duration;
+}
+
+/// <summary>
+/// System for detecting pinch gestures (mobile only)
+/// </summary>
+public class PinchDetectionSystem
+{
+    private readonly float pinchThreshold;
+    private readonly float maxPinchTime;
+
+    // Pinch state
+    private bool isTracking;
+    private float startDistance;
+    private float startTime;
+
+    public PinchDetectionSystem(float threshold, float maxTime)
+    {
+        pinchThreshold = threshold;
+        maxPinchTime = maxTime;
+        isTracking = false;
+    }
+
+    /// <summary>
+    /// Start pinch detection (requires 2 fingers)
+    /// </summary>
+    public void StartPinch()
+    {
+        if (Input.touchCount != 2) return;
+
+        Touch touch1 = Input.GetTouch(0);
+        Touch touch2 = Input.GetTouch(1);
+
+        isTracking = true;
+        startDistance = Vector2.Distance(touch1.position, touch2.position);
+        startTime = Time.time;
+
+        Debug.Log($"Pinch detection started - Distance: {startDistance:F1}");
+    }
+
+    /// <summary>
+    /// Update pinch tracking
+    /// </summary>
+    public void UpdatePinch()
+    {
+        if (!isTracking || Input.touchCount != 2)
+        {
+            if (isTracking && Input.touchCount != 2)
+            {
+                // Lost second finger - cancel pinch
+                isTracking = false;
+                Debug.Log("Pinch cancelled - lost second finger");
+            }
+            return;
+        }
+
+        // Check for timeout
+        float currentDuration = Time.time - startTime;
+        if (currentDuration > maxPinchTime)
+        {
+            isTracking = false;
+            Debug.Log("Pinch timed out");
+        }
+    }
+
+    /// <summary>
+    /// End pinch detection and return result
+    /// </summary>
+    public PinchResult EndPinch()
+    {
+        var result = new PinchResult();
+
+        if (!isTracking)
+        {
+            result.IsValid = false;
+            return result;
+        }
+
+        // Reset tracking first
+        isTracking = false;
+
+        // Need 2 fingers to calculate end distance
+        if (Input.touchCount != 2)
+        {
+            result.IsValid = false;
+            Debug.Log("Pinch invalid - not enough fingers at end");
+            return result;
+        }
+
+        Touch touch1 = Input.GetTouch(0);
+        Touch touch2 = Input.GetTouch(1);
+        float endDistance = Vector2.Distance(touch1.position, touch2.position);
+        float duration = Time.time - startTime;
+
+        // Calculate distance change
+        float distanceChange = endDistance - startDistance;
+
+        result.StartDistance = startDistance;
+        result.EndDistance = endDistance;
+        result.DistanceChange = distanceChange;
+        result.Duration = duration;
+
+        // Check if pinch meets threshold requirements
+        if (Mathf.Abs(distanceChange) < pinchThreshold || duration > maxPinchTime)
+        {
+            result.IsValid = false;
+            Debug.Log($"Pinch invalid - Change: {distanceChange:F1}, Duration: {duration:F2}s");
+            return result;
+        }
+
+        // Determine pinch direction
+        result.Direction = distanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
+        result.IsValid = true;
+
+        Debug.Log($"Pinch detected: {result.Direction}, Change: {distanceChange:F1}, Duration: {duration:F2}s");
+        return result;
+    }
+
+    /// <summary>
+    /// Check if currently tracking a pinch
+    /// </summary>
+    public bool IsTracking() => isTracking;
+
+    /// <summary>
+    /// Check if device supports pinch (has touch support)
+    /// </summary>
+    public bool IsPinchSupported() => Input.touchSupported;
 }
 
 #endregion
