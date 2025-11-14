@@ -1,55 +1,108 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
+using DG.Tweening;
 
+/// <summary>
+/// Advanced Input Manager dengan konsep:
+/// 1. Button Start → Exploration Mode
+/// 2. Exploration Mode → Click Object → Zoom Mode (Focus pada object)
+/// 3. Zoom Mode → Camera Drag dengan click hold/swipe (hanya di mode ini)
+/// 4. Mode lain tidak bisa camera drag
+/// </summary>
 public class AdvancedInputManager : MonoBehaviour
 {
     [Header("Input Settings")]
     [SerializeField] private LayerMask clickableLayerMask = -1;
     [SerializeField] private float maxClickDistance = 100f;
 
-    [Header("Tap Hold Settings")]
-    [SerializeField] private float tapHoldDuration = 0.3f;
-    [SerializeField] private float tapHoldMoveTolerance = 100f; // Pixels - more forgiving
+    [Header("Camera Drag Settings (Zoom Mode Only)")]
+    [SerializeField] private float cameraDragSensitivity = 0.01f;
+    [SerializeField] private float cameraDragSmoothing = 5f;
+    [SerializeField] private float maxDragSpeed = 2f;
 
-    [Header("Pinch Settings")]
-    [SerializeField] private float pinchThreshold = 100f; // Minimum distance change to register pinch
-    [SerializeField] private float pinchSensitivity = 1f;
+    [Header("UI Controls")]
+    [SerializeField] private UnityEngine.UI.Button startExplorationButton;
+    [SerializeField] private UnityEngine.UI.Button swipeRightButton;
+
+    [Header("Exploration Settings")]
+    [SerializeField] private Vector3 explorationPosition = new Vector3(-4.35f, 3.851f, -1.48f);
+    [SerializeField] private Vector3 explorationRotation = new Vector3(90f, 0f, 0f);
+    [SerializeField] private float explorationTransitionDuration = 15f;
+    [SerializeField] private float returnTransitionDuration = 1.2f;
+
+    [Header("Cozy Camera Transition")]
+    [SerializeField] private float cameraDelayAfterButton = 0.2f;
+
+    [Header("UI Transition Settings")]
+    [SerializeField] private float buttonFadeDuration = 0.5f;
+    [SerializeField] private float buttonScaleDuration = 0.3f;
+
+    [Header("Swipe Right Settings")]
+    [SerializeField] private Vector3 swipeRightPosition = new Vector3(-2.50f, 3.851f, -1.48f);
+    [SerializeField] private float swipeTransitionDuration = 0.6f;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = true;
 
+    // Core components
     private Camera playerCamera;
     private TopDownCameraController cameraController;
 
-    // Touch tracking
-    private bool isFirstFingerDown = false;
-    private bool isSecondFingerDown = false;
-    private Vector2 firstFingerPos;
-    private Vector2 secondFingerPos;
-    private Vector2 firstFingerStartPos;
-    private Vector2 secondFingerStartPos;
-    private float initialPinchDistance = 0f;
-    private float currentPinchDistance = 0f;
+    // Game state
+    private GameMode currentGameMode = GameMode.Initial;
+    private CameraDragSystem cameraDragSystem;
 
-    // Tap hold tracking
-    private bool isTapHolding = false;
-    private float tapHoldStartTime = 0f;
-    private Vector2 tapHoldStartPos;
-    private Vector2 lastDragPos;
-    private Coroutine tapHoldCoroutine;
+    // Exploration state
+    private Vector3 originalCameraPosition;
+    private Vector3 originalCameraRotation;
 
-    // Camera exploration
-    private bool isExploring = false;
-    private float exploreSensitivity = 0.01f;
-
-    // Hover tracking
-    private ClickableObject hoveredObject = null;
-
+    // Singleton
     public static AdvancedInputManager Instance { get; private set; }
+
+    public enum GameMode
+    {
+        Initial,        // Awal game, belum exploration
+        Exploration,    // Mode exploration, bisa click object
+        Zoom           // Mode zoom (focus), bisa camera drag
+    }
+
+    #region Unity Lifecycle
 
     private void Awake()
     {
-        // Singleton pattern
+        InitializeSingleton();
+        InitializeComponents();
+    }
+
+    private void Start()
+    {
+        SetupCameraController();
+        SetupUI();
+    }
+
+    private void Update()
+    {
+        HandleInput();
+
+        // Update camera drag system for smooth movement
+        if (currentGameMode == GameMode.Zoom)
+        {
+            cameraDragSystem.Update(Time.deltaTime, cameraController);
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (showDebugInfo) DrawDebugInfo();
+    }
+
+    #endregion
+
+    #region Initialization
+
+    private void InitializeSingleton()
+    {
         if (Instance == null)
         {
             Instance = this;
@@ -61,525 +114,652 @@ public class AdvancedInputManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void InitializeComponents()
     {
-        // Get camera controller after all objects are initialized
+        cameraDragSystem = new CameraDragSystem(cameraDragSensitivity, cameraDragSmoothing, maxDragSpeed);
+    }
+
+    private void SetupCameraController()
+    {
         cameraController = TopDownCameraController.Instance;
         if (cameraController == null)
         {
-            Debug.LogError("TopDownCameraController.Instance not found! Make sure it's attached to the camera.");
+            Debug.LogError("TopDownCameraController.Instance not found!");
         }
     }
 
-    private void Update()
+    private void SetupUI()
     {
-        HandleInput();
-        HandleHovering();
+        if (startExplorationButton != null)
+        {
+            startExplorationButton.onClick.AddListener(StartExplorationMode);
+        }
+
+        if (swipeRightButton != null)
+        {
+            swipeRightButton.onClick.AddListener(SwipeRight);
+            // Hide swipe right button initially
+            swipeRightButton.gameObject.SetActive(false);
+        }
     }
 
-    /// <summary>
-    /// Main input handling method
-    /// </summary>
+    #endregion
+
+    #region Input Handling
+
     private void HandleInput()
     {
-        // Handle mouse input (for testing in editor)
+        // Handle mouse input (editor)
         if (!Application.isMobilePlatform || Application.isEditor)
         {
             HandleMouseInput();
         }
 
-        // Handle touch input (for mobile)
+        // Handle touch input (mobile)
         HandleTouchInput();
     }
 
-    /// <summary>
-    /// Handle mouse input for testing in editor
-    /// </summary>
     private void HandleMouseInput()
     {
-        // Single click
         if (Input.GetMouseButtonDown(0))
         {
-            Vector2 mousePos = Input.mousePosition;
-            StartTapHold(mousePos);
-            // Don't handle object/background clicks immediately - wait for tap hold to complete or fail
+            HandleInputDown(Input.mousePosition);
         }
 
-        // Mouse release
+        if (Input.GetMouseButton(0))
+        {
+            HandleInputDrag(Input.mousePosition);
+        }
+
         if (Input.GetMouseButtonUp(0))
         {
-            StopTapHold();
+            HandleInputUp();
+        }
+    }
+
+    private void HandleTouchInput()
+    {
+        if (Input.touchCount == 1)
+        {
+            Touch touch = Input.GetTouch(0);
+
+            switch (touch.phase)
+            {
+                case TouchPhase.Began:
+                    HandleInputDown(touch.position);
+                    break;
+
+                case TouchPhase.Moved:
+                    HandleInputDrag(touch.position);
+                    break;
+
+                case TouchPhase.Ended:
+                case TouchPhase.Canceled:
+                    HandleInputUp();
+                    break;
+            }
+        }
+    }
+
+    private void HandleInputDown(Vector2 screenPosition)
+    {
+        switch (currentGameMode)
+        {
+            case GameMode.Initial:
+                // Di mode initial, tidak ada input handling
+                Debug.Log("Please press Start Exploration button first");
+                break;
+
+            case GameMode.Exploration:
+                // Di exploration mode, hanya bisa click object
+                HandleExplorationModeClick(screenPosition);
+                break;
+
+            case GameMode.Zoom:
+                // Di zoom mode, mulai camera drag atau click object lain
+                if (!CheckForObjectClick(screenPosition))
+                {
+                    cameraDragSystem.StartDrag(screenPosition);
+                }
+                break;
+        }
+    }
+
+    private void HandleInputDrag(Vector2 screenPosition)
+    {
+        if (currentGameMode == GameMode.Zoom)
+        {
+            // Hanya di zoom mode yang bisa camera drag
+            cameraDragSystem.UpdateDrag(screenPosition, cameraController);
+        }
+    }
+
+    private void HandleInputUp()
+    {
+        if (currentGameMode == GameMode.Zoom)
+        {
+            cameraDragSystem.EndDrag();
+        }
+    }
+
+    #endregion
+
+    #region Game Mode Management
+
+    /// <summary>
+    /// PUBLIC METHOD: Start exploration mode (dipanggil dari button)
+    /// </summary>
+    public void StartExplorationMode()
+    {
+        if (currentGameMode != GameMode.Initial) return;
+
+        Debug.Log("Starting Exploration Mode with elegant transition");
+
+        // Disable button immediately to prevent multiple clicks
+        if (startExplorationButton != null)
+        {
+            startExplorationButton.interactable = false;
         }
 
-        // Handle exploration dragging
-        if (isExploring && Input.GetMouseButton(0))
+        // Start elegant button fade out and scale animation
+        StartCoroutine(ElegantButtonTransition());
+    }
+
+    /// <summary>
+    /// Elegant button transition with fade out and scale effect
+    /// </summary>
+    private System.Collections.IEnumerator ElegantButtonTransition()
+    {
+        if (startExplorationButton != null)
         {
-            Vector2 currentMousePos = Input.mousePosition;
-            HandleExplorationDrag(currentMousePos);
+            // Get button components
+            CanvasGroup buttonCanvasGroup = startExplorationButton.GetComponent<CanvasGroup>();
+            if (buttonCanvasGroup == null)
+            {
+                buttonCanvasGroup = startExplorationButton.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            Transform buttonTransform = startExplorationButton.transform;
+            Vector3 originalScale = buttonTransform.localScale;
+
+            // Create elegant fade out and scale animation
+            Sequence buttonSequence = DOTween.Sequence();
+
+            // Scale down with bounce effect
+            buttonSequence.Append(buttonTransform.DOScale(originalScale * 0.8f, buttonScaleDuration * 0.5f).SetEase(Ease.OutBack));
+            buttonSequence.Join(buttonCanvasGroup.DOFade(0.3f, buttonScaleDuration * 0.5f));
+
+            // Final fade out and scale to zero
+            buttonSequence.Append(buttonTransform.DOScale(0f, buttonFadeDuration).SetEase(Ease.InBack));
+            buttonSequence.Join(buttonCanvasGroup.DOFade(0f, buttonFadeDuration));
+
+            // Wait for button animation to complete
+            yield return buttonSequence.WaitForCompletion();
+
+            // Hide button completely
+            startExplorationButton.gameObject.SetActive(false);
         }
 
-        // Scroll wheel for pinch simulation
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0f)
+        // Small delay for dramatic effect
+        yield return new WaitForSeconds(0.2f);
+
+        // Now start exploration mode
+        BeginExplorationMode();
+    }
+
+    /// <summary>
+    /// Begin exploration mode after button transition
+    /// </summary>
+    private void BeginExplorationMode()
+    {
+        currentGameMode = GameMode.Exploration;
+
+        // Store original camera position
+        originalCameraPosition = cameraController.transform.position;
+        originalCameraRotation = cameraController.transform.rotation.eulerAngles;
+
+        // Start elegant camera transition
+        StartCoroutine(ElegantCameraTransitionToExploration());
+    }
+
+    private void EnterZoomMode(Transform targetObject)
+    {
+        Debug.Log($"Entering Zoom Mode - focusing on: {targetObject.name}");
+
+        currentGameMode = GameMode.Zoom;
+
+        // Focus camera pada object
+        cameraController.SetFocusTarget(targetObject);
+        cameraController.SwitchState(cameraController.focusState);
+    }
+
+    /// <summary>
+    /// PUBLIC METHOD: Return to exploration mode from zoom
+    /// </summary>
+    public void ReturnToExplorationMode()
+    {
+        if (currentGameMode != GameMode.Zoom) return;
+
+        Debug.Log("Returning to Exploration Mode");
+
+        currentGameMode = GameMode.Exploration;
+        AnimateToExplorationPosition();
+    }
+
+    /// <summary>
+    /// PUBLIC METHOD: Exit to initial state
+    /// </summary>
+    public void ExitToInitialMode()
+    {
+        Debug.Log("Exiting to Initial Mode");
+
+        currentGameMode = GameMode.Initial;
+        AnimateToOriginalPosition();
+
+        // Show start button again with elegant fade in
+        StartCoroutine(ShowStartButtonElegantly());
+    }
+
+    /// <summary>
+    /// Show start button again with elegant fade in effect
+    /// </summary>
+    private System.Collections.IEnumerator ShowStartButtonElegantly()
+    {
+        // Hide swipe right button first
+        if (swipeRightButton != null)
         {
-            // Scroll up = Pinch in
-            Vector2 centerPoint = Input.mousePosition;
-            HandlePinchIn(centerPoint);
+            swipeRightButton.gameObject.SetActive(false);
         }
-        else if (scroll < 0f)
+
+        // Wait for camera animation to near completion
+        yield return new WaitForSeconds(returnTransitionDuration * 0.7f);
+
+        if (startExplorationButton != null)
         {
-            // Scroll down = Pinch out
-            HandlePinchOut();
+            // Show button but invisible
+            startExplorationButton.gameObject.SetActive(true);
+
+            // Get or create canvas group
+            CanvasGroup buttonCanvasGroup = startExplorationButton.GetComponent<CanvasGroup>();
+            if (buttonCanvasGroup == null)
+            {
+                buttonCanvasGroup = startExplorationButton.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            Transform buttonTransform = startExplorationButton.transform;
+
+            // Set initial state (invisible and small)
+            buttonCanvasGroup.alpha = 0f;
+            buttonTransform.localScale = Vector3.zero;
+
+            // Enable button interaction
+            startExplorationButton.interactable = true;
+
+            // Create elegant fade in and scale animation
+            Sequence showButtonSequence = DOTween.Sequence();
+
+            // Scale up with bounce effect and fade in
+            showButtonSequence.Append(buttonTransform.DOScale(Vector3.one, buttonFadeDuration).SetEase(Ease.OutBack));
+            showButtonSequence.Join(buttonCanvasGroup.DOFade(1f, buttonFadeDuration));
+
+            yield return showButtonSequence.WaitForCompletion();
+
+            Debug.Log("Start button elegantly restored");
         }
     }
 
     /// <summary>
-    /// Handle touch input for mobile devices
+    /// Show swipe right button with elegant entrance
     /// </summary>
-    private void HandleTouchInput()
+    private System.Collections.IEnumerator ShowSwipeRightButtonElegantly()
     {
-        int touchCount = Input.touchCount;
+        if (swipeRightButton == null) yield break;
 
-        if (touchCount == 0)
+        // Small delay for better timing
+        yield return new WaitForSeconds(0.3f);
+
+        // Show button but invisible
+        swipeRightButton.gameObject.SetActive(true);
+
+        // Get or create canvas group
+        CanvasGroup buttonCanvasGroup = swipeRightButton.GetComponent<CanvasGroup>();
+        if (buttonCanvasGroup == null)
         {
-            // No touches
-            ResetTouchState();
+            buttonCanvasGroup = swipeRightButton.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        Transform buttonTransform = swipeRightButton.transform;
+
+        // Set initial state (invisible and small)
+        buttonCanvasGroup.alpha = 0f;
+        buttonTransform.localScale = Vector3.zero;
+
+        // Enable button interaction
+        swipeRightButton.interactable = true;
+
+        // Create elegant slide in from right animation
+        Vector3 originalPosition = buttonTransform.localPosition;
+        Vector3 startPosition = originalPosition + new Vector3(200f, 0, 0); // Slide from right
+        buttonTransform.localPosition = startPosition;
+
+        // Create elegant entrance sequence
+        Sequence showSwipeSequence = DOTween.Sequence();
+
+        // Slide in and scale up simultaneously
+        showSwipeSequence.Append(buttonTransform.DOLocalMove(originalPosition, buttonFadeDuration).SetEase(Ease.OutBack));
+        showSwipeSequence.Join(buttonTransform.DOScale(Vector3.one, buttonFadeDuration).SetEase(Ease.OutBack));
+        showSwipeSequence.Join(buttonCanvasGroup.DOFade(1f, buttonFadeDuration));
+
+        yield return showSwipeSequence.WaitForCompletion();
+
+        Debug.Log("Swipe right button elegantly shown");
+    }
+
+    /// <summary>
+    /// PUBLIC METHOD: Swipe camera to right position (dipanggil dari button)
+    /// </summary>
+    public void SwipeRight()
+    {
+        if (currentGameMode != GameMode.Exploration)
+        {
+            Debug.Log("Swipe right only available in Exploration mode");
             return;
         }
 
-        if (touchCount == 1)
-        {
-            HandleSingleTouch(Input.GetTouch(0));
-        }
-        else if (touchCount >= 2)
-        {
-            // Multiple touches - stop exploration to avoid conflicts
-            if (isExploring)
-            {
-                Debug.Log("Multiple touches detected - stopping exploration");
-                isExploring = false;
-                isTapHolding = false;
-            }
-            HandleMultiTouch(Input.GetTouch(0), Input.GetTouch(1));
-        }
+        Debug.Log("Swiping camera to right position");
+        AnimateToSwipeRightPosition();
     }
 
-    /// <summary>
-    /// Handle single finger touch
-    /// </summary>
-    private void HandleSingleTouch(Touch touch)
+    #endregion
+
+    #region Click Handling
+
+    private void HandleExplorationModeClick(Vector2 screenPosition)
     {
-        switch (touch.phase)
+        if (CheckForObjectClick(screenPosition))
         {
-            case TouchPhase.Began:
-                firstFingerPos = touch.position;
-                firstFingerStartPos = touch.position;
-                isFirstFingerDown = true;
-                StartTapHold(touch.position);
-                break;
-
-            case TouchPhase.Moved:
-                firstFingerPos = touch.position;
-                CheckTapHoldMovement(touch.position);
-                break;
-
-            case TouchPhase.Ended:
-            case TouchPhase.Canceled:
-                HandleSingleTouchEnd(touch);
-                ResetTouchState();
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Handle single touch end (tap or failed tap hold)
-    /// </summary>
-    private void HandleSingleTouchEnd(Touch touch)
-    {
-        StopTapHold();
-
-        // If tap hold didn't trigger, treat as normal tap
-        if (!isTapHolding)
-        {
-            Ray ray = playerCamera.ScreenPointToRay(touch.position);
-            if (Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
-            {
-                ClickableObject clickable = hit.collider.GetComponent<ClickableObject>();
-                if (clickable != null)
-                {
-                    HandleObjectClick(clickable.transform);
-                }
-            }
-            else
-            {
-                HandleBackgroundClick();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handle two finger touch (pinch gestures)
-    /// </summary>
-    private void HandleMultiTouch(Touch touch1, Touch touch2)
-    {
-        // Stop tap hold when second finger appears
-        StopTapHold();
-
-        switch (touch1.phase)
-        {
-            case TouchPhase.Began when touch2.phase == TouchPhase.Began:
-                InitializePinch(touch1.position, touch2.position);
-                break;
-
-            case TouchPhase.Moved when isSecondFingerDown:
-                UpdatePinch(touch1.position, touch2.position);
-                break;
-
-            case TouchPhase.Ended:
-            case TouchPhase.Canceled:
-                ResetTouchState();
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Initialize pinch gesture
-    /// </summary>
-    private void InitializePinch(Vector2 pos1, Vector2 pos2)
-    {
-        isSecondFingerDown = true;
-        firstFingerPos = pos1;
-        secondFingerPos = pos2;
-        firstFingerStartPos = pos1;
-        secondFingerStartPos = pos2;
-        initialPinchDistance = Vector2.Distance(pos1, pos2);
-        currentPinchDistance = initialPinchDistance;
-    }
-
-    /// <summary>
-    /// Update pinch gesture
-    /// </summary>
-    private void UpdatePinch(Vector2 pos1, Vector2 pos2)
-    {
-        firstFingerPos = pos1;
-        secondFingerPos = pos2;
-        float newDistance = Vector2.Distance(pos1, pos2);
-        float distanceChange = newDistance - currentPinchDistance;
-
-        if (Mathf.Abs(distanceChange) > pinchThreshold * pinchSensitivity)
-        {
-            Vector2 pinchCenter = (pos1 + pos2) * 0.5f;
-
-            if (distanceChange > 0)
-            {
-                // Pinch out (fingers moving apart)
-                HandlePinchOut();
-            }
-            else
-            {
-                // Pinch in (fingers moving together)
-                HandlePinchIn(pinchCenter);
-            }
-
-            currentPinchDistance = newDistance;
-        }
-    }
-
-    /// <summary>
-    /// Start tap hold detection
-    /// </summary>
-    private void StartTapHold(Vector2 position)
-    {
-        Debug.Log($"StartTapHold at position {position} - Current state: {GetCurrentState()?.GetType().Name}");
-        tapHoldStartPos = position;
-        tapHoldStartTime = Time.time;
-
-        if (tapHoldCoroutine != null)
-        {
-            StopCoroutine(tapHoldCoroutine);
+            // Object clicked, sudah handled di CheckForObjectClick
+            return;
         }
 
-        tapHoldCoroutine = StartCoroutine(TapHoldCoroutine());
+        Debug.Log("Background clicked in exploration mode - no action");
     }
 
-    /// <summary>
-    /// Stop tap hold detection
-    /// </summary>
-    private void StopTapHold()
+    private bool CheckForObjectClick(Vector2 screenPosition)
     {
-        if (tapHoldCoroutine != null)
-        {
-            StopCoroutine(tapHoldCoroutine);
-            tapHoldCoroutine = null;
-
-            // If tap hold was cancelled (didn't complete), handle as regular click
-            if (!isTapHolding)
-            {
-                HandleRegularClick(tapHoldStartPos);
-            }
-        }
-
-        if (isTapHolding)
-        {
-            // Stop exploration - camera stays where user dragged it
-            if (isExploring)
-            {
-                Debug.Log("Exploration ended - camera stays at current position");
-                isExploring = false;
-            }
-            isTapHolding = false;
-        }
-    }
-
-    /// <summary>
-    /// Check if finger moved too much during tap hold
-    /// </summary>
-    private void CheckTapHoldMovement(Vector2 currentPos)
-    {
-        // Only check movement tolerance before tap hold is activated
-        if (!isTapHolding)
-        {
-            float moveDistance = Vector2.Distance(tapHoldStartPos, currentPos);
-            if (moveDistance > tapHoldMoveTolerance)
-            {
-                // Finger moved too much before tap hold activated, cancel it
-                StopTapHold();
-            }
-        }
-        // If already in tap hold mode (exploring), allow unlimited movement
-    }
-
-    /// <summary>
-    /// Coroutine for tap hold detection
-    /// </summary>
-    private IEnumerator TapHoldCoroutine()
-    {
-        yield return new WaitForSeconds(tapHoldDuration);
-
-        // Tap hold completed - start exploration mode
-        isTapHolding = true;
-        isExploring = true;
-        lastDragPos = tapHoldStartPos;
-
-        // Start exploration mode
-        if (cameraController?.currentState is FocusState)
-        {
-            Debug.Log("EXPLORATION MODE ACTIVATED - Drag to look around");
-        }
-
-        tapHoldCoroutine = null;
-    }
-
-    /// <summary>
-    /// Reset all touch state
-    /// </summary>
-    private void ResetTouchState()
-    {
-        isFirstFingerDown = false;
-        isSecondFingerDown = false;
-        StopTapHold();
-    }
-
-    /// <summary>
-    /// Handle mouse hover effects
-    /// </summary>
-    private void HandleHovering()
-    {
-        if (isFirstFingerDown || isSecondFingerDown) return; // Don't hover during touch
-
-        Vector3 mousePos = Input.mousePosition;
-        Ray ray = playerCamera.ScreenPointToRay(mousePos);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
-        {
-            ClickableObject clickable = hit.collider.GetComponent<ClickableObject>();
-            HandleHoverChange(clickable);
-        }
-        else
-        {
-            HandleHoverChange(null);
-        }
-    }
-
-    /// <summary>
-    /// Handle hover state changes
-    /// </summary>
-    private void HandleHoverChange(ClickableObject newHoveredObject)
-    {
-        if (newHoveredObject != hoveredObject)
-        {
-            // Unhover previous object
-            if (hoveredObject != null)
-            {
-                hoveredObject.OnUnhover();
-            }
-
-            // Hover new object
-            hoveredObject = newHoveredObject;
-            if (hoveredObject != null)
-            {
-                hoveredObject.OnHover();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handle regular click (when tap hold fails)
-    /// </summary>
-    private void HandleRegularClick(Vector2 position)
-    {
-        Ray ray = playerCamera.ScreenPointToRay(position);
+        Ray ray = playerCamera.ScreenPointToRay(screenPosition);
         if (Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
         {
             ClickableObject clickable = hit.collider.GetComponent<ClickableObject>();
             if (clickable != null)
             {
-                HandleObjectClick(clickable.transform);
+                Debug.Log($"Object clicked: {clickable.name}");
+
+                if (currentGameMode == GameMode.Exploration)
+                {
+                    // Dari exploration ke zoom mode
+                    EnterZoomMode(clickable.transform);
+                }
+                else if (currentGameMode == GameMode.Zoom)
+                {
+                    // Ganti focus ke object lain
+                    EnterZoomMode(clickable.transform);
+                }
+
+                // Trigger object's click method
+                clickable.OnClick();
+                return true;
             }
         }
-        else
-        {
-            HandleBackgroundClick();
-        }
+        return false;
     }
 
+    #endregion
+
+    #region Camera Animation
+
     /// <summary>
-    /// Handle exploration dragging
+    /// Cozy and warm camera transition to exploration
     /// </summary>
-    private void HandleExplorationDrag(Vector2 currentPos)
+    private System.Collections.IEnumerator ElegantCameraTransitionToExploration()
     {
-        if (cameraController == null)
+        if (cameraController == null) yield break;
+
+        // Short cozy pause after button disappear
+        yield return new WaitForSeconds(cameraDelayAfterButton);
+
+        Transform cameraTransform = cameraController.transform;
+
+        // Kill any existing animations
+        DOTween.Kill(cameraTransform);
+
+        // Simple, warm, and smooth movement
+        Sequence cozySequence = DOTween.Sequence();
+
+        // Gentle position movement with soft easing
+        cozySequence.Append(cameraTransform.DOMove(explorationPosition, explorationTransitionDuration)
+            .SetEase(Ease.OutCubic));
+
+        // Smooth rotation with gentle timing
+        cozySequence.Join(cameraTransform.DORotate(explorationRotation, explorationTransitionDuration)
+            .SetEase(Ease.OutCubic));
+
+        yield return cozySequence.WaitForCompletion();
+
+        // Show swipe right button after smooth transition
+        StartCoroutine(ShowSwipeRightButtonElegantly());
+
+        Debug.Log("Cozy camera transition completed");
+    }
+
+    private void AnimateToExplorationPosition()
+    {
+        // Legacy method - now just calls the elegant version
+        StartCoroutine(ElegantCameraTransitionToExploration());
+    }
+
+    private void AnimateToOriginalPosition()
+    {
+        if (cameraController == null) return;
+
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(cameraController.transform.DOMove(originalCameraPosition, returnTransitionDuration).SetEase(Ease.InOutQuart));
+        sequence.Join(cameraController.transform.DORotate(originalCameraRotation, returnTransitionDuration).SetEase(Ease.InOutQuart));
+
+        sequence.OnComplete(() => {
+            Debug.Log("Returned to original position");
+        });
+    }
+
+    private void AnimateToSwipeRightPosition()
+    {
+        if (cameraController == null) return;
+
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(cameraController.transform.DOMove(swipeRightPosition, swipeTransitionDuration).SetEase(Ease.OutCubic));
+        sequence.Join(cameraController.transform.DORotate(explorationRotation, swipeTransitionDuration).SetEase(Ease.OutCubic));
+
+        sequence.OnComplete(() => {
+            Debug.Log("Swipe right position reached - camera moved to the right");
+        });
+    }
+
+    #endregion
+
+    #region Public Interface
+
+    public GameMode GetCurrentMode() => currentGameMode;
+    public bool IsInZoomMode() => currentGameMode == GameMode.Zoom;
+    public bool IsInExplorationMode() => currentGameMode == GameMode.Exploration;
+
+    // Swipe camera methods
+    public void SwipeRightCamera() => SwipeRight();
+
+    #endregion
+
+    #region Debug
+
+    private void DrawDebugInfo()
+    {
+        GUILayout.BeginArea(new Rect(10, 10, 350, 200));
+
+        GUILayout.Label($"Game Mode: {currentGameMode}");
+        GUILayout.Label($"Camera State: {cameraController?.currentState?.GetType().Name ?? "None"}");
+        GUILayout.Label($"Camera Drag: {(currentGameMode == GameMode.Zoom ? "ENABLED" : "DISABLED")}");
+        GUILayout.Label($"Drag Speed: {cameraDragSystem.GetCurrentSpeed():F2}");
+        GUILayout.Label($"Focused Object: {cameraController?.currentFocusTarget?.name ?? "None"}");
+
+        GUILayout.Space(10);
+
+        // Control buttons
+        if (currentGameMode == GameMode.Initial)
         {
-            Debug.LogWarning("CameraController is null during exploration drag!");
-            isExploring = false;
+            if (GUILayout.Button("Start Exploration"))
+            {
+                StartExplorationMode();
+            }
+        }
+        else if (currentGameMode == GameMode.Exploration)
+        {
+            if (GUILayout.Button("Swipe Right"))
+            {
+                SwipeRight();
+            }
+            if (GUILayout.Button("Exit to Initial"))
+            {
+                ExitToInitialMode();
+            }
+        }
+        else if (currentGameMode == GameMode.Zoom)
+        {
+            if (GUILayout.Button("Return to Exploration"))
+            {
+                ReturnToExplorationMode();
+            }
+            if (GUILayout.Button("Exit to Initial"))
+            {
+                ExitToInitialMode();
+            }
+        }
+
+        GUILayout.EndArea();
+    }
+
+    #endregion
+}
+
+#region Camera Drag System
+
+/// <summary>
+/// Sistem camera drag yang smooth dan pelan dengan interpolasi
+/// </summary>
+public class CameraDragSystem
+{
+    private readonly float sensitivity;
+    private readonly float smoothing;
+    private readonly float maxSpeed;
+
+    // Drag state
+    private bool isDragging;
+    private Vector2 lastDragPosition;
+
+    // Smooth movement variables
+    private Vector3 targetVelocity;
+    private Vector3 currentVelocity;
+    private Vector3 velocitySmoothing;
+
+    public CameraDragSystem(float dragSensitivity, float dragSmoothing, float dragMaxSpeed)
+    {
+        sensitivity = dragSensitivity;
+        smoothing = dragSmoothing;
+        maxSpeed = dragMaxSpeed;
+    }
+
+    public void StartDrag(Vector2 position)
+    {
+        isDragging = true;
+        lastDragPosition = position;
+
+        // Reset velocities for smooth start
+        targetVelocity = Vector3.zero;
+        currentVelocity = Vector3.zero;
+
+        Debug.Log("Camera drag started - smooth mode");
+    }
+
+    public void UpdateDrag(Vector2 currentPosition, TopDownCameraController cameraController)
+    {
+        if (!isDragging || cameraController == null) return;
+
+        Vector2 deltaPos = currentPosition - lastDragPosition;
+        lastDragPosition = currentPosition;
+
+        // Skip very small movements
+        if (deltaPos.magnitude < 0.5f)
+        {
+            // Slow down when not moving
+            targetVelocity = Vector3.Lerp(targetVelocity, Vector3.zero, Time.deltaTime * smoothing);
             return;
         }
 
-        Vector2 deltaPos = currentPos - lastDragPos;
-        lastDragPos = currentPos;
-
-        // Skip very small movements
-        if (deltaPos.magnitude < 1f) return;
-
-        // Convert screen movement to world movement
-        Vector3 worldDelta = new Vector3(
-            -deltaPos.x * exploreSensitivity,
+        // Convert screen movement to target velocity
+        Vector3 inputVelocity = new Vector3(
+            -deltaPos.x * sensitivity,
             0,
-            -deltaPos.y * exploreSensitivity
+            -deltaPos.y * sensitivity
         );
 
-        // Move camera based on drag
-        cameraController.transform.position += worldDelta;
+        // Clamp velocity to max speed
+        inputVelocity = Vector3.ClampMagnitude(inputVelocity, maxSpeed);
 
+        // Set target velocity (will be smoothed in Update)
+        targetVelocity = inputVelocity;
     }
 
-
-    /// <summary>
-    /// Handle input from different camera states
-    /// </summary>
-    private void HandleObjectClick(Transform clickedObject)
+    public void Update(float deltaTime, TopDownCameraController cameraController)
     {
-        var currentState = GetCurrentState();
-        if (currentState is OverviewState overview)
+        if (cameraController == null) return;
+
+        // Always smooth the velocity, even when not dragging
+        currentVelocity = Vector3.SmoothDamp(
+            currentVelocity,
+            isDragging ? targetVelocity : Vector3.zero,
+            ref velocitySmoothing,
+            1f / smoothing,
+            Mathf.Infinity,
+            deltaTime
+        );
+
+        // Apply movement if there's any velocity
+        if (currentVelocity.magnitude > 0.001f)
         {
-            overview.HandleObjectClick(clickedObject);
-        }
-        else if (currentState is FocusState focus)
-        {
-            focus.HandleObjectClick(clickedObject);
-        }
-        else if (currentState is NavigationState navigation)
-        {
-            navigation.HandleObjectClick(clickedObject);
+            Vector3 movement = currentVelocity * deltaTime;
+            cameraController.transform.position += movement;
+
+            // Debug info untuk velocity
+            if (isDragging && currentVelocity.magnitude > 0.01f)
+            {
+                Debug.Log($"Smooth camera drag - Velocity: {currentVelocity.magnitude:F2}");
+            }
         }
     }
 
-    private void HandlePinchIn(Vector2 centerPoint)
+    public void EndDrag()
     {
-        var currentState = GetCurrentState();
-        if (currentState is OverviewState overview)
+        if (isDragging)
         {
-            overview.HandlePinchIn(centerPoint);
-        }
-        else if (currentState is NavigationState navigation)
-        {
-            navigation.HandlePinchIn(centerPoint);
+            isDragging = false;
+            // Don't reset velocity immediately - let it smooth to zero naturally
+            targetVelocity = Vector3.zero;
+            Debug.Log("Camera drag ended - smoothing to stop");
         }
     }
 
-    private void HandlePinchOut()
-    {
-        var currentState = GetCurrentState();
-        if (currentState is FocusState focus)
-        {
-            focus.HandlePinchOut();
-        }
-        else if (currentState is NavigationState navigation)
-        {
-            navigation.HandlePinchOut();
-        }
-    }
+    public bool IsDragging() => isDragging;
 
-    private void HandleTapHold(Vector2 position)
-    {
-        Debug.Log($"HandleTapHold called - Current state: {GetCurrentState()?.GetType().Name}");
-        var currentState = GetCurrentState();
-        if (currentState is FocusState focus)
-        {
-            Debug.Log("Entering navigation mode from focus state");
-            focus.HandleTapHold(position);
-        }
-        else
-        {
-            Debug.Log($"Tap hold ignored - not in focus state, current state: {currentState?.GetType().Name}");
-        }
-    }
-
-    private void HandleTapHoldRelease()
-    {
-        var currentState = GetCurrentState();
-        if (currentState is NavigationState navigation)
-        {
-            navigation.HandleTapHoldRelease();
-        }
-    }
-
-    private void HandleBackgroundClick()
-    {
-        var currentState = GetCurrentState();
-        if (currentState is FocusState focus)
-        {
-            focus.HandleBackgroundClick();
-        }
-        else if (currentState is NavigationState navigation)
-        {
-            navigation.HandleBackgroundClick();
-        }
-    }
-
-    /// <summary>
-    /// Get current camera state
-    /// </summary>
-    private State GetCurrentState()
-    {
-        return cameraController?.currentState;
-    }
-
-    /// <summary>
-    /// Debug GUI for testing
-    /// </summary>
-    private void OnGUI()
-    {
-        if (!showDebugInfo) return;
-
-        GUILayout.BeginArea(new Rect(10, 10, 300, 200));
-        GUILayout.Label($"Camera State: {GetCurrentState()?.GetType().Name ?? "None"}");
-        GUILayout.Label($"Touch Count: {Input.touchCount}");
-        GUILayout.Label($"Tap Holding: {isTapHolding}");
-        GUILayout.Label($"First Finger: {isFirstFingerDown}");
-        GUILayout.Label($"Second Finger: {isSecondFingerDown}");
-        GUILayout.Label($"Pinch Distance: {currentPinchDistance:F1}");
-        GUILayout.Label($"Focused Object: {cameraController?.currentFocusTarget?.name ?? "None"}");
-        GUILayout.EndArea();
-    }
+    // Debug info
+    public float GetCurrentSpeed() => currentVelocity.magnitude;
+    public Vector3 GetCurrentVelocity() => currentVelocity;
 }
+
+#endregion

@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 public class TopDownCameraController : StateMachine
 {
@@ -31,14 +32,10 @@ public class TopDownCameraController : StateMachine
     public NavigationState navigationState;
 
     private Camera cam;
-    private Coroutine transitionCoroutine;
 
     // Camera state tracking
     private Vector3 overviewPosition;
     private Vector3 overviewRotation;
-    private Vector3 startPosition;
-    private Vector3 startRotation;
-    private float startFOV;
 
     public static TopDownCameraController Instance { get; private set; }
 
@@ -82,7 +79,7 @@ public class TopDownCameraController : StateMachine
     private void StoreCurrentAsOverview()
     {
         overviewPosition = transform.position;
-        overviewRotation = transform.rotation.eulerAngles;
+        overviewRotation = transform.rotation.eulerAngles; // Keep the actual current rotation
         currentFocusTarget = null;
     }
 
@@ -124,8 +121,10 @@ public class TopDownCameraController : StateMachine
         if (currentFocusTarget == null) return;
 
         Vector3 targetPos = CalculateFocusPosition(currentFocusTarget);
-        Vector3 targetRot = overviewRotation;
+        Vector3 targetRot = new Vector3(90f, 0f, 0f); // FOCUS MODE specific rotation (top-down)
         float targetFOV = focusFOV;
+
+
         StartTransition(targetPos, targetRot, targetFOV);
     }
 
@@ -154,15 +153,17 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     private Vector3 CalculateFocusPosition(Transform target)
     {
+        // Calculate focus position based on target object position
         Vector3 targetPos = target.position;
 
-        // Position camera directly above the object at focus height
+        // Focus height and offset from object
         Vector3 focusPosition = new Vector3(
-            targetPos.x,
-            focusHeight,
-            targetPos.z
+            targetPos.x,           // Same X as object
+            focusHeight,           // Use focus height setting
+            targetPos.z            // Same Z as object
         );
 
+        Debug.Log($"Focus position calculated for {target.name}: {focusPosition}");
         return focusPosition;
     }
 
@@ -200,62 +201,27 @@ public class TopDownCameraController : StateMachine
     }
 
     /// <summary>
-    /// Start smooth transition between camera states
+    /// Start smooth transition between camera states using DoTween
     /// </summary>
     private void StartTransition(Vector3 targetPos, Vector3 targetRot, float targetFOV)
     {
-        // Stop any existing transition
-        if (transitionCoroutine != null)
-        {
-            StopCoroutine(transitionCoroutine);
-        }
+        // Kill any existing transition
+        DOTween.Kill(transform);
+        DOTween.Kill(cam);
 
-        // Store starting state
-        startPosition = transform.position;
-        startRotation = transform.rotation.eulerAngles;
-        startFOV = cam.fieldOfView;
-
-        // Start transition coroutine
-        transitionCoroutine = StartCoroutine(TransitionCoroutine(targetPos, targetRot, targetFOV));
-    }
-
-    /// <summary>
-    /// Smooth transition coroutine
-    /// </summary>
-    private IEnumerator TransitionCoroutine(Vector3 targetPos, Vector3 targetRot, float targetFOV)
-    {
+        // Set transitioning state
         isTransitioning = true;
-        float elapsedTime = 0f;
 
-        while (elapsedTime < transitionDuration)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = elapsedTime / transitionDuration;
+        // Create smooth transition sequence with DoTween
+        Sequence transitionSequence = DOTween.Sequence();
+        transitionSequence.Append(transform.DOMove(targetPos, transitionDuration).SetEase(Ease.OutQuart));
+        transitionSequence.Join(transform.DORotate(targetRot, transitionDuration).SetEase(Ease.OutQuart));
+        transitionSequence.Join(DOTween.To(() => cam.fieldOfView, x => cam.fieldOfView = x, targetFOV, transitionDuration).SetEase(Ease.OutQuart));
 
-            // Apply animation curve for smooth easing
-            float easedT = transitionCurve.Evaluate(t);
-
-            // Interpolate position
-            transform.position = Vector3.Lerp(startPosition, targetPos, easedT);
-
-            // Interpolate rotation (handling angle wrapping)
-            Vector3 currentRot = Vector3.Lerp(startRotation, targetRot, easedT);
-            transform.rotation = Quaternion.Euler(currentRot);
-
-            // Interpolate field of view
-            cam.fieldOfView = Mathf.Lerp(startFOV, targetFOV, easedT);
-
-            yield return null;
-        }
-
-        // Ensure exact final values
-        transform.position = targetPos;
-        transform.rotation = Quaternion.Euler(targetRot);
-        cam.fieldOfView = targetFOV;
-
-        // Update state
-        isTransitioning = false;
-        transitionCoroutine = null;
+        // Set completion callback
+        transitionSequence.OnComplete(() => {
+            isTransitioning = false;
+        });
     }
 
     /// <summary>
@@ -289,14 +255,12 @@ public class TopDownCameraController : StateMachine
     {
         if (target == null) return;
 
-        if (transitionCoroutine != null)
-        {
-            StopCoroutine(transitionCoroutine);
-            transitionCoroutine = null;
-        }
+        // Kill any existing transitions
+        DOTween.Kill(transform);
+        DOTween.Kill(cam);
 
         Vector3 targetPosition = CalculateFocusPosition(target);
-        Vector3 targetRotation = overviewRotation; // Keep same rotation as overview
+        Vector3 targetRotation = new Vector3(90f, 0f, 0f); // Top-down view
 
         transform.position = targetPosition;
         transform.rotation = Quaternion.Euler(targetRotation);
