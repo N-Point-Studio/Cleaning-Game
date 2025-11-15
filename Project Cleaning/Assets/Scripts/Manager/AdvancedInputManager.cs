@@ -90,6 +90,9 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void Start()
     {
+        // Set target frame rate to 60 FPS for smooth performance
+        Application.targetFrameRate = 60;
+
         SetupCameraController();
         SetupUI();
     }
