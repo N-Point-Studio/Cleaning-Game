@@ -6,6 +6,8 @@ public class Tool : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private SurfaceDetection surfaceDetection;
+    [SerializeField] private DraggableObject drag;
+
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 10f;
@@ -27,16 +29,21 @@ public class Tool : MonoBehaviour
         if (surfaceDetection == null)
             return;
 
-        if (surfaceDetection.IsSurfaceDetected)
+        if (!TouchManager.Instance.isClickedOn && !TouchManager.Instance.isInteracting)
+        {
+            ReturnToInitial();
+            return;
+        }
+
+        if (surfaceDetection.IsSurfaceDetected && drag.isDragging)
             StickToSurface();
         else
             ReturnToInitial();
-
-        Debug.Log("[surface]: " + name + " adalah " + surfaceDetection.IsSurfaceDetected);
     }
 
     private void StickToSurface()
     {
+        Debug.Log("[surface] stick to ");
         Vector3 targetPos = surfaceDetection.RaycastTipPos;
         Vector3 targetNormal = surfaceDetection.RaycastTipNormal;
         //NOTE PENTING! kalo mau ubah ke koordinat X, Y ubah ke Vector3.up!
@@ -49,6 +56,7 @@ public class Tool : MonoBehaviour
 
     private void ReturnToInitial()
     {
+        Debug.Log("[surface] initial to ");
         transform.position = Vector3.Lerp(transform.position, initialPosition.position, Time.deltaTime * moveSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * rotateSpeed);
     }

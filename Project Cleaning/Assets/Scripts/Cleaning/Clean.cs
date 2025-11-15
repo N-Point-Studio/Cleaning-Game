@@ -41,8 +41,8 @@ public class Clean : MonoBehaviour
 
                     if (pixelDirtMask.g > 0.01f && pixelDirt.g < 1.0f)
                     {
-                    _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
-                    didCleanAnything = true;
+                        _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
+                        didCleanAnything = true;
                     }
                 }
             }
@@ -57,9 +57,8 @@ public class Clean : MonoBehaviour
         return didCleanAnything;
     }
 
-    public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale)
+    public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale, float surfaceRotation)
     {
-        // BARU: Tambahkan flag untuk melacak perubahan
         bool didCleanAnything = false;
 
         int centerX = (int)(uv.x * _templateDirtMask.width);
@@ -80,36 +79,31 @@ public class Clean : MonoBehaviour
                 float u = (float)(x + radius) / (radius * 2);
                 float v = (float)(y + radius) / (radius * 2);
 
-                Color brushPixel = brush.GetPixelBilinear(u, v);
+                // --- Rotasi UV brush berdasarkan rotasi permukaan ---
+                Vector2 rotated = RotateUV(u, v, surfaceRotation);
+
+                // Hindari sampling di luar brush
+                if (rotated.x < 0 || rotated.x > 1 || rotated.y < 0 || rotated.y > 1)
+                    continue;
+
+                Color brushPixel = brush.GetPixelBilinear(rotated.x, rotated.y);
                 Color dirtPixel = _templateDirtMask.GetPixel(px, py);
 
-                if (x == 0 && y == 0)
-            {
-                Debug.Log("DEBUG: Nilai G Kotoran (dirtPixel.g) = " + dirtPixel.g);
-            }
-                
-                // BARU: Cek apakah piksel ini kotor DAN kuas mencoba membersihkannya
                 if (dirtPixel.g > 0.01f && brushPixel.g < 1.0f)
                 {
-                float newGreen = dirtPixel.g * brushPixel.g;
-                _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
-                didCleanAnything = true;
-
-                if (x == 0 && y == 0)
-                {
-                    Debug.LogWarning("--- MEMBERSIHKAN PIKSEL TENGAH! ---");
-                }
+                    float newGreen = dirtPixel.g * brushPixel.g;
+                    _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
+                    didCleanAnything = true;
                 }
             }
         }
 
-        // BARU: Hanya panggil Apply() jika ada yang berubah
         if (didCleanAnything)
-        {
             _templateDirtMask.Apply();
-        }
+
         return didCleanAnything;
     }
+
 
     private void CreateTexture()
     {
@@ -128,4 +122,24 @@ public class Clean : MonoBehaviour
         // Setiap kali dipanggil, kita anggap "berhasil"
         return true;
     }
+
+    private Vector2 RotateUV(float u, float v, float angleDeg)
+    {
+        float angle = angleDeg * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(angle);
+        float sin = Mathf.Sin(angle);
+
+        // Geser sehingga titik pusat (0.5,0.5)
+        float cx = u - 0.5f;
+        float cy = v - 0.5f;
+
+        // Rotasi
+        float rx = cx * cos - cy * sin;
+        float ry = cx * sin + cy * cos;
+
+        // Kembalikan ke posisi uv 0..1
+        return new Vector2(rx + 0.5f, ry + 0.5f);
+    }
+
 }

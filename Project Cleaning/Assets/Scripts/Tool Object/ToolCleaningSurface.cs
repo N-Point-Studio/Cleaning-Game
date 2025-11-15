@@ -92,7 +92,7 @@ public class ToolCleaningSurface : MonoBehaviour
 
     private bool TryClean(Clean clean, Vector2 textureCoord)
     {
-        return clean.CleanAt(textureCoord, brush, brushSize);
+        return clean.CleanAt(textureCoord, brush, brushSize, surface.RaycastTipRotation);
     }
 
     private bool TryDestroyMesh(CleanMesh obj)

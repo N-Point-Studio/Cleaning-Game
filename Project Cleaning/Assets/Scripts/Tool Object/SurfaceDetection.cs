@@ -10,8 +10,6 @@ public class SurfaceDetection : MonoBehaviour
         Mesh,
     }
 
-    [Header("References")]
-    [SerializeField] private Transform currentPointTransform;
     [Header("Raycast Settings")]
     [SerializeField] private float rayLength = 10f;
     [SerializeField] private LayerMask dirtsLayerMask;
@@ -19,6 +17,8 @@ public class SurfaceDetection : MonoBehaviour
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
+    public float RaycastTipRotation { get; private set; }
+
     public Clean CleaningSurface { get; private set; }
     public Vector2 TextureSurface { get; private set; }
     public CleanMesh MudObject { get; private set; }
@@ -32,24 +32,34 @@ public class SurfaceDetection : MonoBehaviour
 
     private void Update()
     {
-        // Debug.Log("is used? " + isUsed);
-        if (isUsed) PerformRaycast();
-        Debug.Log("[surface] from here: " + IsSurfaceDetected);
+        if (TouchManager.Instance.isClickedOn && TouchManager.Instance.isInteracting)
+        {
+            if (isUsed) PerformRaycastTouch();
+        }
+        else
+        {
+            IsSurfaceDetected = false;
+            return;
+        }
     }
 
-    private void PerformRaycast()
+    private void PerformRaycastTouch()
     {
-        if (currentPointTransform == null)
-            return;
-
         if (!TouchManager.Instance.isClickedOn)
         {
             IsSurfaceDetected = false;
             return;
         }
 
+        Vector2 touchPos = TouchManager.Instance.curScreenPos;
+        Ray ray = Camera.main.ScreenPointToRay(new Vector2(touchPos.x, touchPos.y + 400));
+
+        Debug.Log("current screen pos: " + touchPos);
+        Debug.Log("current screen pos: " + new Vector3(touchPos.x, touchPos.y + 100));
+
         RaycastHit hit;
-        if (Physics.Raycast(currentPointTransform.position, currentPointTransform.forward, out hit, rayLength, dirtsLayerMask))
+        // if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, rayLength, dirtsLayerMask))
         {
             switch (surfaceType)
             {
@@ -63,7 +73,9 @@ public class SurfaceDetection : MonoBehaviour
                     EssentialDetecting(hit);
                     CleaningSurface = clean;
                     break;
+
             }
+            Debug.Log("hitting: " + hit.transform.name);
         }
         else
         {
@@ -76,30 +88,16 @@ public class SurfaceDetection : MonoBehaviour
 
     private void EssentialDetecting(RaycastHit hit)
     {
+
         IsSurfaceDetected = true;
         RaycastTipPos = hit.point;
         RaycastTipNormal = hit.normal;
+
+        Vector3 projectedUp = Vector3.ProjectOnPlane(Vector3.up, hit.normal);
+        RaycastTipRotation = Vector3.SignedAngle(Vector3.up, projectedUp, hit.normal);
+
         TextureSurface = hit.textureCoord;
-    }
+        Debug.Log("hitting: " + hit.transform.name + "is surface detected: " + IsSurfaceDetected);
 
-    private void OnDrawGizmos()
-    {
-        if (currentPointTransform == null)
-            return;
-
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawRay(currentPointTransform.position, currentPointTransform.forward * rayLength);
-
-        if (IsSurfaceDetected && RaycastTipPos != Vector3.positiveInfinity)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawSphere(RaycastTipPos, 0.05f);
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(RaycastTipPos, RaycastTipNormal * 0.3f);
-
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(currentPointTransform.position, RaycastTipPos);
-        }
     }
 }
