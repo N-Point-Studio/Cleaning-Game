@@ -10,6 +10,7 @@ public class AssembleManager : MonoBehaviour
     public FragmentStateMachine CurrentFragmentInspected;
     public ClusterStateMachine CurrentClusterInspected;
     public List<AssemblyTarget> assemblyTargets = new();
+    public List<ClusterStateMachine> clusters = new List<ClusterStateMachine>();
 
     private void Awake()
     {
@@ -20,6 +21,11 @@ public class AssembleManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void LateUpdate()
+    {
+        clusters.RemoveAll(item => item == null);
     }
 
     public bool IsInspectingAvailable()
@@ -49,5 +55,20 @@ public class AssembleManager : MonoBehaviour
         }
         correctPos = null;
         return false;
+    }
+
+    public void RegisterCluster(ClusterStateMachine cluster, bool isRegister)
+    {
+        if (!clusters.Contains(cluster))
+        {
+            if (isRegister)
+            {
+                clusters.Add(cluster);
+            }
+            else
+            {
+                clusters.Remove(cluster);
+            }
+        }
     }
 }

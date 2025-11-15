@@ -35,6 +35,7 @@ public class ClusterStateMachine : StateMachine
         BoxCollider = GetComponent<BoxCollider>();
         BoxCollider.size = new Vector3(2.5f, 2.5f, 2.5f);
         SwitchState(new ClusterCreatedState(this));
+        AssembleManager.Instance.RegisterCluster(this, true);
     }
 
     public void SetClusterState(ClusterState state)

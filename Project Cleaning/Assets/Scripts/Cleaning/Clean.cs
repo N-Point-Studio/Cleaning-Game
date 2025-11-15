@@ -1,60 +1,26 @@
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Clean : MonoBehaviour
 {
-    public enum CollisionToolsType
-    {
-        Texture,
-        Mesh,
-    }
     public Texture2D _dirtMaskBase;
     public Material _material;
-    // public CollisionToolsType type = CollisionToolsType.Mesh;
     private Texture2D _templateDirtMask;
+
+    private float dirtAmountTotal;
+    private float dirtAmount;
 
     private void Start()
     {
+        CleanManager.Instance.Register(this);
         CreateTexture();
     }
 
-    public bool CleanAt(Vector2 textureCoord, Texture2D brush)
+
+    private void Update()
     {
-        Debug.Log("Clean at " + textureCoord);
-
-        bool didCleanAnything = false;
-
-        int pixelX = (int)(textureCoord.x * _templateDirtMask.width);
-        int pixelY = (int)(textureCoord.y * _templateDirtMask.height);
-        for (int x = 0; x < brush.width; x++)
-        {
-            for (int y = 0; y < brush.height; y++)
-            {
-                int px = pixelX + x;
-                int py = pixelY + y;
-
-                if (px >= 0 && px < _templateDirtMask.width && py >= 0 && py < _templateDirtMask.height)
-                {
-                    Color pixelDirt = brush.GetPixel(x, y);
-                    Color pixelDirtMask = _templateDirtMask.GetPixel(px, py);
-
-
-                    if (pixelDirtMask.g > 0.01f && pixelDirt.g < 1.0f)
-                    {
-                        _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
-                        didCleanAnything = true;
-                    }
-                }
-            }
-        }
-
-        // BARU: Hanya panggil Apply() jika ada yang berubah (ini optimasi besar!)
-        if (didCleanAnything)
-        {
-            _templateDirtMask.Apply();
-        }
-
-        return didCleanAnything;
+        Debug.Log(name + " progress is: " + GetDirtAmount());
     }
 
     public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale, float surfaceRotation)
@@ -73,28 +39,40 @@ public class Clean : MonoBehaviour
                 int px = centerX + x;
                 int py = centerY + y;
 
-                if (px < 0 || px >= _templateDirtMask.width || py < 0 || py >= _templateDirtMask.height)
+                if (px < 0 || px >= _templateDirtMask.width ||
+                    py < 0 || py >= _templateDirtMask.height)
                     continue;
 
-                float u = (float)(x + radius) / (radius * 2);
-                float v = (float)(y + radius) / (radius * 2);
+                float u = (x + radius) / (radius * 2f);
+                float v = (y + radius) / (radius * 2f);
 
-                // --- Rotasi UV brush berdasarkan rotasi permukaan ---
                 Vector2 rotated = RotateUV(u, v, surfaceRotation);
 
-                // Hindari sampling di luar brush
-                if (rotated.x < 0 || rotated.x > 1 || rotated.y < 0 || rotated.y > 1)
+                if (rotated.x < 0 || rotated.x > 1 ||
+                    rotated.y < 0 || rotated.y > 1)
                     continue;
 
                 Color brushPixel = brush.GetPixelBilinear(rotated.x, rotated.y);
                 Color dirtPixel = _templateDirtMask.GetPixel(px, py);
 
-                if (dirtPixel.g > 0.01f && brushPixel.g < 1.0f)
-                {
-                    float newGreen = dirtPixel.g * brushPixel.g;
-                    _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
-                    didCleanAnything = true;
-                }
+                // Pixel tidak menghapus apa-apa
+                if (brushPixel.g >= 1f)
+                    continue;
+
+                // Sudah bersih
+                if (dirtPixel.g <= 0.01f)
+                    continue;
+
+                // Hitung berapa yang hilang
+                float newGreen = dirtPixel.g * brushPixel.g;
+                float removed = dirtPixel.g - newGreen;
+
+                // Update progress
+                dirtAmount -= removed;
+
+                // Update pixel
+                _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
+                didCleanAnything = true;
             }
         }
 
@@ -104,42 +82,49 @@ public class Clean : MonoBehaviour
         return didCleanAnything;
     }
 
-
     private void CreateTexture()
     {
         _templateDirtMask = new Texture2D(_dirtMaskBase.width, _dirtMaskBase.height);
         _templateDirtMask.SetPixels(_dirtMaskBase.GetPixels());
         _templateDirtMask.Apply();
-        var renderer = GetComponent<Renderer>();
-        _material = renderer.material;
 
+        _material = GetComponent<Renderer>().material;
         _material.SetTexture("_DirtMask", _templateDirtMask);
-    }
 
-    public bool DestroyMesh()
-    {
-        Destroy(gameObject);
-        // Setiap kali dipanggil, kita anggap "berhasil"
-        return true;
+        // Hitung total dirt
+        dirtAmountTotal = 0f;
+        for (int x = 0; x < _dirtMaskBase.width; x++)
+        {
+            for (int y = 0; y < _dirtMaskBase.height; y++)
+            {
+                dirtAmountTotal += _dirtMaskBase.GetPixel(x, y).g;
+            }
+        }
+
+        dirtAmount = dirtAmountTotal;
     }
 
     private Vector2 RotateUV(float u, float v, float angleDeg)
     {
         float angle = angleDeg * Mathf.Deg2Rad;
-
         float cos = Mathf.Cos(angle);
         float sin = Mathf.Sin(angle);
 
-        // Geser sehingga titik pusat (0.5,0.5)
         float cx = u - 0.5f;
         float cy = v - 0.5f;
 
-        // Rotasi
         float rx = cx * cos - cy * sin;
         float ry = cx * sin + cy * cos;
 
-        // Kembalikan ke posisi uv 0..1
         return new Vector2(rx + 0.5f, ry + 0.5f);
     }
 
+    public float GetDirtAmount()
+    {
+        // Lindungi dari NaN
+        if (dirtAmountTotal <= 0)
+            return 0f;
+
+        return dirtAmount / dirtAmountTotal;
+    }
 }

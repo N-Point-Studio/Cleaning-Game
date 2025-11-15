@@ -15,10 +15,16 @@ public class ClusterMoveToInspect : ClusterBaseState
 
         var manager = stateMachine.assembleManager;
         var inspectedFragment = manager.CurrentFragmentInspected;
+        var inspectedCluster = manager.CurrentClusterInspected;
 
         if (inspectedFragment != null)
         {
             inspectedFragment.SwitchState(new FragmentReturningState(inspectedFragment));
+        }
+
+        if (inspectedCluster != null)
+        {
+            inspectedCluster.SwitchState(new ClusterReturningState(inspectedCluster));
         }
 
         AssembleManager.Instance.SetCurrentInspectFragment(null);
