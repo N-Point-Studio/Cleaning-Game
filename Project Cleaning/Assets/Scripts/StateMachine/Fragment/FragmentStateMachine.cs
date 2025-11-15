@@ -6,7 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(FragmentInteraction))]
 public class FragmentStateMachine : StateMachine
 {
-    public List<AssemblyTarget> assemblyTargets = new List<AssemblyTarget>();
     public List<FragmentStateMachine> StateMachineConnected = new List<FragmentStateMachine>();
     public FragmentInteraction Interaction { get; private set; }
     public Camera MainCamera { get; private set; }
@@ -27,20 +26,6 @@ public class FragmentStateMachine : StateMachine
         Interaction = GetComponent<FragmentInteraction>();
         Interaction.SetInitialPos(InitialPosition);
         SwitchState(new FragmentIdleState(this));
-    }
-
-    public bool TryGetAssemblyTarget(FragmentStateMachine other, out Transform correctPos)
-    {
-        foreach (var target in assemblyTargets)
-        {
-            if (target.targetFragment == other)
-            {
-                correctPos = target.correctPosition;
-                return true;
-            }
-        }
-        correctPos = null;
-        return false;
     }
 
     public void DisableAllInteraction()

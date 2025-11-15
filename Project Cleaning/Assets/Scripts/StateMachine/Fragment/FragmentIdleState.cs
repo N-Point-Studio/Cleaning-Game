@@ -89,22 +89,22 @@ public class FragmentIdleState : FragmentBaseState
 
             if (currentDistanceZ < 2.0f)
             {
-                if (potentialTarget != null && potentialTarget.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
-                {
-                    stateMachine.transform.rotation = Quaternion.Slerp(
-                        stateMachine.transform.rotation,
-                        correctPos.rotation,
-                        Time.deltaTime * 5f
-                    );
-                }
-                else
-                {
-                    stateMachine.transform.rotation = Quaternion.Slerp(
-                        stateMachine.transform.rotation,
-                        AssembleManager.Instance.InspectPosition.transform.rotation,
-                        Time.deltaTime * 5f
-                    );
-                }
+                // if (potentialTarget != null && potentialTarget.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
+                // {
+                //     stateMachine.transform.rotation = Quaternion.Slerp(
+                //         stateMachine.transform.rotation,
+                //         correctPos.rotation,
+                //         Time.deltaTime * 5f
+                //     );
+                // }
+                // else
+                // {
+                stateMachine.transform.rotation = Quaternion.Slerp(
+                    stateMachine.transform.rotation,
+                    AssembleManager.Instance.InspectPosition.transform.rotation,
+                    Time.deltaTime * 5f
+                );
+                // }
             }
 
             if (AssembleManager.Instance.CurrentFragmentInspected != null && stateMachine != AssembleManager.Instance.CurrentFragmentInspected)

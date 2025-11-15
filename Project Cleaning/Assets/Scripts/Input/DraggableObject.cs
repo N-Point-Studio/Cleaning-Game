@@ -10,7 +10,7 @@ public class DraggableObject : MonoBehaviour
     public bool isDragging = false;
     public bool isReturning = false;
     public bool isTapping = false;
-    private Collider collider;
+    private Collider Collider;
 
 
     private void Awake()
@@ -20,7 +20,7 @@ public class DraggableObject : MonoBehaviour
 
         initialPosition = transform.position;
         grabOffset = Vector3.Distance(transform.position, GrabPosition.position);
-        collider = GetComponent<Collider>();
+        Collider = GetComponent<Collider>();
     }
 
     private void Update()
@@ -53,7 +53,7 @@ public class DraggableObject : MonoBehaviour
             isDragging = false;
             isTapping = false;
             isReturning = true;
-            collider.enabled = false;
+            Collider.enabled = false;
             TouchManager.Instance.TouchUsed(false);
         }
 
@@ -65,7 +65,7 @@ public class DraggableObject : MonoBehaviour
                 isReturning = false;
                 isDragging = false;
                 isTapping = false;
-                collider.enabled = true;
+                Collider.enabled = true;
                 // surface?.isUsed = false;
                 if (surface != null) surface.isUsed = false;
             }
