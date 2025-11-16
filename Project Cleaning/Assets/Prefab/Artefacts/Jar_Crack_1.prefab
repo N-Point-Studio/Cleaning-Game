@@ -347,7 +347,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dirtMaskBase: {fileID: 2800000, guid: b83fdf09d608f49ac9d7290ca11282a3, type: 3}
+  _dirtMaskBase: {fileID: 2800000, guid: 479b156c974d440888f0ac7aaaf6c4a0, type: 3}
   _material: {fileID: 2100000, guid: e884e1fc267694d3ba8f681bcdfd2c84, type: 2}
 --- !u!114 &8976208817301868809
 MonoBehaviour:
@@ -383,11 +383,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0e315f2cd2f3467e9e770237581cdb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  assemblyTargets:
-  - targetFragment: {fileID: 0}
-    correctPosition: {fileID: 0}
-  - targetFragment: {fileID: 0}
-    correctPosition: {fileID: 0}
   StateMachineConnected: []
   CurrentStatus: 
 --- !u!64 &3195982502390688828

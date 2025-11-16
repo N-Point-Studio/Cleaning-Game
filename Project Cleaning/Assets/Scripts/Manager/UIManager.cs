@@ -11,12 +11,12 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
-        float progress = CleanManager.Instance.GetOverallProgress();
-
+        float progress = (CleanManager.Instance.GetOverallProgress() + AssembleManager.Instance.GetAttachProgress()) / 3;
+        Debug.Log("progress bar " + progress);
+        // Debug.Log("progress assemble " + AssembleManager.Instance.GetTotalClusterProgress());
         progressBar.SetValue(progress);
-        progressBar.UpdateFill();
-
     }
+
 
     private void Awake()
     {

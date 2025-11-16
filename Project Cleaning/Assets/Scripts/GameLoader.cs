@@ -27,11 +27,7 @@ public class GameLoader : MonoBehaviour
 
             FragmentStateMachine fragmentSM = spawned.GetComponent<FragmentStateMachine>();
 
-            AssemblyTarget newTarget = new AssemblyTarget
-            {
-                targetFragment = fragmentSM,
-                correctPosition = fragData.correctPosition
-            };
+            AssemblyTarget newTarget = new AssemblyTarget(fragmentSM, fragData.correctPosition);
 
             AssembleManager.Instance.assemblyTargets.Add(newTarget);
         }
