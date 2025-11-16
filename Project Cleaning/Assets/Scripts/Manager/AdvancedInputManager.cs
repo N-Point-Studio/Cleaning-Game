@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using DG.Tweening;
 
 /// <summary>
@@ -43,6 +44,10 @@ public class AdvancedInputManager : MonoBehaviour
     [SerializeField] private float pinchThreshold = 30f;
     [SerializeField] private float maxPinchTime = 2f;
 
+    [Header("Scene Change Settings")]
+    [SerializeField] private bool enableSceneChange = true;
+    [SerializeField] private float sceneChangeDelay = 0.5f;
+
     // Core components
     private Camera playerCamera;
     private TopDownCameraController cameraController;
@@ -52,6 +57,7 @@ public class AdvancedInputManager : MonoBehaviour
     private readonly float[] cameraXPositions = { -4.35f, -2.5f, -0.5f };
     private int currentPositionIndex = 0;
     private Vector3 originalCameraPosition, originalCameraRotation;
+    private bool justEnteredZoomMode = false;
 
     // Input systems
     private CameraDragSystem cameraDragSystem;
@@ -101,16 +107,20 @@ public class AdvancedInputManager : MonoBehaviour
     private void SetupUI()
     {
         if (startExplorationImage != null)
-        {
             SetupImageClickDetection(startExplorationImage, StartExplorationMode);
-        }
-        if (additionalImage1 != null) additionalImage1.raycastTarget = false;
-        if (additionalImage2 != null) additionalImage2.raycastTarget = false;
+
+        if (additionalImage1 != null)
+            additionalImage1.raycastTarget = false;
+
+        if (additionalImage2 != null)
+            additionalImage2.raycastTarget = false;
     }
 
     private void SetupImageClickDetection(Image targetImage, System.Action onClickAction)
     {
-        var eventTrigger = targetImage.GetComponent<EventTrigger>() ?? targetImage.gameObject.AddComponent<EventTrigger>();
+        if (!targetImage.TryGetComponent<EventTrigger>(out var eventTrigger))
+            eventTrigger = targetImage.gameObject.AddComponent<EventTrigger>();
+
         var clickEvent = new EventTrigger.Entry { eventID = EventTriggerType.PointerClick };
         clickEvent.callback.AddListener((data) => onClickAction?.Invoke());
         eventTrigger.triggers.Add(clickEvent);
@@ -119,12 +129,11 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void SetImageClickable(Image targetImage, bool clickable)
     {
-        if (targetImage != null)
-        {
-            targetImage.raycastTarget = clickable;
-            var eventTrigger = targetImage.GetComponent<EventTrigger>();
-            if (eventTrigger != null) eventTrigger.enabled = clickable;
-        }
+        if (targetImage == null) return;
+
+        targetImage.raycastTarget = clickable;
+        if (targetImage.TryGetComponent<EventTrigger>(out var eventTrigger))
+            eventTrigger.enabled = clickable;
     }
     #endregion
 
@@ -190,12 +199,14 @@ public class AdvancedInputManager : MonoBehaviour
         switch (currentGameMode)
         {
             case GameMode.Initial:
-                Debug.Log("Please press Start Exploration button first");
+                // Input ignored in initial mode - user must start exploration first
                 break;
+
             case GameMode.Exploration:
                 if (!CheckForObjectClick(screenPosition))
                     swipeDetectionSystem.StartSwipe(screenPosition);
                 break;
+
             case GameMode.Zoom:
                 if (!CheckForObjectClick(screenPosition))
                     cameraDragSystem.StartDrag(screenPosition);
@@ -341,6 +352,7 @@ public class AdvancedInputManager : MonoBehaviour
     private void EnterZoomMode(Transform targetObject)
     {
         currentGameMode = GameMode.Zoom;
+        justEnteredZoomMode = true;
         cameraController.SetFocusTarget(targetObject);
         cameraController.SwitchState(cameraController.focusState);
     }
@@ -348,6 +360,8 @@ public class AdvancedInputManager : MonoBehaviour
     private void EnterZoomModeAtCenter()
     {
         currentGameMode = GameMode.Zoom;
+        justEnteredZoomMode = true;
+
         var currentPosition = cameraController.transform.position;
         var focusPosition = currentPosition + cameraController.transform.forward * 2f;
         var tempFocus = new GameObject("TempFocusTarget") { transform = { position = focusPosition } };
@@ -367,13 +381,16 @@ public class AdvancedInputManager : MonoBehaviour
     public void ReturnToExplorationMode()
     {
         if (currentGameMode != GameMode.Zoom) return;
+
         currentGameMode = GameMode.Exploration;
+        justEnteredZoomMode = false;
         AnimateToPosition(cameraXPositions[currentPositionIndex]);
     }
 
     public void ExitToInitialMode()
     {
         currentGameMode = GameMode.Initial;
+        justEnteredZoomMode = false;
         AnimateToOriginalPosition();
         StartCoroutine(ShowStartButtonElegantly());
     }
@@ -433,26 +450,89 @@ public class AdvancedInputManager : MonoBehaviour
         sequence.Append(cameraController.transform.DOMove(originalCameraPosition, returnTransitionDuration).SetEase(Ease.InOutQuart));
         sequence.Join(cameraController.transform.DORotate(originalCameraRotation, returnTransitionDuration).SetEase(Ease.InOutQuart));
     }
+
     #endregion
 
     #region Object Interaction
     private bool CheckForObjectClick(Vector2 screenPosition)
     {
         var ray = playerCamera.ScreenPointToRay(screenPosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
+        if (!Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
+            return false;
+
+        if (!hit.collider.TryGetComponent<ClickableObject>(out var clickable))
+            return false;
+
+        switch (currentGameMode)
         {
-            var clickable = hit.collider.GetComponent<ClickableObject>();
-            if (clickable != null)
-            {
-                if (currentGameMode == GameMode.Exploration || currentGameMode == GameMode.Zoom)
-                {
-                    EnterZoomMode(clickable.transform);
-                }
-                clickable.OnClick();
-                return true;
-            }
+            case GameMode.Exploration:
+                HandleExplorationClick(clickable);
+                break;
+
+            case GameMode.Zoom:
+                HandleZoomClick(clickable);
+                break;
+
+            default:
+                PlayClickFeedback(clickable);
+                break;
         }
-        return false;
+
+        return true;
+    }
+
+    private void HandleExplorationClick(ClickableObject clickable)
+    {
+        EnterZoomMode(clickable.transform);
+        PlayClickFeedback(clickable);
+    }
+
+    private void HandleZoomClick(ClickableObject clickable)
+    {
+        if (justEnteredZoomMode)
+        {
+            justEnteredZoomMode = false;
+            PlayClickFeedback(clickable);
+            return;
+        }
+
+        if (enableSceneChange && clickable.CanChangeScene())
+            HandleSceneChange(clickable);
+
+        PlayClickFeedback(clickable);
+    }
+
+    private void HandleSceneChange(ClickableObject clickableObject)
+    {
+        if (clickableObject?.CanChangeScene() != true)
+            return;
+
+        string sceneName = clickableObject.GetSceneName();
+        if (string.IsNullOrEmpty(sceneName))
+            return;
+
+        StartCoroutine(ChangeSceneCoroutine(sceneName));
+    }
+
+    private IEnumerator ChangeSceneCoroutine(string sceneName)
+    {
+        if (sceneChangeDelay > 0)
+            yield return new WaitForSeconds(sceneChangeDelay);
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private void PlayClickFeedback(ClickableObject clickable)
+    {
+        if (clickable == null) return;
+
+        // Play audio feedback
+        if (clickable.ClickSound != null && clickable.TryGetComponent<AudioSource>(out var audioSource))
+            audioSource.PlayOneShot(clickable.ClickSound);
+
+        // Mark as focused and trigger events
+        clickable.SetFocusState(true);
+        clickable.OnObjectClicked?.Invoke();
     }
     #endregion
 

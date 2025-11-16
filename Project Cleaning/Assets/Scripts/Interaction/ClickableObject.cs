@@ -8,6 +8,10 @@ public class ClickableObject : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip clickSound;
 
+    [Header("Scene Navigation")]
+    [SerializeField] private string targetSceneName = "";
+    [SerializeField] private bool canChangeScene = false;
+
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
 
@@ -77,6 +81,22 @@ public class ClickableObject : MonoBehaviour
         {
             OnLoseFocus();
         }
+    }
+
+    /// <summary>
+    /// Get the target scene name for this clickable object
+    /// </summary>
+    public string GetSceneName()
+    {
+        return targetSceneName;
+    }
+
+    /// <summary>
+    /// Check if this object can trigger a scene change
+    /// </summary>
+    public bool CanChangeScene()
+    {
+        return canChangeScene && !string.IsNullOrEmpty(targetSceneName);
     }
 
     // NOTE: Unity's built-in mouse events are disabled to prevent conflicts with AdvancedInputManager
