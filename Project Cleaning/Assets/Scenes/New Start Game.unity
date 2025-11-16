@@ -4263,7 +4263,7 @@ GameObject:
   - component: {fileID: 1867663053}
   - component: {fileID: 1867663052}
   m_Layer: 0
-  m_Name: Advance
+  m_Name: AdvanceInputManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
