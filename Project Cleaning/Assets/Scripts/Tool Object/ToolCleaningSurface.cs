@@ -33,6 +33,11 @@ public class ToolCleaningSurface : MonoBehaviour
     private bool isMoving = false;
     private float vfxEmissionRate;
 
+
+    private bool wasCleaningLastFrame = false;
+
+
+
     void Awake()
     {
         cleaningAudioSource = GetComponent<AudioSource>();
@@ -60,6 +65,7 @@ public class ToolCleaningSurface : MonoBehaviour
         CheckForMovement();
         RaycastCleaningSurface();
         HandleEffects();
+        HandleHaptics();
     }
 
     private void CheckForMovement()
@@ -125,6 +131,31 @@ public class ToolCleaningSurface : MonoBehaviour
             }
         }
     }
+
+    private void HandleHaptics()
+    {
+        bool conditionsMet = isActivelyCleaning && isMoving;
+
+        if (conditionsMet)
+        {
+            // Start continuous haptics only once
+            if (!wasCleaningLastFrame)
+            {
+                HapticManager.Instance.StartContinuous(HapticManager.HapticType.Medium);
+            }
+        }
+        else
+        {
+            // Stop when movement stops or surface lost
+            if (wasCleaningLastFrame)
+            {
+                HapticManager.Instance.StopContinuous();
+            }
+        }
+
+        wasCleaningLastFrame = conditionsMet;
+    }
+
     void OnDrawGizmos()
     {
         Gizmos.color = Color.black;
