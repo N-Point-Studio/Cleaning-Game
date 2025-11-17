@@ -6,54 +6,28 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
 
-    [Header("References")]
-    [SerializeField] private ProgressBar progressBar;
-
-    private void Update()
-    {
-        float progress = (CleanManager.Instance.GetOverallProgress() + AssembleManager.Instance.GetAttachProgress()) / 3;
-        Debug.Log("progress bar " + progress);
-        // Debug.Log("progress assemble " + AssembleManager.Instance.GetTotalClusterProgress());
-        progressBar.SetValue(progress);
-    }
-
+    [Header("Separate Progress Bars")]
+    [SerializeField] private ProgressBar progressDirts;   // For Mud
+    [SerializeField] private ProgressBar progressDusts;   // For Texture/Dust cleaning
+    [SerializeField] private ProgressBar progressAssemble; // For Assemble
 
     private void Awake()
     {
         Instance = this;
     }
 
-    public void SetProgressMax(int max)
+    private void Update()
     {
-        progressBar.maximum = max;
-        if (progressBar.current > max)
-            progressBar.current = max;
-    }
+        // CLEANING (TEXTURE)
+        float dustProgress = CleanManager.Instance.GetDustProgress();
+        progressDusts.SetValue(dustProgress);
 
-    public void SetProgressValue(int value)
-    {
-        progressBar.current = Mathf.Clamp(value, progressBar.minimum, progressBar.maximum);
-    }
+        // CLEANING (MUD / CLEANMESH)
+        float mudProgress = CleanManager.Instance.GetMudProgress();
+        progressDirts.SetValue(mudProgress);
 
-    public void AddProgress(int value)
-    {
-        SetProgressValue(progressBar.current + value);
-    }
-
-    public void SetProgressPercent(float percent)
-    {
-        percent = Mathf.Clamp01(percent);
-        progressBar.current = Mathf.RoundToInt(progressBar.maximum * percent);
-    }
-
-    public void ResetProgress()
-    {
-        progressBar.current = progressBar.minimum;
-    }
-
-    public float GetProgressPercent()
-    {
-        if (progressBar.maximum <= 0) return 0f;
-        return (float)progressBar.current / progressBar.maximum;
+        // ASSEMBLE PROGRESS
+        float attachProgress = AssembleManager.Instance.GetAttachProgress();
+        progressAssemble.SetValue(attachProgress);
     }
 }
