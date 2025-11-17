@@ -3898,7 +3898,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clickSound: {fileID: 0}
-  targetSceneName: FixDragging
+  targetSceneName: GamePlayRND
   canChangeScene: 1
   OnObjectClicked:
     m_PersistentCalls:

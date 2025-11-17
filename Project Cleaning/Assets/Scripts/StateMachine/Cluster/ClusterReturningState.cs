@@ -12,6 +12,8 @@ public class ClusterReturningState : ClusterBaseState
 
         stateMachine.SetClusterState(ClusterState.Return);
         stateMachine.transform.SetParent(null);
+        stateMachine.Interaction.DisableAllInteraction();
+
 
         // Debug.Log($"Entering returning cluster state with: {stateMachine.InitialPosition}");
     }
@@ -40,5 +42,6 @@ public class ClusterReturningState : ClusterBaseState
 
     public override void Exit()
     {
+        stateMachine.Interaction.DisableAllInteraction();
     }
 }

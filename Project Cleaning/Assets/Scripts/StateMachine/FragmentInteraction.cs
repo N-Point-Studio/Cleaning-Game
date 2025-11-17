@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -150,5 +151,12 @@ public class FragmentInteraction : MonoBehaviour
     {
         if (!isReturning) return;
         transform.position = Vector3.Lerp(transform.position, initialPosition, Time.deltaTime * speed);
+    }
+
+    internal void DisableAllInteraction()
+    {
+        isTapAvailable = false;
+        isDragAvailable = false;
+        isHoldAvailable = false;
     }
 }

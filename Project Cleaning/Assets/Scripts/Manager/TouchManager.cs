@@ -173,18 +173,23 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             OnHoldReleased?.Invoke();
         }
     }
+    private bool isTouchHittingObject = false;
+    private RaycastHit hitInfo;
 
-    private void OnDrawGizmos()
-    {
-        if (mainCamera == null) mainCamera = Camera.main;
-        if (mainCamera == null || curScreenPos == Vector3.zero) return;
+    // private void OnDrawGizmos()
+    // {
+    //     if (mainCamera == null) mainCamera = Camera.main;
+    //     if (mainCamera == null || curScreenPos == Vector3.zero) return;
 
-        // Konversi screen → world (z diatur agar terlihat di depan kamera)
-        Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y, 50f));
+    //     // Konversi screen → world (z diatur agar terlihat di depan kamera)
+    //     Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y, 20f));
+    //     Vector3 worldPosOffset = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y + 150, 20f));
 
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(worldPos, 0.1f);
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(mainCamera.transform.position, worldPos);
-    }
+    //     Gizmos.color = Color.yellow;
+    //     Gizmos.DrawSphere(worldPos, 0.1f);
+    //     Gizmos.color = Color.cyan;
+    //     Gizmos.DrawLine(mainCamera.transform.position, worldPos);
+    //     Gizmos.color = Color.blue;
+    //     Gizmos.DrawLine(mainCamera.transform.position, worldPosOffset);
+    // }
 }

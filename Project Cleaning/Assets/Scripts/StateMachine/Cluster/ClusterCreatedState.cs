@@ -7,6 +7,8 @@ public class ClusterCreatedState : ClusterBaseState
     public ClusterCreatedState(ClusterStateMachine stateMachine) : base(stateMachine) { }
     public override void Enter()
     {
+        stateMachine.DisableAllInteraction();
+
         Debug.Log("Cluster state: created");
 
         stateMachine.SetClusterState(ClusterState.Created);
