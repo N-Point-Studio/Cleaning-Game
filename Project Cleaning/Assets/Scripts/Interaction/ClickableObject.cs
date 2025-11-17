@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
 
 [RequireComponent(typeof(Collider))]
 public class ClickableObject : MonoBehaviour
@@ -16,12 +17,23 @@ public class ClickableObject : MonoBehaviour
     [SerializeField] private bool useTransitionAnimation = true;
     [SerializeField] private EasyTransition.TransitionSettings transitionSettings;
 
-    [Header("Image Popup")]
-    [SerializeField] private GameObject popupImageGameObject;
-    [SerializeField] private float animationDuration = 0.6f;
+    [Header("Text Popup")]
+    [SerializeField] private GameObject popupTextGameObject;
+    [SerializeField] private TextMeshProUGUI textMeshPro;
+    [SerializeField] private float characterAnimationSpeed = 0.05f;
+    [SerializeField] private float scaleAnimationDuration = 0.6f;
     [SerializeField] private bool autoHideAfterSeconds = true;
     [SerializeField] private float autoHideDelay = 3f;
     [SerializeField] private bool onlyShowInExplorationMode = true;
+
+    [Header("Shake Animation")]
+    [SerializeField] private bool enableShakeAnimation = true;
+    [SerializeField] private float shakeIntensity = 0.05f;
+    [SerializeField] private float shakeDuration = 3f;
+    [SerializeField] private bool shakeOnlyWhenFocused = true;
+
+    [Header("Inspectable Object")]
+    [SerializeField] private bool isInspectable = true;
 
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
@@ -32,10 +44,18 @@ public class ClickableObject : MonoBehaviour
     private AudioSource audioSource;
     private bool isFocused = false;
 
-    // Image popup components
-    private CanvasGroup popupCanvasGroup;
+    // Text popup components
     private Vector3 originalPopupScale;
     private bool isPopupVisible = false;
+    private string fullTextContent;
+    private Sequence currentTextSequence;
+
+    // Shake animation components
+    private Vector3 originalPosition;
+    private Sequence currentShakeSequence;
+
+    // Inspectable components
+    private InspectableJar inspectableJar;
 
     private void Awake()
     {
@@ -44,30 +64,69 @@ public class ClickableObject : MonoBehaviour
 
         // Setup popup image if assigned
         SetupPopupImage();
+
+        // Setup shake animation
+        SetupShakeAnimation();
+
+        // Setup inspectable functionality
+        SetupInspectableObject();
     }
 
     private void SetupPopupImage()
     {
-        if (popupImageGameObject != null)
+        if (popupTextGameObject != null)
         {
-            Debug.Log($"Setting up popup for: {popupImageGameObject.name}");
-
-            // Try to get or add CanvasGroup
-            popupCanvasGroup = popupImageGameObject.GetComponent<CanvasGroup>();
-            if (popupCanvasGroup == null)
+            // Auto-find TextMeshPro component if not assigned
+            if (textMeshPro == null)
             {
-                Debug.Log("No CanvasGroup found, adding one");
-                popupCanvasGroup = popupImageGameObject.AddComponent<CanvasGroup>();
+                textMeshPro = popupTextGameObject.GetComponent<TextMeshProUGUI>();
+                if (textMeshPro == null)
+                {
+                    textMeshPro = popupTextGameObject.GetComponentInChildren<TextMeshProUGUI>();
+                }
             }
 
-            originalPopupScale = popupImageGameObject.transform.localScale;
-            Debug.Log($"Original scale saved: {originalPopupScale}");
+            if (textMeshPro != null)
+            {
+                // Store the full text content
+                fullTextContent = textMeshPro.text;
+                originalPopupScale = popupTextGameObject.transform.localScale;
 
-            HidePopupImmediate();
+                // Hide initially
+                popupTextGameObject.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("No TextMeshProUGUI component found in popup GameObject!");
+            }
         }
         else
         {
-            Debug.LogWarning("popupImageGameObject is null in SetupPopupImage!");
+            Debug.LogWarning("popupTextGameObject is null!");
+        }
+    }
+
+    private void SetupShakeAnimation()
+    {
+        // Store the original position
+        originalPosition = transform.localPosition;
+
+        // Don't start shake animation automatically - only when focused/clicked
+    }
+
+    private void SetupInspectableObject()
+    {
+        if (isInspectable)
+        {
+            // Get or add InspectableJar component
+            inspectableJar = GetComponent<InspectableJar>();
+            if (inspectableJar == null)
+            {
+                inspectableJar = gameObject.AddComponent<InspectableJar>();
+            }
+
+            // Disable inspectable functionality initially - only enable when focused in zoom mode
+            inspectableJar.enabled = false;
         }
     }
 
@@ -79,8 +138,18 @@ public class ClickableObject : MonoBehaviour
         // Trigger the Unity Event first
         OnObjectClicked?.Invoke();
 
-        // Show popup image (allow even during camera transitions)
-        ShowPopupImage();
+        // Show popup text (allow even during camera transitions)
+        ShowPopupText();
+
+        // Set focus state and start shake animation when clicked (if in exploration mode and enabled)
+        if (enableShakeAnimation && shakeOnlyWhenFocused)
+        {
+            if (AdvancedInputManager.Instance != null && AdvancedInputManager.Instance.IsInExplorationMode())
+            {
+                isFocused = true;
+                StartShakeAnimation();
+            }
+        }
     }
 
 
@@ -90,6 +159,18 @@ public class ClickableObject : MonoBehaviour
     public void OnLoseFocus()
     {
         isFocused = false;
+
+        // Stop shake animation when losing focus
+        if (enableShakeAnimation && shakeOnlyWhenFocused)
+        {
+            StopShakeAnimation();
+        }
+
+        // Disable inspectable functionality when losing focus
+        if (isInspectable && inspectableJar != null)
+        {
+            inspectableJar.enabled = false;
+        }
     }
 
 
@@ -110,6 +191,26 @@ public class ClickableObject : MonoBehaviour
         if (!focused)
         {
             OnLoseFocus();
+        }
+        else
+        {
+            // Start shake animation when gaining focus (if enabled and in exploration mode)
+            if (enableShakeAnimation && shakeOnlyWhenFocused)
+            {
+                if (AdvancedInputManager.Instance != null && AdvancedInputManager.Instance.IsInExplorationMode())
+                {
+                    StartShakeAnimation();
+                }
+            }
+
+            // Enable inspectable functionality when entering zoom mode
+            if (isInspectable && inspectableJar != null && AdvancedInputManager.Instance != null)
+            {
+                if (AdvancedInputManager.Instance.IsInZoomMode())
+                {
+                    inspectableJar.enabled = true;
+                }
+            }
         }
     }
 
@@ -146,100 +247,122 @@ public class ClickableObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Show popup image with smooth animation
+    /// Check if this object can be inspected with pinch/zoom gestures
     /// </summary>
-    public void ShowPopupImage()
+    public bool IsInspectable()
     {
-        if (popupImageGameObject == null)
+        return isInspectable;
+    }
+
+    /// <summary>
+    /// Enable or disable inspectable functionality
+    /// </summary>
+    public void SetInspectableEnabled(bool enabled)
+    {
+        if (isInspectable && inspectableJar != null)
         {
-            Debug.LogWarning($"{gameObject.name}: Popup Image Game Object is not assigned!");
-            return;
-        }
-
-        if (isPopupVisible)
-        {
-            return;
-        }
-
-        // Check exploration mode restriction
-        if (onlyShowInExplorationMode && AdvancedInputManager.Instance != null)
-        {
-            if (!AdvancedInputManager.Instance.IsInExplorationMode())
-            {
-                return;
-            }
-        }
-
-        isPopupVisible = true;
-        popupImageGameObject.SetActive(true);
-
-        // Start animation from zero scale and alpha
-        popupImageGameObject.transform.localScale = Vector3.zero;
-        popupCanvasGroup.alpha = 0f;
-
-        // Create smooth animation sequence
-        var sequence = DOTween.Sequence();
-
-        // Scale up with bounce effect
-        sequence.Append(popupImageGameObject.transform.DOScale(originalPopupScale, animationDuration)
-                       .SetEase(Ease.OutBack));
-
-        // Fade in
-        sequence.Join(popupCanvasGroup.DOFade(1f, animationDuration * 0.8f)
-                     .SetEase(Ease.OutSine));
-
-        // Auto hide if enabled
-        if (autoHideAfterSeconds)
-        {
-            sequence.AppendInterval(autoHideDelay);
-            sequence.AppendCallback(() =>
-            {
-                HidePopupImage();
-            });
+            inspectableJar.enabled = enabled;
         }
     }
 
     /// <summary>
-    /// Hide popup image with smooth animation
+    /// Show popup text with character-by-character animation (Fixed version)
     /// </summary>
-    public void HidePopupImage()
+    public void ShowPopupText()
     {
-        if (popupImageGameObject == null || !isPopupVisible) return;
+        // Auto-find components if not set
+        if (textMeshPro == null)
+        {
+            textMeshPro = popupTextGameObject?.GetComponent<TextMeshProUGUI>();
+            if (textMeshPro == null)
+                textMeshPro = popupTextGameObject?.GetComponentInChildren<TextMeshProUGUI>();
+        }
 
-        var sequence = DOTween.Sequence();
+        if (popupTextGameObject == null || textMeshPro == null)
+        {
+            Debug.LogError($"TextMeshPro setup failed! GameObject: {popupTextGameObject != null}, TextMeshPro: {textMeshPro != null}");
+            return;
+        }
 
-        // Scale down
-        sequence.Append(popupImageGameObject.transform.DOScale(Vector3.zero, animationDuration * 0.7f)
-                       .SetEase(Ease.InBack));
+        if (string.IsNullOrEmpty(fullTextContent))
+            fullTextContent = textMeshPro.text;
 
-        // Fade out
-        sequence.Join(popupCanvasGroup.DOFade(0f, animationDuration * 0.5f)
-                     .SetEase(Ease.InSine));
+        if (string.IsNullOrEmpty(fullTextContent))
+        {
+            Debug.LogError("No text content to display!");
+            return;
+        }
 
-        // Hide when complete
-        sequence.OnComplete(HidePopupImmediate);
+        if (isPopupVisible) return;
+
+        // Check exploration mode
+        if (onlyShowInExplorationMode && AdvancedInputManager.Instance != null)
+        {
+            if (!AdvancedInputManager.Instance.IsInExplorationMode())
+                return;
+        }
+
+        Debug.Log($"Starting text animation: '{fullTextContent}'");
+
+        isPopupVisible = true;
+        popupTextGameObject.SetActive(true);
+
+        // Kill existing animation
+        if (currentTextSequence != null && currentTextSequence.IsActive())
+            currentTextSequence.Kill();
+
+        // Set full text, start with no visible characters
+        textMeshPro.text = fullTextContent;
+        textMeshPro.maxVisibleCharacters = 0;
+
+        // Character-by-character animation
+        currentTextSequence = DOTween.Sequence();
+        currentTextSequence.Append(DOTween.To(() => textMeshPro.maxVisibleCharacters,
+                                             x => textMeshPro.maxVisibleCharacters = x,
+                                             fullTextContent.Length,
+                                             fullTextContent.Length * characterAnimationSpeed)
+                                           .SetEase(Ease.Linear));
+
+        // Auto hide (commented out to keep text visible)
+        // if (autoHideAfterSeconds)
+        // {
+        //     currentTextSequence.AppendInterval(autoHideDelay);
+        //     currentTextSequence.AppendCallback(HidePopupText);
+        // }
+
+        Debug.Log("Text animation started!");
     }
 
-    private void HidePopupImmediate()
+    /// <summary>
+    /// Hide popup text (Simple version)
+    /// </summary>
+    public void HidePopupText()
     {
-        if (popupImageGameObject != null)
+        if (popupTextGameObject == null || !isPopupVisible) return;
+
+        Debug.Log("Hiding text popup");
+
+        // Kill any existing animation
+        if (currentTextSequence != null && currentTextSequence.IsActive())
         {
-            isPopupVisible = false;
-            popupImageGameObject.transform.localScale = Vector3.zero;
-            popupCanvasGroup.alpha = 0f;
-            popupImageGameObject.SetActive(false);
+            currentTextSequence.Kill();
         }
+
+        // Simple hide
+        isPopupVisible = false;
+        textMeshPro.maxVisibleCharacters = 0;
+        popupTextGameObject.SetActive(false);
     }
 
     /// <summary>
     /// Toggle popup visibility
     /// </summary>
-    public void TogglePopupImage()
+    public void TogglePopupText()
     {
         if (isPopupVisible)
-            HidePopupImage();
+            HidePopupText();
         else
-            ShowPopupImage();
+            ShowPopupText();
     }
 
     /// <summary>
@@ -248,30 +371,80 @@ public class ClickableObject : MonoBehaviour
     [System.Obsolete("For debugging only")]
     public void TestPopupManual()
     {
-        Debug.Log("=== MANUAL TEST POPUP ===");
-        Debug.Log($"Popup GameObject: {(popupImageGameObject != null ? popupImageGameObject.name : "NULL")}");
+        Debug.Log("=== MANUAL TEST TEXT POPUP ===");
+        Debug.Log($"Popup GameObject: {(popupTextGameObject != null ? popupTextGameObject.name : "NULL")}");
+        Debug.Log($"TextMeshPro: {(textMeshPro != null ? "Found" : "NULL")}");
+        Debug.Log($"Text Content: '{fullTextContent}'");
         Debug.Log($"Is Popup Visible: {isPopupVisible}");
-        Debug.Log($"Canvas Group: {(popupCanvasGroup != null ? "Found" : "NULL")}");
 
-        if (popupImageGameObject != null)
+        ShowPopupText();
+    }
+
+    /// <summary>
+    /// Start the slow shake animation for the clickable object
+    /// </summary>
+    public void StartShakeAnimation()
+    {
+        if (!enableShakeAnimation) return;
+
+        // Only start shake if focused and in exploration mode (when shakeOnlyWhenFocused is enabled)
+        if (shakeOnlyWhenFocused)
         {
-            Debug.Log($"GameObject Active: {popupImageGameObject.activeInHierarchy}");
-            Debug.Log($"Has Image Component: {popupImageGameObject.GetComponent<Image>() != null}");
+            if (!isFocused) return;
+            if (AdvancedInputManager.Instance != null && !AdvancedInputManager.Instance.IsInExplorationMode()) return;
         }
 
-        ShowPopupImage();
+        // Kill existing shake animation
+        if (currentShakeSequence != null && currentShakeSequence.IsActive())
+            currentShakeSequence.Kill();
+
+        // Create a smooth continuous shake animation using a single tween
+        // This creates a seamless up-down motion without any stops
+        var shakeTween = transform.DOLocalMoveY(originalPosition.y + shakeIntensity, shakeDuration / 2)
+                                 .SetEase(Ease.InOutSine)
+                                 .SetLoops(-1, LoopType.Yoyo);
+
+        // Wrap in sequence for proper cleanup
+        currentShakeSequence = DOTween.Sequence();
+        currentShakeSequence.Append(shakeTween);
+    }
+
+    /// <summary>
+    /// Stop the shake animation and return to original position
+    /// </summary>
+    public void StopShakeAnimation()
+    {
+        if (currentShakeSequence != null && currentShakeSequence.IsActive())
+        {
+            currentShakeSequence.Kill();
+        }
+
+        // Return to original position
+        transform.DOLocalMove(originalPosition, 0.2f).SetEase(Ease.OutQuad);
+    }
+
+    /// <summary>
+    /// Toggle shake animation on/off
+    /// </summary>
+    public void ToggleShakeAnimation()
+    {
+        if (currentShakeSequence != null && currentShakeSequence.IsActive())
+            StopShakeAnimation();
+        else
+            StartShakeAnimation();
     }
 
     private void OnDestroy()
     {
         // Clean up DOTween animations
-        if (popupImageGameObject != null)
+        if (currentTextSequence != null && currentTextSequence.IsActive())
         {
-            DOTween.Kill(popupImageGameObject.transform);
+            currentTextSequence.Kill();
         }
-        if (popupCanvasGroup != null)
+
+        if (currentShakeSequence != null && currentShakeSequence.IsActive())
         {
-            DOTween.Kill(popupCanvasGroup);
+            currentShakeSequence.Kill();
         }
     }
 

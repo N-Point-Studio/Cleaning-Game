@@ -382,6 +382,9 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (currentGameMode != GameMode.Zoom) return;
 
+        // Disable all inspectable objects when leaving zoom mode
+        DisableAllInspectableObjects();
+
         currentGameMode = GameMode.Exploration;
         justEnteredZoomMode = false;
         AnimateToPosition(cameraXPositions[currentPositionIndex]);
@@ -389,6 +392,9 @@ public class AdvancedInputManager : MonoBehaviour
 
     public void ExitToInitialMode()
     {
+        // Disable all inspectable objects when exiting to initial mode
+        DisableAllInspectableObjects();
+
         currentGameMode = GameMode.Initial;
         justEnteredZoomMode = false;
         AnimateToOriginalPosition();
@@ -498,8 +504,11 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandleExplorationClick(ClickableObject clickable)
     {
-        EnterZoomMode(clickable.transform);
+        // Show text popup first in exploration mode
         PlayClickFeedback(clickable);
+
+        // Then enter zoom mode
+        EnterZoomMode(clickable.transform);
     }
 
     private void HandleZoomClick(ClickableObject clickable)
@@ -508,6 +517,12 @@ public class AdvancedInputManager : MonoBehaviour
         {
             justEnteredZoomMode = false;
             PlayClickFeedback(clickable);
+
+            // Enable inspectable functionality for focused object in zoom mode
+            if (clickable.IsInspectable())
+            {
+                clickable.SetInspectableEnabled(true);
+            }
             return;
         }
 
@@ -569,6 +584,20 @@ public class AdvancedInputManager : MonoBehaviour
         // Call the OnClick method to trigger popup image
         Debug.Log("Calling clickable.OnClick()");
         clickable.OnClick();
+    }
+
+    private void DisableAllInspectableObjects()
+    {
+        // Find all clickable objects and disable their inspectable functionality
+        ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
+        foreach (var clickable in allClickables)
+        {
+            if (clickable.IsInspectable())
+            {
+                clickable.SetInspectableEnabled(false);
+                clickable.SetFocusState(false);
+            }
+        }
     }
     #endregion
 
