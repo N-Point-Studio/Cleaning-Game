@@ -456,24 +456,39 @@ public class AdvancedInputManager : MonoBehaviour
     #region Object Interaction
     private bool CheckForObjectClick(Vector2 screenPosition)
     {
+        Debug.Log("=== CheckForObjectClick called ===");
+
         var ray = playerCamera.ScreenPointToRay(screenPosition);
         if (!Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
+        {
+            Debug.Log("No object hit by raycast");
             return false;
+        }
+
+        Debug.Log($"Hit object: {hit.collider.name}");
 
         if (!hit.collider.TryGetComponent<ClickableObject>(out var clickable))
+        {
+            Debug.Log("Object has no ClickableObject component");
             return false;
+        }
+
+        Debug.Log($"Found ClickableObject on: {clickable.name}, Current mode: {currentGameMode}");
 
         switch (currentGameMode)
         {
             case GameMode.Exploration:
+                Debug.Log("Calling HandleExplorationClick");
                 HandleExplorationClick(clickable);
                 break;
 
             case GameMode.Zoom:
+                Debug.Log("Calling HandleZoomClick");
                 HandleZoomClick(clickable);
                 break;
 
             default:
+                Debug.Log("Calling PlayClickFeedback (default)");
                 PlayClickFeedback(clickable);
                 break;
         }
@@ -511,7 +526,16 @@ public class AdvancedInputManager : MonoBehaviour
         if (string.IsNullOrEmpty(sceneName))
             return;
 
-        StartCoroutine(ChangeSceneCoroutine(sceneName));
+        // Use Easy Transitions if available and enabled
+        if (clickableObject.UseTransitionAnimation() && clickableObject.GetTransitionSettings() != null)
+        {
+            EasyTransition.TransitionManager.Instance().Transition(sceneName, clickableObject.GetTransitionSettings(), 0f);
+        }
+        else
+        {
+            // Fallback to direct scene load
+            StartCoroutine(ChangeSceneCoroutine(sceneName));
+        }
     }
 
     private IEnumerator ChangeSceneCoroutine(string sceneName)
@@ -524,7 +548,15 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void PlayClickFeedback(ClickableObject clickable)
     {
-        if (clickable == null) return;
+        Debug.Log("=== PlayClickFeedback called ===");
+
+        if (clickable == null)
+        {
+            Debug.Log("Clickable is null!");
+            return;
+        }
+
+        Debug.Log($"PlayClickFeedback for: {clickable.name}");
 
         // Play audio feedback
         if (clickable.ClickSound != null && clickable.TryGetComponent<AudioSource>(out var audioSource))
@@ -533,6 +565,10 @@ public class AdvancedInputManager : MonoBehaviour
         // Mark as focused and trigger events
         clickable.SetFocusState(true);
         clickable.OnObjectClicked?.Invoke();
+
+        // Call the OnClick method to trigger popup image
+        Debug.Log("Calling clickable.OnClick()");
+        clickable.OnClick();
     }
     #endregion
 
