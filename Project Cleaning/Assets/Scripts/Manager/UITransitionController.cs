@@ -116,8 +116,14 @@ public class UITransitionController : MonoBehaviour
         foreach (var image in imagesToAnimate) image.gameObject.SetActive(false);
         yield return new WaitForSeconds(0.3f);
 
+        // Reset the slide position to the beginning
+        CameraAnimationController.Instance?.ResetSlideIndex();
+
         // Notify that button transition is complete
         GameModeManager.Instance?.StartExplorationMode();
+
+        // Explicitly start the camera animation for the initial transition
+        CameraAnimationController.Instance?.BeginExplorationMode();
     }
 
     public IEnumerator ShowStartButtonElegantly(float returnTransitionDuration)

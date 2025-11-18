@@ -48,7 +48,7 @@ public class CameraAnimationController : MonoBehaviour
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.OnEnterExplorationMode += BeginExplorationMode;
+            // GameModeManager.Instance.OnEnterExplorationMode += BeginExplorationMode; // This is the line that causes the bug
             GameModeManager.Instance.OnEnterInitialMode += ExitToInitialMode;
             GameModeManager.Instance.OnEnterZoomMode += () => { }; // Zoom handling is done through EnterZoomMode method
         }
@@ -58,13 +58,20 @@ public class CameraAnimationController : MonoBehaviour
     #region Camera Transitions
     public void BeginExplorationMode()
     {
-        currentPositionIndex = 0;
         originalCameraPosition = cameraController.transform.position;
         originalCameraRotation = cameraController.transform.rotation.eulerAngles;
 
         Debug.Log("=== EXPLORATION MODE STARTED - Camera animation ready ===");
 
         StartCoroutine(ElegantCameraTransitionToExploration());
+    }
+
+    /// <summary>
+    /// Resets the exploration slide index to the beginning.
+    /// </summary>
+    public void ResetSlideIndex()
+    {
+        currentPositionIndex = 0;
     }
 
     private IEnumerator ElegantCameraTransitionToExploration()
