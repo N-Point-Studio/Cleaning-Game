@@ -208,6 +208,9 @@ public class DoubleTapDetector : MonoBehaviour
     // Synchronized return to exploration mode
     private System.Collections.IEnumerator SynchronizedReturnToExploration()
     {
+        // Ensure all objects lose focus and stop shaking before we transition.
+        ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
+
         var cameraController = TopDownCameraController.Instance;
         if (cameraController == null)
         {

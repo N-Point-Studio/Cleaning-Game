@@ -15,10 +15,10 @@ public class AdvancedInputManager : MonoBehaviour
     [Header("Gesture Settings")]
     [SerializeField] private float swipeThreshold = 50f;
     [SerializeField] private float maxSwipeTime = 1f;
-    [SerializeField] private float pinchThreshold = 15f;
+    [SerializeField] private float pinchThreshold = 5f;
     [SerializeField] private float maxPinchTime = 3f;
     [SerializeField] private float earlyPinchDetectionTime = 0.1f;
-    [SerializeField] private float pinchVsSwipePriority = 8f;
+    [SerializeField] private float pinchVsSwipePriority = 4f;
 
     // Core components
     private TopDownCameraController cameraController;
@@ -271,8 +271,8 @@ public class AdvancedInputManager : MonoBehaviour
                 var earlyPinchResult = pinchDetectionSystem.UpdatePinch();
                 Debug.Log($"=== PINCH UPDATE: Distance={earlyPinchResult.CurrentDistance:F1}, Change={earlyPinchResult.DistanceChange:F1}, EarlyDetection={earlyPinchResult.HasEarlyDetection} ===");
 
-                // ADAPTIVE DETECTION: Multiple thresholds for better reliability
-                if (earlyPinchResult.DistanceChange > 5f || earlyPinchResult.HasEarlyDetection)
+                // ADAPTIVE DETECTION: Use early detection flag to block swipes.
+                if (earlyPinchResult.HasEarlyDetection)
                 {
                     isSwipeBlocked = true;
                     Debug.Log("=== PINCH MOVEMENT DETECTED - Blocking swipe ===");
@@ -423,11 +423,22 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandlePinchGesture(PinchDirection direction, Vector2 pinchCenter = default)
     {
+        // Do not start a new transition if one is already happening
+        if (IsInTransition)
+        {
+            Debug.Log("=== PINCH IGNORED - Transition in progress ===");
+            return;
+        }
+
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
         Debug.Log($"=== HANDLE PINCH GESTURE: Direction={direction}, Mode={currentMode}, Center={pinchCenter} ===");
 
         if (currentMode == GameModeManager.GameMode.Exploration && direction == PinchDirection.In)
         {
+            // Block input and acquire lock for the transition
+            BlockInputFor(0.3f);
+            StartTransitionLock();
+
             Debug.Log("=== PINCH IN - Attempting to enter zoom mode ===");
             gameModeManager?.EnterZoomMode();
 
@@ -443,6 +454,9 @@ public class AdvancedInputManager : MonoBehaviour
         }
         else if (currentMode == GameModeManager.GameMode.Zoom && direction == PinchDirection.Out)
         {
+            // Block input for the transition
+            BlockInputFor(0.4f); // Block for slightly longer than the transition
+
             Debug.Log("=== PINCH OUT - Returning to exploration mode with synchronized transition ===");
             StartCoroutine(SynchronizedPinchReturnToExploration());
         }
@@ -456,18 +470,31 @@ public class AdvancedInputManager : MonoBehaviour
     #region Synchronized Transitions
     private System.Collections.IEnumerator SynchronizedPinchReturnToExploration()
     {
-        // STEP 1: Start camera animation to exploration mode FIRST
-        Debug.Log("=== PINCH STEP 1: Starting camera animation to exploration mode ===");
-        cameraAnimator?.ReturnToExplorationModeFast();
+        // Acquire lock
+        StartTransitionLock();
 
-        // STEP 2: Wait for camera animation to start
-        yield return new WaitForSeconds(0.1f);
+        // Ensure all objects lose focus and stop shaking.
+        objectHandler?.DisableAllInspectableObjects();
 
-        // STEP 3: Change the game mode state to match the visual transition
-        Debug.Log("=== PINCH STEP 2: Changing to Exploration mode after camera animation started ===");
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController == null)
+        {
+            EndTransitionLock(); // Release lock on error
+            yield break;
+        }
+
+        // Use a fast, simple transition for pinch-out
+        cameraController.SetTransitionDuration(0.3f);
+
+        // Perform all state changes synchronously
+        cameraController.SwitchState(cameraController.overviewState);
         gameModeManager?.ReturnToExplorationMode();
 
-        Debug.Log($"=== MODE AFTER SYNCHRONIZED PINCH RETURN: {gameModeManager?.GetCurrentMode()} ===");
+        // Reset duration after the transition is configured
+        cameraController.ResetTransitionDuration();
+
+        // The lock will be released by the camera's OnComplete callback.
+        yield break;
     }
     #endregion
 
