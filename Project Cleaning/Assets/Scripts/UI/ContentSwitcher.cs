@@ -35,7 +35,11 @@ public class ContentSwitcher : MonoBehaviour
     {
         // Show initial content
         if (initialText != null)
+        {
             initialText.SetActive(true);
+            // Make sure initial text starts with all characters hidden (like ClickableObject)
+            PrepareTextForTypewriter(initialText);
+        }
 
         if (beforeImage != null)
             beforeImage.SetActive(true);
@@ -279,6 +283,15 @@ public class ContentSwitcher : MonoBehaviour
 
         isContentRevealed = false;
         SetupInitialState();
+    }
+
+    // Method to trigger initial text animation (can be called from ClickableObject)
+    public void ShowInitialText()
+    {
+        if (initialText != null)
+        {
+            StartCoroutine(StartTypewriterAnimationCoroutine(initialText));
+        }
     }
 
     private void OnDestroy()

@@ -4842,6 +4842,7 @@ MonoBehaviour:
   afterImage: {fileID: 1614978082}
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
+  characterAnimationSpeed: 0.02
 --- !u!1 &1455841966
 GameObject:
   m_ObjectHideFlags: 0

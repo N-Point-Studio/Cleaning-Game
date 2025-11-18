@@ -107,10 +107,8 @@ public class AdvancedInputManager : MonoBehaviour
 
         if (doubleTapDetector != null)
         {
-            doubleTapDetector.ResetDoubleTapState();
-
-            // Reset gesture cooldown to allow immediate object interaction after mode change
-            doubleTapDetector.ResetGestureCooldown();
+            // Use complete reset to clear all gesture states
+            doubleTapDetector.CompleteGestureReset();
         }
 
         Debug.Log($"=== INPUT MANAGER - Mode changed to: {newMode}, gesture cooldown reset ===");
@@ -317,10 +315,23 @@ public class AdvancedInputManager : MonoBehaviour
         }
 
         // PRIORITY 2: Only check for double-tap if NO object was clicked
-        if (!objectWasClicked && doubleTapDetector != null && doubleTapDetector.CheckForDoubleTap(screenPosition))
+        if (!objectWasClicked && doubleTapDetector != null)
         {
-            doubleTapDetector.HandleDoubleTap(screenPosition);
-            return; // Exit early - double tap handled
+            // Add extra delay check to ensure mode switching is stable
+            bool canDoubleTap = doubleTapDetector.CheckForDoubleTap(screenPosition);
+            if (canDoubleTap)
+            {
+                Debug.Log("=== DOUBLE TAP DETECTED - Handling gesture ===");
+                doubleTapDetector.HandleDoubleTap(screenPosition);
+                return; // Exit early - double tap handled
+            }
+        }
+
+        // If an object was clicked, ensure gesture states are clean for next interaction
+        if (objectWasClicked && doubleTapDetector != null)
+        {
+            // Reset gesture state after object interaction to prevent interference
+            doubleTapDetector.ResetDoubleTapState();
         }
     }
 
@@ -388,14 +399,31 @@ public class AdvancedInputManager : MonoBehaviour
         }
         else if (currentMode == GameModeManager.GameMode.Zoom && direction == PinchDirection.Out)
         {
-            Debug.Log("=== PINCH OUT - Returning to exploration mode ===");
-            gameModeManager?.ReturnToExplorationMode();
-            cameraAnimator?.ReturnToExplorationModeFast(); // Use fast return for pinch too
+            Debug.Log("=== PINCH OUT - Returning to exploration mode with synchronized transition ===");
+            StartCoroutine(SynchronizedPinchReturnToExploration());
         }
         else
         {
             Debug.Log($"=== PINCH GESTURE IGNORED - Mode: {currentMode}, Direction: {direction} ===");
         }
+    }
+    #endregion
+
+    #region Synchronized Transitions
+    private System.Collections.IEnumerator SynchronizedPinchReturnToExploration()
+    {
+        // STEP 1: Start camera animation to exploration mode FIRST
+        Debug.Log("=== PINCH STEP 1: Starting camera animation to exploration mode ===");
+        cameraAnimator?.ReturnToExplorationModeFast();
+
+        // STEP 2: Wait for camera animation to start
+        yield return new WaitForSeconds(0.1f);
+
+        // STEP 3: Change the game mode state to match the visual transition
+        Debug.Log("=== PINCH STEP 2: Changing to Exploration mode after camera animation started ===");
+        gameModeManager?.ReturnToExplorationMode();
+
+        Debug.Log($"=== MODE AFTER SYNCHRONIZED PINCH RETURN: {gameModeManager?.GetCurrentMode()} ===");
     }
     #endregion
 

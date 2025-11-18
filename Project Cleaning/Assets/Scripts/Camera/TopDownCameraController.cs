@@ -278,6 +278,14 @@ public class TopDownCameraController : StateMachine
     }
 
     /// <summary>
+    /// Get current transition speed
+    /// </summary>
+    public float GetTransitionSpeed()
+    {
+        return transitionDuration;
+    }
+
+    /// <summary>
     /// Debug: Draw gizmos in scene view
     /// </summary>
     private void OnDrawGizmos()

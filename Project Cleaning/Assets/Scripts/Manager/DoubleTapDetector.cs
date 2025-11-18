@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// Detects double tap gestures and triggers appropriate actions
@@ -6,11 +7,11 @@ using UnityEngine;
 public class DoubleTapDetector : MonoBehaviour
 {
     [Header("Double Tap Settings")]
-    [SerializeField] private float doubleTapTimeWindow = 0.2f; // Maximum time between two taps (faster response)
+    [SerializeField] private float doubleTapTimeWindow = 0.3f; // Maximum time between two taps (increased for better detection)
     [SerializeField] private float doubleTapDistanceThreshold = 50f; // Maximum distance between taps
     [SerializeField] private bool enableDoubleTapZoom = true; // Enable double tap as backup to pinch
     [SerializeField] private bool instantSingleTapReturn = false; // Single tap in zoom mode instantly returns (no double tap needed)
-    [SerializeField] private float gestureCooldown = 0.3f; // Prevent rapid gesture conflicts
+    [SerializeField] private float gestureCooldown = 0.5f; // Increased cooldown to prevent conflicts
 
     // Double tap detection state
     private float lastTapTime = 0f;
@@ -44,19 +45,14 @@ public class DoubleTapDetector : MonoBehaviour
 
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
 
-        // SMART COOLDOWN: Only block rapid taps in the same mode to prevent conflicts
+        // ENHANCED COOLDOWN: Block rapid taps more strictly to prevent conflicts
         if (currentTime - lastGestureTime < gestureCooldown)
         {
-            // Only block if we're in the same mode (to prevent rapid mode switching)
-            // But allow object clicks after mode changes
             Debug.Log($"=== GESTURE COOLDOWN - Time since last gesture: {currentTime - lastGestureTime:F2}s, Mode: {currentMode} ===");
 
-            // Allow gestures if enough time has passed OR if we're doing a valid mode transition
-            if (currentTime - lastGestureTime < gestureCooldown * 0.5f) // Reduce cooldown for object interactions
-            {
-                Debug.Log("=== GESTURE BLOCKED - Too rapid ===");
-                return false;
-            }
+            // Always respect full cooldown period to prevent timing conflicts
+            Debug.Log("=== GESTURE BLOCKED - Too rapid, waiting for cooldown ===");
+            return false;
         }
 
         // INSTANT SINGLE TAP RETURN: If in zoom mode and instant return is enabled, return immediately
@@ -106,15 +102,13 @@ public class DoubleTapDetector : MonoBehaviour
             case GameModeManager.GameMode.Exploration:
                 // Double tap in exploration mode = Enter zoom mode at tap position
                 Debug.Log("=== DOUBLE TAP TO ZOOM IN ===");
-                GameModeManager.Instance?.EnterZoomMode();
-                CameraAnimationController.Instance?.EnterZoomModeAtScreenPosition(tapPosition);
+                StartCoroutine(SynchronizedEnterZoom(tapPosition));
                 break;
 
             case GameModeManager.GameMode.Zoom:
                 // Double tap in zoom mode = Return to exploration mode with fast animation
                 Debug.Log("=== DOUBLE TAP TO ZOOM OUT ===");
-                GameModeManager.Instance?.ReturnToExplorationMode();
-                CameraAnimationController.Instance?.ReturnToExplorationModeFast(); // Use fast return
+                StartCoroutine(SynchronizedReturnToExploration());
                 break;
 
             case GameModeManager.GameMode.Initial:
@@ -133,7 +127,67 @@ public class DoubleTapDetector : MonoBehaviour
     public void ResetGestureCooldown()
     {
         lastGestureTime = 0f;
-        Debug.Log("=== GESTURE COOLDOWN RESET ===");
+        // Also reset double tap state to prevent false detections
+        ResetDoubleTapState();
+        Debug.Log("=== GESTURE COOLDOWN AND DOUBLE TAP STATE RESET ===");
+    }
+
+    // Add complete gesture reset for mode transitions
+    public void CompleteGestureReset()
+    {
+        lastGestureTime = 0f;
+        lastTapTime = 0f;
+        isWaitingForSecondTap = false;
+        lastTapPosition = Vector2.zero;
+        Debug.Log("=== COMPLETE GESTURE RESET - All states cleared ===");
+    }
+
+    // Synchronized enter zoom mode
+    private System.Collections.IEnumerator SynchronizedEnterZoom(Vector2 tapPosition)
+    {
+        // STEP 1: Start camera animation to zoom mode FIRST
+        Debug.Log("=== DOUBLE TAP STEP 1: Starting camera animation to zoom mode ===");
+        CameraAnimationController.Instance?.EnterZoomModeAtScreenPosition(tapPosition);
+
+        // STEP 2: Wait for camera animation to start
+        yield return new WaitForSeconds(0.1f);
+
+        // STEP 3: Change the game mode state to match the visual transition
+        Debug.Log("=== DOUBLE TAP STEP 2: Changing to Zoom mode after camera animation started ===");
+        GameModeManager.Instance?.EnterZoomMode();
+
+        // STEP 4: CRITICAL FIX - Ensure camera state machine is also synchronized
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController != null)
+        {
+            Debug.Log("=== DOUBLE TAP STEP 3: Synchronizing camera state machine to focus ===");
+            // Set focus target to closest object to tap position
+            Transform closestObject = cameraController.FindClosestObjectToScreenPoint(tapPosition);
+            if (closestObject != null)
+            {
+                cameraController.SetFocusTarget(closestObject);
+            }
+            cameraController.SwitchState(cameraController.focusState);
+        }
+
+        Debug.Log($"=== MODE AFTER SYNCHRONIZED ZOOM: {GameModeManager.Instance?.GetCurrentMode()} ===");
+    }
+
+    // Synchronized return to exploration mode
+    private System.Collections.IEnumerator SynchronizedReturnToExploration()
+    {
+        // STEP 1: Start camera animation to exploration mode FIRST
+        Debug.Log("=== DOUBLE TAP STEP 1: Starting camera animation to exploration mode ===");
+        CameraAnimationController.Instance?.ReturnToExplorationModeFast();
+
+        // STEP 2: Wait for camera animation to start
+        yield return new WaitForSeconds(0.1f);
+
+        // STEP 3: Change the game mode state to match the visual transition
+        Debug.Log("=== DOUBLE TAP STEP 2: Changing to Exploration mode after camera animation started ===");
+        GameModeManager.Instance?.ReturnToExplorationMode();
+
+        Debug.Log($"=== MODE AFTER SYNCHRONIZED RETURN: {GameModeManager.Instance?.GetCurrentMode()} ===");
     }
     #endregion
 }
