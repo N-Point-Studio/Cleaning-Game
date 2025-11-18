@@ -21,7 +21,7 @@ RenderSettings:
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 1.2596958, g: 1.1553279, b: 0.99684244, a: 1}
-  m_AmbientEquatorColor: {r: 1.0592737, g: 0.9606794, b: 0.834428, a: 1}
+  m_AmbientEquatorColor: {r: 0.52963686, g: 0.4803397, b: 0.417214, a: 1}
   m_AmbientGroundColor: {r: 0.08851013, g: 0.10012104, b: 0.3679245, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
@@ -452,7 +452,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &203844587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -488,7 +488,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 0.55
+  m_Intensity: 0.2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -546,13 +546,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 203844586}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0.4109827, y: -0, z: -0, w: 0.9116432}
   m_LocalPosition: {x: 0, y: 3, z: 2.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 48.533, y: 0, z: 0}
 --- !u!1001 &260301890
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1142,6 +1142,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Brush_Animation
       objectReference: {fileID: 0}
+    - target: {fileID: 8675910488644644803, guid: c60d8d6a7efdf4007adec5bfcaf40f4a,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: e2523c197cf6b422c8fc73233b187578, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3035,7 +3040,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &995661064
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3197,7 +3202,7 @@ Light:
   m_Type: 0
   m_Shape: 0
   m_Color: {r: 1, g: 0.94299, b: 0.8066038, a: 1}
-  m_Intensity: 98.8
+  m_Intensity: 83.3
   m_Range: 35.8
   m_SpotAngle: 120.97339
   m_InnerSpotAngle: 70.778435
