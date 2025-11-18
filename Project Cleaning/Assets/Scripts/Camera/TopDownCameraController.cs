@@ -32,6 +32,7 @@ public class TopDownCameraController : StateMachine
     public NavigationState navigationState;
 
     private Camera cam;
+    private float defaultTransitionDuration; // Store default duration
 
     // Camera state tracking
     private Vector3 overviewPosition;
@@ -51,6 +52,9 @@ public class TopDownCameraController : StateMachine
             overviewState = new OverviewState(this);
             focusState = new FocusState(this);
             navigationState = new NavigationState(this);
+
+            // Store default transition duration
+            defaultTransitionDuration = transitionDuration;
 
             // Store current transform as overview position
             StoreCurrentAsOverview();
@@ -107,9 +111,27 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToOverview()
     {
-        Vector3 targetPos = overviewPosition;
-        Vector3 targetRot = overviewRotation;
+        // Get the correct exploration position from the animation controller
+        var camAnimController = CameraAnimationController.Instance;
+        if (camAnimController == null)
+        {
+            // Fallback to old logic if controller not found
+            Vector3 targetPosFallback = overviewPosition;
+            Vector3 targetRotFallback = overviewRotation;
+            float targetFOVFallback = overviewFOV;
+            StartTransition(targetPosFallback, targetRotFallback, targetFOVFallback);
+            return;
+        }
+
+        // Calculate the correct target position based on the current exploration state
+        float targetX = camAnimController.GetCurrentXPosition();
+        Vector3 explorationBasePos = camAnimController.GetExplorationPosition();
+        Vector3 targetPos = new Vector3(targetX, explorationBasePos.y, explorationBasePos.z);
+        
+        // Use the standard exploration rotation
+        Vector3 targetRot = new Vector3(90f, 0f, 0f);
         float targetFOV = overviewFOV;
+
         StartTransition(targetPos, targetRot, targetFOV);
     }
 
@@ -204,9 +226,9 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     private void StartTransition(Vector3 targetPos, Vector3 targetRot, float targetFOV)
     {
-        // Kill any existing transition
-        DOTween.Kill(transform);
-        DOTween.Kill(cam);
+        // Kill any existing transition and force it to completion to ensure OnComplete callbacks are fired
+        DOTween.Kill(transform, true);
+        DOTween.Kill(cam, true);
 
         // Set transitioning state
         isTransitioning = true;
@@ -220,6 +242,7 @@ public class TopDownCameraController : StateMachine
         // Set completion callback
         transitionSequence.OnComplete(() => {
             isTransitioning = false;
+            AdvancedInputManager.EndTransitionLock(); // Release the global lock
         });
     }
 
@@ -272,9 +295,17 @@ public class TopDownCameraController : StateMachine
     /// <summary>
     /// Public method to adjust transition speed at runtime
     /// </summary>
-    public void SetTransitionSpeed(float newDuration)
+    public void SetTransitionDuration(float newDuration)
     {
         transitionDuration = Mathf.Clamp(newDuration, 0.1f, 3f);
+    }
+
+    /// <summary>
+    /// Public method to reset transition speed to default
+    /// </summary>
+    public void ResetTransitionDuration()
+    {
+        transitionDuration = defaultTransitionDuration;
     }
 
     /// <summary>

@@ -115,6 +115,14 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     private void HandleExplorationClick(ClickableObject clickable)
     {
+        // Do not start a new transition if one is already happening
+        if (AdvancedInputManager.IsInTransition)
+        {
+            Debug.Log("=== CLICK IGNORED - Transition in progress ===");
+            return;
+        }
+        AdvancedInputManager.StartTransitionLock(); // Acquire the lock
+
         Debug.Log($"=== HANDLE EXPLORATION CLICK START: {clickable.name} ===");
         Debug.Log($"=== CURRENT MODE BEFORE CHANGE: {GameModeManager.Instance?.GetCurrentMode()} ===");
 
@@ -127,6 +135,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (GameModeManager.Instance == null)
         {
             Debug.LogError("=== ERROR: GameModeManager.Instance is NULL! ===");
+            AdvancedInputManager.EndTransitionLock(); // Release lock on error
             return;
         }
 

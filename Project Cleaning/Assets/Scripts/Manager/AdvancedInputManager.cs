@@ -41,6 +41,33 @@ public class AdvancedInputManager : MonoBehaviour
 
     // Singleton
     public static AdvancedInputManager Instance { get; private set; }
+    public static bool IsInTransition { get; private set; } // Global flag to lock transitions
+
+    // Input blocking for stability
+    private float inputBlockUntil = 0f;
+
+    /// <summary>
+    /// Sets the global transition lock.
+    /// </summary>
+    public static void StartTransitionLock()
+    {
+        if (IsInTransition)
+        {
+            Debug.LogWarning("Attempted to start a new transition while one is already in progress.");
+            return;
+        }
+        IsInTransition = true;
+        Debug.Log("=== TRANSITION LOCK ACQUIRED ===");
+    }
+
+    /// <summary>
+    /// Releases the global transition lock.
+    /// </summary>
+    public static void EndTransitionLock()
+    {
+        IsInTransition = false;
+        Debug.Log("=== TRANSITION LOCK RELEASED ===");
+    }
 
     #region Unity Lifecycle
     private void Awake()
@@ -64,12 +91,29 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void Update()
     {
+        // If input is blocked, ignore everything
+        if (Time.time < inputBlockUntil)
+        {
+            return;
+        }
+
         HandleInput();
         if (gameModeManager != null && gameModeManager.IsInZoomMode() &&
             cameraDragSystem != null && cameraController != null)
         {
             cameraDragSystem.Update(Time.deltaTime, cameraController);
         }
+    }
+    #endregion
+
+    #region Public Interface
+    /// <summary>
+    /// Blocks all input for a specified duration to prevent conflicts
+    /// </summary>
+    public void BlockInputFor(float duration)
+    {
+        inputBlockUntil = Time.time + duration;
+        Debug.Log($"=== INPUT BLOCKED for {duration} seconds ===");
     }
     #endregion
 

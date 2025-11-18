@@ -94,8 +94,33 @@ public class DoubleTapDetector : MonoBehaviour
 
     public void HandleDoubleTap(Vector2 tapPosition)
     {
+        // Do not start a new transition if one is already happening
+        if (AdvancedInputManager.IsInTransition)
+        {
+            Debug.Log("=== DOUBLE TAP IGNORED - Transition in progress ===");
+            return;
+        }
+
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+
+        // Block input for a short duration to prevent the second tap from being processed as a new click
+        if (AdvancedInputManager.Instance != null)
+        {
+            // Use a longer delay when exiting zoom, as requested by the user
+            if (currentMode == GameModeManager.GameMode.Zoom)
+            {
+                AdvancedInputManager.Instance.BlockInputFor(1.0f);
+            }
+            else
+            {
+                AdvancedInputManager.Instance.BlockInputFor(0.3f);
+            }
+        }
+        
         Debug.Log($"=== HANDLE DOUBLE TAP: Mode={currentMode}, Position={tapPosition} ===");
+
+        // Acquire the lock before starting a transition
+        AdvancedInputManager.StartTransitionLock();
 
         switch (currentMode)
         {
@@ -114,6 +139,7 @@ public class DoubleTapDetector : MonoBehaviour
             case GameModeManager.GameMode.Initial:
                 // Double tap ignored in initial mode
                 Debug.Log("=== DOUBLE TAP IGNORED - Still in Initial mode ===");
+                AdvancedInputManager.EndTransitionLock(); // Release lock if no transition happens
                 break;
         }
     }
@@ -145,49 +171,64 @@ public class DoubleTapDetector : MonoBehaviour
     // Synchronized enter zoom mode
     private System.Collections.IEnumerator SynchronizedEnterZoom(Vector2 tapPosition)
     {
-        // STEP 1: Start camera animation to zoom mode FIRST
-        Debug.Log("=== DOUBLE TAP STEP 1: Starting camera animation to zoom mode ===");
-        CameraAnimationController.Instance?.EnterZoomModeAtScreenPosition(tapPosition);
-
-        // STEP 2: Wait for camera animation to start
-        yield return new WaitForSeconds(0.1f);
-
-        // STEP 3: Change the game mode state to match the visual transition
-        Debug.Log("=== DOUBLE TAP STEP 2: Changing to Zoom mode after camera animation started ===");
-        GameModeManager.Instance?.EnterZoomMode();
-
-        // STEP 4: CRITICAL FIX - Ensure camera state machine is also synchronized
         var cameraController = TopDownCameraController.Instance;
-        if (cameraController != null)
+        if (cameraController == null)
         {
-            Debug.Log("=== DOUBLE TAP STEP 3: Synchronizing camera state machine to focus ===");
-            // Set focus target to closest object to tap position
-            Transform closestObject = cameraController.FindClosestObjectToScreenPoint(tapPosition);
-            if (closestObject != null)
-            {
-                cameraController.SetFocusTarget(closestObject);
-            }
-            cameraController.SwitchState(cameraController.focusState);
+            Debug.LogError("TopDownCameraController.Instance is NULL!");
+            AdvancedInputManager.EndTransitionLock(); // Release lock on error
+            yield break;
         }
 
+        // Set focus target to closest object to tap position
+        Transform closestObject = cameraController.FindClosestObjectToScreenPoint(tapPosition);
+        if (closestObject != null)
+        {
+            cameraController.SetFocusTarget(closestObject);
+        }
+        else
+        {
+            Debug.LogWarning("No closest object found for double tap zoom. Using current camera position as focus.");
+        }
+
+        // Temporarily set a faster transition duration for double tap zoom
+        float fastDoubleTapTransitionDuration = 0.2f; // Define a fast duration
+        cameraController.SetTransitionDuration(fastDoubleTapTransitionDuration);
+
+        // Perform all state changes synchronously
+        cameraController.SwitchState(cameraController.focusState);
+        GameModeManager.Instance?.EnterZoomMode();
+        
+        // Reset duration after the transition is configured
+        cameraController.ResetTransitionDuration();
+
         Debug.Log($"=== MODE AFTER SYNCHRONIZED ZOOM: {GameModeManager.Instance?.GetCurrentMode()} ===");
+        yield break; // Coroutine is done, the lock will be released by the camera tween's OnComplete
     }
 
     // Synchronized return to exploration mode
     private System.Collections.IEnumerator SynchronizedReturnToExploration()
     {
-        // STEP 1: Start camera animation to exploration mode FIRST
-        Debug.Log("=== DOUBLE TAP STEP 1: Starting camera animation to exploration mode ===");
-        CameraAnimationController.Instance?.ReturnToExplorationModeFast();
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController == null)
+        {
+            Debug.LogError("TopDownCameraController.Instance is NULL!");
+            AdvancedInputManager.EndTransitionLock(); // Release lock on error
+            yield break;
+        }
 
-        // STEP 2: Wait for camera animation to start
-        yield return new WaitForSeconds(0.1f);
+        // Temporarily set a slower transition duration for zoom out, as requested
+        float exitTransitionDuration = 1.0f;
+        cameraController.SetTransitionDuration(exitTransitionDuration);
 
-        // STEP 3: Change the game mode state to match the visual transition
-        Debug.Log("=== DOUBLE TAP STEP 2: Changing to Exploration mode after camera animation started ===");
+        // Perform all state changes synchronously
+        cameraController.SwitchState(cameraController.overviewState);
         GameModeManager.Instance?.ReturnToExplorationMode();
 
+        // Reset duration after the transition is configured
+        cameraController.ResetTransitionDuration();
+
         Debug.Log($"=== MODE AFTER SYNCHRONIZED RETURN: {GameModeManager.Instance?.GetCurrentMode()} ===");
+        yield break; // Coroutine is done, the lock will be released by the camera tween's OnComplete
     }
     #endregion
 }
