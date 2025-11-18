@@ -31,18 +31,47 @@ public class InspectableJar : MonoBehaviour
 
     private void OnEnable()
     {
-        TouchManager.ZoomStart += StartZoom;
-        TouchManager.ZoomEnd += StopZoom;
+        // SAFETY CHECK: Only subscribe if TouchManager exists
+        if (TouchManager.Instance != null)
+        {
+            TouchManager.ZoomStart += StartZoom;
+            TouchManager.ZoomEnd += StopZoom;
+        }
     }
 
     private void OnDisable()
     {
-        TouchManager.ZoomStart -= StartZoom;
-        TouchManager.ZoomEnd -= StopZoom;
+        // SAFETY CHECK: Only unsubscribe if TouchManager exists
+        if (TouchManager.Instance != null)
+        {
+            TouchManager.ZoomStart -= StartZoom;
+            TouchManager.ZoomEnd -= StopZoom;
+        }
     }
 
     private void FixedUpdate()
     {
+        // SAFETY CHECK: Ensure TouchManager exists before using it
+        if (TouchManager.Instance == null)
+        {
+            // TouchManager not available, disable interaction
+            isRotating = false;
+            hasInitializedTouch = false;
+            return;
+        }
+
+        // COMPATIBILITY CHECK: Don't interfere if new AdvancedInputManager is handling input
+        if (AdvancedInputManager.Instance != null)
+        {
+            // New input system is active, only allow interaction in zoom mode
+            if (!AdvancedInputManager.Instance.IsInZoomMode())
+            {
+                isRotating = false;
+                hasInitializedTouch = false;
+                return;
+            }
+        }
+
         if (TouchManager.Instance.isInteracting) return;
 
         if (!TouchManager.Instance.isClickedOn)
@@ -109,6 +138,12 @@ public class InspectableJar : MonoBehaviour
 
         while (true)
         {
+            // SAFETY CHECK: Break if TouchManager becomes null
+            if (TouchManager.Instance == null)
+            {
+                yield break;
+            }
+
             distance = Vector2.Distance(TouchManager.Instance.curScreenPos, TouchManager.Instance.curSecondaryPos);
 
             Vector3 targetPos = transform.position;
