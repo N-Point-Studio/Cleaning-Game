@@ -382,6 +382,9 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (currentGameMode != GameMode.Zoom) return;
 
+        // Disable all inspectable objects when leaving zoom mode
+        DisableAllInspectableObjects();
+
         currentGameMode = GameMode.Exploration;
         justEnteredZoomMode = false;
         AnimateToPosition(cameraXPositions[currentPositionIndex]);
@@ -389,6 +392,9 @@ public class AdvancedInputManager : MonoBehaviour
 
     public void ExitToInitialMode()
     {
+        // Disable all inspectable objects when exiting to initial mode
+        DisableAllInspectableObjects();
+
         currentGameMode = GameMode.Initial;
         justEnteredZoomMode = false;
         AnimateToOriginalPosition();
@@ -456,24 +462,39 @@ public class AdvancedInputManager : MonoBehaviour
     #region Object Interaction
     private bool CheckForObjectClick(Vector2 screenPosition)
     {
+        Debug.Log("=== CheckForObjectClick called ===");
+
         var ray = playerCamera.ScreenPointToRay(screenPosition);
         if (!Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
+        {
+            Debug.Log("No object hit by raycast");
             return false;
+        }
+
+        Debug.Log($"Hit object: {hit.collider.name}");
 
         if (!hit.collider.TryGetComponent<ClickableObject>(out var clickable))
+        {
+            Debug.Log("Object has no ClickableObject component");
             return false;
+        }
+
+        Debug.Log($"Found ClickableObject on: {clickable.name}, Current mode: {currentGameMode}");
 
         switch (currentGameMode)
         {
             case GameMode.Exploration:
+                Debug.Log("Calling HandleExplorationClick");
                 HandleExplorationClick(clickable);
                 break;
 
             case GameMode.Zoom:
+                Debug.Log("Calling HandleZoomClick");
                 HandleZoomClick(clickable);
                 break;
 
             default:
+                Debug.Log("Calling PlayClickFeedback (default)");
                 PlayClickFeedback(clickable);
                 break;
         }
@@ -483,8 +504,11 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandleExplorationClick(ClickableObject clickable)
     {
-        EnterZoomMode(clickable.transform);
+        // Show text popup first in exploration mode
         PlayClickFeedback(clickable);
+
+        // Then enter zoom mode
+        EnterZoomMode(clickable.transform);
     }
 
     private void HandleZoomClick(ClickableObject clickable)
@@ -493,6 +517,12 @@ public class AdvancedInputManager : MonoBehaviour
         {
             justEnteredZoomMode = false;
             PlayClickFeedback(clickable);
+
+            // Enable inspectable functionality for focused object in zoom mode
+            if (clickable.IsInspectable())
+            {
+                clickable.SetInspectableEnabled(true);
+            }
             return;
         }
 
@@ -511,7 +541,16 @@ public class AdvancedInputManager : MonoBehaviour
         if (string.IsNullOrEmpty(sceneName))
             return;
 
-        StartCoroutine(ChangeSceneCoroutine(sceneName));
+        // Use Easy Transitions if available and enabled
+        if (clickableObject.UseTransitionAnimation() && clickableObject.GetTransitionSettings() != null)
+        {
+            EasyTransition.TransitionManager.Instance().Transition(sceneName, clickableObject.GetTransitionSettings(), 0f);
+        }
+        else
+        {
+            // Fallback to direct scene load
+            StartCoroutine(ChangeSceneCoroutine(sceneName));
+        }
     }
 
     private IEnumerator ChangeSceneCoroutine(string sceneName)
@@ -524,7 +563,15 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void PlayClickFeedback(ClickableObject clickable)
     {
-        if (clickable == null) return;
+        Debug.Log("=== PlayClickFeedback called ===");
+
+        if (clickable == null)
+        {
+            Debug.Log("Clickable is null!");
+            return;
+        }
+
+        Debug.Log($"PlayClickFeedback for: {clickable.name}");
 
         // Play audio feedback
         if (clickable.ClickSound != null && clickable.TryGetComponent<AudioSource>(out var audioSource))
@@ -533,6 +580,24 @@ public class AdvancedInputManager : MonoBehaviour
         // Mark as focused and trigger events
         clickable.SetFocusState(true);
         clickable.OnObjectClicked?.Invoke();
+
+        // Call the OnClick method to trigger popup image
+        Debug.Log("Calling clickable.OnClick()");
+        clickable.OnClick();
+    }
+
+    private void DisableAllInspectableObjects()
+    {
+        // Find all clickable objects and disable their inspectable functionality
+        ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
+        foreach (var clickable in allClickables)
+        {
+            if (clickable.IsInspectable())
+            {
+                clickable.SetInspectableEnabled(false);
+                clickable.SetFocusState(false);
+            }
+        }
     }
     #endregion
 

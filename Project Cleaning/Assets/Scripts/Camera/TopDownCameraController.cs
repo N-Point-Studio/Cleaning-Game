@@ -163,7 +163,6 @@ public class TopDownCameraController : StateMachine
             targetPos.z            // Same Z as object
         );
 
-        Debug.Log($"Focus position calculated for {target.name}: {focusPosition}");
         return focusPosition;
     }
 

@@ -1,70 +1,58 @@
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Clean : MonoBehaviour
 {
-    public enum CollisionToolsType
-    {
-        Texture,
-        Mesh,
-    }
+    [Header("Textures")]
     public Texture2D _dirtMaskBase;
     public Material _material;
-    // public CollisionToolsType type = CollisionToolsType.Mesh;
     private Texture2D _templateDirtMask;
+
+    [Header("Progress (0 = kotor, 1 = bersih)")]
+    [Range(0, 1f)]
+    [SerializeField] private float progress = 0f;   // tampil di inspector (read-only)
+
+    private float dirtAmountTotal = 0f;
+    private float dirtAmount = 0f;
 
     private void Start()
     {
         CreateTexture();
+        StartCoroutine(CalculateDirtTotalAsync());
     }
 
-    public bool CleanAt(Vector2 textureCoord, Texture2D brush)
+
+    private IEnumerator CalculateDirtTotalAsync()
     {
-        Debug.Log("Clean at " + textureCoord);
+        dirtAmountTotal = 0f;
 
-        bool didCleanAnything = false;
+        Color[] pixels = _dirtMaskBase.GetPixels();
+        const int batchSize = 10000;
 
-        int pixelX = (int)(textureCoord.x * _templateDirtMask.width);
-        int pixelY = (int)(textureCoord.y * _templateDirtMask.height);
-        for (int x = 0; x < brush.width; x++)
+        for (int i = 0; i < pixels.Length; i++)
         {
-            for (int y = 0; y < brush.height; y++)
-            {
-                int px = pixelX + x;
-                int py = pixelY + y;
+            dirtAmountTotal += pixels[i].g;
 
-                if (px >= 0 && px < _templateDirtMask.width && py >= 0 && py < _templateDirtMask.height)
-                {
-                    Color pixelDirt = brush.GetPixel(x, y);
-                    Color pixelDirtMask = _templateDirtMask.GetPixel(px, py);
-
-
-                    if (pixelDirtMask.g > 0.01f && pixelDirt.g < 1.0f)
-                    {
-                    _templateDirtMask.SetPixel(px, py, new Color(0, pixelDirtMask.g * pixelDirt.g, 0));
-                    didCleanAnything = true;
-                    }
-                }
-            }
+            if (i % batchSize == 0)
+                yield return null;
         }
 
-        // BARU: Hanya panggil Apply() jika ada yang berubah (ini optimasi besar!)
-        if (didCleanAnything)
-        {
-            _templateDirtMask.Apply();
-        }
+        dirtAmount = dirtAmountTotal;
 
-        return didCleanAnything;
+        // UpdateProgress();
+        CleanManager.Instance.Register(this);
+
+        Debug.Log($"{name} Dirt Total Selesai: {dirtAmountTotal}");
     }
 
-    public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale)
+
+    public bool CleanAt(Vector2 uv, Texture2D brush, float brushScale, float surfaceRotation)
     {
-        // BARU: Tambahkan flag untuk melacak perubahan
         bool didCleanAnything = false;
 
         int centerX = (int)(uv.x * _templateDirtMask.width);
         int centerY = (int)(uv.y * _templateDirtMask.height);
-
         int radius = Mathf.RoundToInt((brush.width * brushScale) * 0.5f);
 
         for (int x = -radius; x < radius; x++)
@@ -77,55 +65,79 @@ public class Clean : MonoBehaviour
                 if (px < 0 || px >= _templateDirtMask.width || py < 0 || py >= _templateDirtMask.height)
                     continue;
 
-                float u = (float)(x + radius) / (radius * 2);
-                float v = (float)(y + radius) / (radius * 2);
+                float u = (x + radius) / (radius * 2f);
+                float v = (y + radius) / (radius * 2f);
 
-                Color brushPixel = brush.GetPixelBilinear(u, v);
+                Vector2 rotated = RotateUV(u, v, surfaceRotation);
+
+                if (rotated.x < 0 || rotated.x > 1 || rotated.y < 0 || rotated.y > 1)
+                    continue;
+
+                Color brushPixel = brush.GetPixelBilinear(rotated.x, rotated.y);
                 Color dirtPixel = _templateDirtMask.GetPixel(px, py);
 
-                if (x == 0 && y == 0)
-            {
-                Debug.Log("DEBUG: Nilai G Kotoran (dirtPixel.g) = " + dirtPixel.g);
-            }
-                
-                // BARU: Cek apakah piksel ini kotor DAN kuas mencoba membersihkannya
-                if (dirtPixel.g > 0.01f && brushPixel.g < 1.0f)
-                {
+                if (brushPixel.g >= 1f) continue;
+                if (dirtPixel.g <= 0.01f) continue;
+
                 float newGreen = dirtPixel.g * brushPixel.g;
+                float removed = dirtPixel.g - newGreen;
+
+                dirtAmount -= removed;
+
                 _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
                 didCleanAnything = true;
-
-                if (x == 0 && y == 0)
-                {
-                    Debug.LogWarning("--- MEMBERSIHKAN PIKSEL TENGAH! ---");
-                }
-                }
             }
         }
 
-        // BARU: Hanya panggil Apply() jika ada yang berubah
         if (didCleanAnything)
         {
             _templateDirtMask.Apply();
+            UpdateProgress();
         }
+
         return didCleanAnything;
     }
+
 
     private void CreateTexture()
     {
         _templateDirtMask = new Texture2D(_dirtMaskBase.width, _dirtMaskBase.height);
         _templateDirtMask.SetPixels(_dirtMaskBase.GetPixels());
         _templateDirtMask.Apply();
-        var renderer = GetComponent<Renderer>();
-        _material = renderer.material;
 
+        _material = GetComponent<Renderer>().material;
         _material.SetTexture("_DirtMask", _templateDirtMask);
     }
 
-    public bool DestroyMesh()
+
+    private void UpdateProgress()
     {
-        Destroy(gameObject);
-        // Setiap kali dipanggil, kita anggap "berhasil"
-        return true;
+        if (dirtAmountTotal <= 0)
+            progress = 0f;
+        else
+            progress = Mathf.Clamp01(1f - (dirtAmount / dirtAmountTotal));
+    }
+
+
+    public float GetDirtAmount()
+    {
+        UpdateProgress(); // supaya inspector selalu update
+        return progress;
+    }
+
+
+    private Vector2 RotateUV(float u, float v, float angleDeg)
+    {
+        float angle = angleDeg * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(angle);
+        float sin = Mathf.Sin(angle);
+
+        float cx = u - 0.5f;
+        float cy = v - 0.5f;
+
+        float rx = cx * cos - cy * sin;
+        float ry = cx * sin + cy * cos;
+
+        return new Vector2(rx + 0.5f, ry + 0.5f);
     }
 }

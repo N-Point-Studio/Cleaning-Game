@@ -4,20 +4,14 @@ using UnityEngine;
 
 public class CleanMesh : MonoBehaviour
 {
-    // Start is called before the first frame update
     void Start()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        CleanManager.Instance.RegisterMud(this, false);
     }
 
     public bool DestroyMesh()
     {
+        CleanManager.Instance.RegisterMud(this, true);
         Destroy(gameObject);
         return true;
     }

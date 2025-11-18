@@ -13,6 +13,8 @@ public class FragmentAssembledState : FragmentBaseState
     {
         stateMachine.CurrentStatus = "Assembled";
         stateMachine.Interaction.isHoldAvailable = true;
+        stateMachine.Interaction.isTapAvailable = false;
+        stateMachine.Interaction.isDragAvailable = false;
         stateMachine.Interaction.isReturning = false;
         AssembleIntoCluster();
     }
@@ -21,7 +23,7 @@ public class FragmentAssembledState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.Interaction.isHoldAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
     }
 
     private void AssembleIntoCluster()

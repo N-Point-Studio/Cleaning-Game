@@ -17,6 +17,7 @@ public class FragmentIdleState : FragmentBaseState
 
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
+        stateMachine.Interaction.isHoldAvailable = false;
 
     }
 
@@ -59,8 +60,7 @@ public class FragmentIdleState : FragmentBaseState
 
     public override void Exit()
     {
-        stateMachine.Interaction.isTapAvailable = false;
-        stateMachine.Interaction.isDragAvailable = false;
+        stateMachine.Interaction.DisableAllInteraction();
         stateMachine.Interaction.isDragging = false;
         potentialTarget = null;
         TouchManager.Instance.SetIsDrag(false);
@@ -89,22 +89,22 @@ public class FragmentIdleState : FragmentBaseState
 
             if (currentDistanceZ < 2.0f)
             {
-                if (potentialTarget != null && potentialTarget.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
-                {
-                    stateMachine.transform.rotation = Quaternion.Slerp(
-                        stateMachine.transform.rotation,
-                        correctPos.rotation,
-                        Time.deltaTime * 5f
-                    );
-                }
-                else
-                {
-                    stateMachine.transform.rotation = Quaternion.Slerp(
-                        stateMachine.transform.rotation,
-                        AssembleManager.Instance.InspectPosition.transform.rotation,
-                        Time.deltaTime * 5f
-                    );
-                }
+                // if (potentialTarget != null && potentialTarget.TryGetAssemblyTarget(stateMachine, out Transform correctPos))
+                // {
+                //     stateMachine.transform.rotation = Quaternion.Slerp(
+                //         stateMachine.transform.rotation,
+                //         correctPos.rotation,
+                //         Time.deltaTime * 5f
+                //     );
+                // }
+                // else
+                // {
+                stateMachine.transform.rotation = Quaternion.Slerp(
+                    stateMachine.transform.rotation,
+                    AssembleManager.Instance.InspectPosition.transform.rotation,
+                    Time.deltaTime * 5f
+                );
+                // }
             }
 
             if (AssembleManager.Instance.CurrentFragmentInspected != null && stateMachine != AssembleManager.Instance.CurrentFragmentInspected)

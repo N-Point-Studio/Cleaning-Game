@@ -10,6 +10,12 @@ public class AssembleManager : MonoBehaviour
     public FragmentStateMachine CurrentFragmentInspected;
     public ClusterStateMachine CurrentClusterInspected;
     public List<AssemblyTarget> assemblyTargets = new();
+    public List<ClusterStateMachine> clusters = new List<ClusterStateMachine>();
+    public int TotalFragments;
+
+    [Header("Progress")]
+    [Range(0, 1f)]
+    [SerializeField] private float progressAttach = 0f;
 
     private void Awake()
     {
@@ -20,6 +26,21 @@ public class AssembleManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        TotalFragments = assemblyTargets.Count;
+    }
+
+    private void Update()
+    {
+        AssembleProgress();
+    }
+
+    private void LateUpdate()
+    {
+        clusters.RemoveAll(item => item == null);
     }
 
     public bool IsInspectingAvailable()
@@ -49,5 +70,53 @@ public class AssembleManager : MonoBehaviour
         }
         correctPos = null;
         return false;
+    }
+
+    public void RegisterCluster(ClusterStateMachine cluster, bool isRegister)
+    {
+        if (!clusters.Contains(cluster))
+        {
+            if (isRegister)
+            {
+                clusters.Add(cluster);
+            }
+            else
+            {
+                clusters.Remove(cluster);
+            }
+        }
+    }
+
+    private void AssembleProgress()
+    {
+        float progressAttachment = 0;
+        foreach (var cluster in clusters)
+        {
+            if (cluster == null) continue;
+
+            FragmentStateMachine[] fragments = cluster.GetComponentsInChildren<FragmentStateMachine>();
+
+            if (fragments.Length <= 1) continue;
+
+            foreach (var fragment in fragments)
+            {
+                if (fragment == null) continue;
+
+                if (fragment.CurrentStatus == "Attached")
+                {
+                    progressAttachment += 1;
+                    Debug.Log("persentase naik");
+                }
+            }
+        }
+
+        var overallProgress = progressAttachment / TotalFragments;
+        Debug.Log($"Progress attach ({progressAttachment}/{TotalFragments}): {overallProgress}");
+        progressAttach = overallProgress;
+    }
+
+    public float GetAttachProgress()
+    {
+        return progressAttach;
     }
 }
