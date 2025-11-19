@@ -37,7 +37,6 @@ public class ToolCleaningSurface : MonoBehaviour
     private bool wasCleaningLastFrame = false;
 
 
-
     void Awake()
     {
         cleaningAudioSource = GetComponent<AudioSource>();
@@ -56,6 +55,16 @@ public class ToolCleaningSurface : MonoBehaviour
             emissionModule.rateOverTime = 0f;
         }
         lastFramePosition = transform.position;
+    }
+
+    void OnEnable()
+    {
+        SettingManager.OnSfxVolumeChanged += SetSFXVolume;
+    }
+
+    void OnDisable()
+    {
+
     }
 
     void Update()
@@ -160,5 +169,10 @@ public class ToolCleaningSurface : MonoBehaviour
     {
         Gizmos.color = Color.black;
         Gizmos.DrawLine(transform.position, transform.position + transform.forward * raycastRange);
+    }
+
+    private void SetSFXVolume(float vol)
+    {
+        cleaningAudioSource.volume = vol;
     }
 }

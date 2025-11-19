@@ -18,7 +18,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     //  [READ] INI UNTUK ZOOM
     public static event Action ZoomStart;
     public static event Action ZoomEnd;
-    private Coroutine ZoomCoroutine;
     public Vector3 curSecondaryPos;
     public bool isRotating = false;
     public bool isZooming = false;
@@ -30,7 +29,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     public static event Action OnHoldPerformed;
     public static event Action OnHoldReleased;
 
-    float touchDownTime;
     [SerializeField] private float ZoomSpeed;
 
     private void Awake()
@@ -57,20 +55,6 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     }
 
     public bool isClickedOn = false;
-
-    public void ScreenSafeArea()
-    {
-        bool isOutOfBonds =
-            curScreenPos.x <= edgeOffset ||
-            curScreenPos.y <= edgeOffset ||
-            curScreenPos.x >= screenWidth - edgeOffset ||
-            curScreenPos.y >= screenHeight - edgeOffset;
-
-        if (isOutOfBonds || !isInteracting)
-        {
-            curScreenPos = Vector3.zero;
-        }
-    }
 
     void OnEnable()
     {
@@ -173,23 +157,33 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             OnHoldReleased?.Invoke();
         }
     }
-    private bool isTouchHittingObject = false;
-    private RaycastHit hitInfo;
 
-    // private void OnDrawGizmos()
-    // {
-    //     if (mainCamera == null) mainCamera = Camera.main;
-    //     if (mainCamera == null || curScreenPos == Vector3.zero) return;
+    public void DisableAllTouch(bool status)
+    {
+        if (status)
+        {
+            inputSystem.Input.Disable();
 
-    //     // Konversi screen → world (z diatur agar terlihat di depan kamera)
-    //     Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y, 20f));
-    //     Vector3 worldPosOffset = mainCamera.ScreenToWorldPoint(new Vector3(curScreenPos.x, curScreenPos.y + 150, 20f));
+            curScreenPos = Vector3.zero;
+            curSecondaryPos = Vector3.zero;
 
-    //     Gizmos.color = Color.yellow;
-    //     Gizmos.DrawSphere(worldPos, 0.1f);
-    //     Gizmos.color = Color.cyan;
-    //     Gizmos.DrawLine(mainCamera.transform.position, worldPos);
-    //     Gizmos.color = Color.blue;
-    //     Gizmos.DrawLine(mainCamera.transform.position, worldPosOffset);
-    // }
+            isInteracting = false;
+            isDragging = false;
+            isRotating = false;
+            isZooming = false;
+            isTapped = false;
+            isClickedOn = false;
+
+            OnTapReleased?.Invoke();
+            OnHoldReleased?.Invoke();
+
+            Debug.Log("All Touch Disabled");
+        }
+        else
+        {
+            inputSystem.Input.Enable();
+            Debug.Log("All Touch Enabled");
+        }
+    }
+
 }

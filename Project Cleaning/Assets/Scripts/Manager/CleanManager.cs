@@ -89,6 +89,7 @@ public class CleanManager : MonoBehaviour
             cleanTotal += clean.GetDirtAmount();
         }
         progressClean = Mathf.Clamp01(cleanTotal / totalTexture);
+        Debug.Log($"progress clean harusnya: {progressClean}");
         return progressClean;
     }
 
