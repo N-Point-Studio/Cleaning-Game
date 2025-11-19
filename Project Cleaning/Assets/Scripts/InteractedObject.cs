@@ -17,15 +17,18 @@ public class InteractedObject : MonoBehaviour
 
     void Update()
     {
+        Debug.Log("Snack");
         if (TouchManager.Instance.isDragging || TouchManager.Instance.isInteracting || TouchManager.Instance.isZooming || TouchManager.Instance.isRotating || !TouchManager.Instance.isClickedOn) return;
         Clicked();
     }
 
     private void Clicked()
     {
+        Debug.Log("Clicked on Snack");
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
+            Debug.Log("Clicked on Snack Object");
             UIManager.Instance.ShowSetting(true);
         }
     }

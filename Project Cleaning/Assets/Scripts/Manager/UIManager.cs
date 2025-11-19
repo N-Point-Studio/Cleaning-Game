@@ -36,7 +36,7 @@ public class UIManager : MonoBehaviour
     private void ProgressUpdate()
     {
         float dustProgress = CleanManager.Instance.GetDustProgress();
-        progressDusts.SetValue(10);
+        progressDusts.SetValue(dustProgress);
 
         float mudProgress = CleanManager.Instance.GetMudProgress();
         progressDirts.SetValue(mudProgress);

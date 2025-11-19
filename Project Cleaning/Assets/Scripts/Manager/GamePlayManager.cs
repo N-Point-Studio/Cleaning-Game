@@ -10,6 +10,7 @@ public class GamePlayManager : MonoBehaviour
     [SerializeField] GameObject Environment;
     [SerializeField] Transform ClearInspect;
     [SerializeField] Camera ToolCamera;
+    [SerializeField] ParticleSystem GlitterParticle;
 
     private Transform initialTransfromEnvironment;
     private Vector3 FinishedPosition = new Vector3(0.0f, -5.5f, -9f);
@@ -41,6 +42,7 @@ public class GamePlayManager : MonoBehaviour
             TouchManager.Instance.DisableAllTouch(true);
             UIManager.Instance.ShowFinishUI(true);
             UIManager.Instance.ShowFinishBackground(true);
+            GlitterParticle.gameObject.SetActive(true);
             ToolCamera.enabled = false;
 
 
