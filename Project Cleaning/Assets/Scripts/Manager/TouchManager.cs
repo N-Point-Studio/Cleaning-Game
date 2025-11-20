@@ -122,11 +122,17 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         if (context.performed)
         {
             Debug.Log("secondary performed");
+            // --- PERBAIKAN: Set status zooming jadi TRUE ---
+            isZooming = true; 
+            // -----------------------------------------------
             ZoomStart?.Invoke();
         }
         else if (context.canceled)
         {
             Debug.Log("secondary canceled");
+            // --- PERBAIKAN: Set status zooming jadi FALSE ---
+            isZooming = false;
+            // ------------------------------------------------
             ZoomEnd?.Invoke();
         }
     }
