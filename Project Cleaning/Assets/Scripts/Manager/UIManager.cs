@@ -1,59 +1,79 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
 
-    [Header("References")]
-    [SerializeField] private ProgressBar progressBar;
-
-    private void Update()
-    {
-        float progress = (CleanManager.Instance.GetOverallProgress() + AssembleManager.Instance.GetAttachProgress()) / 3;
-        Debug.Log("progress bar " + progress);
-        // Debug.Log("progress assemble " + AssembleManager.Instance.GetTotalClusterProgress());
-        progressBar.SetValue(progress);
-    }
-
-
+    [Header("Separate Progress Bars")]
+    [SerializeField] private ProgressBar progressDirts;
+    [SerializeField] private ProgressBar progressDusts;
+    [SerializeField] private ProgressBar progressAssemble;
+    [SerializeField] private GameObject settingCanvas;
+    [SerializeField] private Button ExitButton;
+    [SerializeField] private Button ResumeButton;
+    [SerializeField] private GameObject FinishUI;
+    [SerializeField] private GameObject FinishBackground;
+    private bool isSettingShown = false;
     private void Awake()
     {
         Instance = this;
     }
 
-    public void SetProgressMax(int max)
+    private void Start()
     {
-        progressBar.maximum = max;
-        if (progressBar.current > max)
-            progressBar.current = max;
+        ExitButton.onClick.AddListener(ExitButtonInteract);
+        ResumeButton.onClick.AddListener(ResumeButtonInteract);
     }
 
-    public void SetProgressValue(int value)
+    private void Update()
     {
-        progressBar.current = Mathf.Clamp(value, progressBar.minimum, progressBar.maximum);
+        ProgressUpdate();
     }
 
-    public void AddProgress(int value)
+    private void ProgressUpdate()
     {
-        SetProgressValue(progressBar.current + value);
+        float dustProgress = CleanManager.Instance.GetDustProgress();
+        progressDusts.SetValue(dustProgress);
+
+        float mudProgress = CleanManager.Instance.GetMudProgress();
+        progressDirts.SetValue(mudProgress);
+
+        float attachProgress = AssembleManager.Instance.GetAttachProgress();
+        progressAssemble.SetValue(attachProgress);
     }
 
-    public void SetProgressPercent(float percent)
+    public void ShowSetting(bool isShown)
     {
-        percent = Mathf.Clamp01(percent);
-        progressBar.current = Mathf.RoundToInt(progressBar.maximum * percent);
+        settingCanvas.SetActive(isShown);
+        TouchManager.Instance.TouchUsed(isShown);
     }
 
-    public void ResetProgress()
+    public void ShowFinishUI(bool isShown)
     {
-        progressBar.current = progressBar.minimum;
+        FinishUI.SetActive(isShown);
     }
 
-    public float GetProgressPercent()
+    public void ShowFinishBackground(bool isShown)
     {
-        if (progressBar.maximum <= 0) return 0f;
-        return (float)progressBar.current / progressBar.maximum;
+        FinishBackground.SetActive(isShown);
+    }
+
+    public void ExitButtonInteract()
+    {
+        Debug.Log("Exit level");
+    }
+
+    public void ResumeButtonInteract()
+    {
+        Debug.Log("Exit level");
+        ShowSetting(false);
+    }
+
+    public float GetAllProgressValue()
+    {
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / 3;
     }
 }

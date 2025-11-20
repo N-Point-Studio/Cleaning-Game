@@ -10,6 +10,7 @@ public class HapticManager : MonoBehaviour
     private bool continuousActive = false;
     private float timer;
     private HapticType currentType;
+    public bool IsActivated { get; private set; } = false;
 
     public enum HapticType
     {
@@ -33,7 +34,7 @@ public class HapticManager : MonoBehaviour
 
     private void Update()
     {
-        if (!continuousActive)
+        if (!continuousActive || !IsActivated)
             return;
 
         timer += Time.deltaTime;
@@ -82,5 +83,10 @@ public class HapticManager : MonoBehaviour
     public void StopContinuous()
     {
         continuousActive = false;
+    }
+
+    public void SetActiveHaptic(bool isActive)
+    {
+        IsActivated = isActive;
     }
 }

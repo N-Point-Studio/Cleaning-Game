@@ -11,4 +11,5 @@ public enum ClusterState
     Return,
     Assemble,
     Unassembled,
+    Finished
 }
