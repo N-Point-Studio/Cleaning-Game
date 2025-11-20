@@ -12,6 +12,8 @@ public class GamePlayManager : MonoBehaviour
     [SerializeField] Camera ToolCamera;
     [SerializeField] ParticleSystem GlitterParticle;
 
+    public bool isGameFinished = false;
+
     private Transform initialTransfromEnvironment;
     private Vector3 FinishedPosition = new Vector3(0.0f, -5.5f, -9f);
 
@@ -53,6 +55,7 @@ public class GamePlayManager : MonoBehaviour
             );
 
             ClusterStateMachine cluster = AssembleManager.Instance.CurrentClusterInspected;
+            Debug.Log("Cluster Finished: " + cluster.name);
             cluster.SwitchState(new ClusterFinishState(cluster));
             cluster.transform.position = Vector3.Lerp(cluster.transform.position, ClearInspect.position, Time.deltaTime * 2);
 
@@ -63,7 +66,12 @@ public class GamePlayManager : MonoBehaviour
             );
 
             cluster.transform.SetParent(ClearInspect);
+            isGameFinished = true;
         }
     }
 
+    public bool IsGameFinished()
+    {
+        return isGameFinished;
+    }
 }
