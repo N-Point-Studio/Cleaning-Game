@@ -213,6 +213,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -245,6 +252,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -437,6 +451,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 2
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -567,6 +588,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 3
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -676,6 +704,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -961,6 +996,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 2
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -1070,6 +1112,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -1337,6 +1386,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -1603,6 +1659,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -2095,6 +2158,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 290960780}
+  - component: {fileID: 290960781}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -2120,6 +2184,20 @@ Transform:
   - {fileID: 1881310938}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &290960781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290960779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aced983c0ce04181b58f227bf742c58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugLogs: 1
+  respondToSpecificObjects: 1
 --- !u!1 &291932388
 GameObject:
   m_ObjectHideFlags: 0
@@ -2175,8 +2253,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chapterType: 1
+  objectType: 2
   currentTestingChapter: 0
-  enableTestingMode: 1
+  enableTestingMode: 0
   triggerButton: {fileID: 0}
   initialText: {fileID: 347007618}
   text1: {fileID: 863421483}
@@ -2909,6 +2988,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -3217,6 +3303,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -3444,6 +3537,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -4314,6 +4414,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 1872575715}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 0
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -4473,7 +4580,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &568318471
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4543,6 +4650,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 1872575715}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -4673,6 +4787,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 1
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -4803,6 +4924,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -5838,6 +5966,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -6435,8 +6570,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chapterType: 2
+  objectType: 3
   currentTestingChapter: 0
-  enableTestingMode: 1
+  enableTestingMode: 0
   triggerButton: {fileID: 0}
   initialText: {fileID: 1209202976}
   text1: {fileID: 617793430}
@@ -6466,7 +6602,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &800854028
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6859,6 +6995,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -7136,6 +7279,37 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 932776771}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &944659310
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 944659311}
+  m_Layer: 0
+  m_Name: Default
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &944659311
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944659310}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.10645725, y: 0.23383734, z: 0.00080866227, w: 0.9664297}
+  m_LocalPosition: {x: -8.31, y: 5.58, z: -13.61}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &947025436
 GameObject:
   m_ObjectHideFlags: 0
@@ -7227,6 +7401,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -7259,6 +7440,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -7559,7 +7747,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &994363289
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7668,7 +7856,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: -0.03793609, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &994363291
@@ -7679,6 +7867,227 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 994363288}
   m_CullTransparentMesh: 1
+--- !u!1 &1128378252
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1128378259}
+  - component: {fileID: 1128378258}
+  - component: {fileID: 1128378257}
+  - component: {fileID: 1128378256}
+  - component: {fileID: 1128378255}
+  - component: {fileID: 1128378254}
+  - component: {fileID: 1128378253}
+  m_Layer: 0
+  m_Name: Second Camera
+  m_TagString: Second Camera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1128378253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fdbefdd6fd294aaea8f470800887ace, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  overviewFOV: 60
+  focusHeight: 2
+  focusFOV: 50
+  navigationHeight: 20
+  navigationFOV: 50
+  transitionDuration: 0.5
+  transitionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  isTransitioning: 0
+--- !u!95 &1128378254
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 0
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: bf0d08a3d7337452780b30dd280e6449, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!320 &1128378255
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 0
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 51d6b6002b3654995b25ad4d3c507493, type: 2}
+  m_InitialState: 1
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 1
+  m_InitialTime: 0
+  m_SceneBindings: []
+  m_ExposedReferences:
+    m_References: []
+--- !u!114 &1128378256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 1
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 1
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+--- !u!81 &1128378257
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 1
+--- !u!20 &1128378258
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: -1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &1128378259
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128378252}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -4.35, y: 3.851, z: -1.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &1150822796
 GameObject:
   m_ObjectHideFlags: 0
@@ -7955,6 +8364,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -8617,7 +9033,7 @@ GameObject:
   - component: {fileID: 1278149062}
   - component: {fileID: 1278149061}
   m_Layer: 9
-  m_Name: CoinDoneImage
+  m_Name: KendiDoneImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8692,6 +9108,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -8806,6 +9229,8 @@ MonoBehaviour:
   enableSceneChange: 1
   sceneChangeDelay: 0.5
   clickValidationDelay: 0.1
+  enableContentSwitcherTrigger: 1
+  onlyTriggerInZoomMode: 0
 --- !u!114 &1286864697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8930,6 +9355,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -9061,6 +9493,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -9634,7 +10073,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1514792972
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9741,7 +10180,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: -0.17625046, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1514792974
@@ -10133,15 +10572,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1682662417}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   chapterType: 0
+  objectType: 1
   currentTestingChapter: 0
   enableTestingMode: 1
-  triggerButton: {fileID: 800854028}
+  triggerButton: {fileID: 0}
   initialText: {fileID: 922827017}
   text1: {fileID: 715806736}
   text2: {fileID: 350085875}
@@ -10169,7 +10609,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1687430429
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10278,7 +10718,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 1
+  m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1687430431
@@ -10559,7 +10999,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chapterType: 1
+  chapterType: 0
+  objectType: 2
   currentTestingChapter: 0
   enableTestingMode: 1
   triggerButton: {fileID: 0}
@@ -10774,6 +11215,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -10837,6 +11285,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1733456940}
   m_CullTransparentMesh: 1
+--- !u!1 &1800655156
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1800655157}
+  m_Layer: 0
+  m_Name: Finish
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1800655157
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800655156}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -4.35, y: 3.851, z: -1.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1853741514
 GameObject:
   m_ObjectHideFlags: 0
@@ -10966,6 +11445,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -10998,6 +11484,13 @@ MonoBehaviour:
   shakeDuration: 3
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 0
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -11115,9 +11608,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chapterType: 0
+  objectType: 0
   currentTestingChapter: 0
   enableTestingMode: 1
-  triggerButton: {fileID: 800854028}
+  triggerButton: {fileID: 0}
   initialText: {fileID: 179735223}
   text1: {fileID: 1514792971}
   text2: {fileID: 1687430428}
@@ -11402,6 +11896,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 1
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 1682662417}
+  autoDetectContentSwitcher: 0
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -11634,7 +12135,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chapterType: 2
+  chapterType: 0
+  objectType: 0
   currentTestingChapter: 0
   enableTestingMode: 1
   triggerButton: {fileID: 0}
@@ -11962,6 +12464,13 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
+  objectType: 3
+  detectObjectOnClick: 1
+  contentSwitcherObject: {fileID: 0}
+  autoDetectContentSwitcher: 1
+  debugContentSwitcherDetection: 1
+  objectsToChange: []
+  autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
       m_Calls: []
@@ -12614,6 +13123,9 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 961739753}
+  - {fileID: 944659311}
+  - {fileID: 1128378259}
+  - {fileID: 1800655157}
   - {fileID: 203844589}
   - {fileID: 767946177}
   - {fileID: 1187352176}

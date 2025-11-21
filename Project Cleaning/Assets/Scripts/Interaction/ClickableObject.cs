@@ -3,6 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using DG.Tweening;
 using TMPro;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Collider))]
 public class ClickableObject : MonoBehaviour
@@ -35,17 +36,28 @@ public class ClickableObject : MonoBehaviour
     [Header("Inspectable Object")]
     [SerializeField] private bool isInspectable = true;
 
+    [Header("Object Identification")]
+    [SerializeField] private ObjectType objectType = ObjectType.ChinaCoin;
+    [SerializeField] private bool detectObjectOnClick = true;
+
+    [Header("ContentSwitcher Integration")]
+    [Tooltip("Drag GameObject with ContentSwitcher component here (REQUIRED for ContentSwitcher to work)")]
+    [SerializeField] private GameObject contentSwitcherObject;
+
+    [Header("Object State Changes")]
+    [Tooltip("GameObjects that will be affected when ContentSwitcher completes")]
+    [SerializeField] private GameObject[] objectsToChange; // Objects to modify after ContentSwitcher
+    [SerializeField] private bool autoFindRelatedObjects = true;
+
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
 
     [Header("Events")]
     public UnityEvent OnObjectClicked;
 
-    private AudioSource audioSource;
     private bool isFocused = false;
 
     // Text popup components
-    private Vector3 originalPopupScale;
     private bool isPopupVisible = false;
     private string fullTextContent;
     private Sequence currentTextSequence;
@@ -57,19 +69,16 @@ public class ClickableObject : MonoBehaviour
     // Inspectable components
     private InspectableJar inspectableJar;
 
+    // ContentSwitcher integration
+    private ContentSwitcher linkedContentSwitcher;
+    private bool hasValidContentSwitcher = false;
+
     private void Awake()
     {
-        // Get components
-        audioSource = GetComponent<AudioSource>();
-
-        // Setup popup image if assigned
         SetupPopupImage();
-
-        // Setup shake animation
         SetupShakeAnimation();
-
-        // Setup inspectable functionality
         SetupInspectableObject();
+        SetupContentSwitcherDetection();
     }
 
     private void SetupPopupImage()
@@ -88,11 +97,7 @@ public class ClickableObject : MonoBehaviour
 
             if (textMeshPro != null)
             {
-                // Store the full text content
                 fullTextContent = textMeshPro.text;
-                originalPopupScale = popupTextGameObject.transform.localScale;
-
-                // Hide initially
                 popupTextGameObject.SetActive(false);
             }
             else
@@ -130,11 +135,39 @@ public class ClickableObject : MonoBehaviour
         }
     }
 
+    private void SetupContentSwitcherDetection()
+    {
+        if (contentSwitcherObject != null)
+        {
+            ValidateContentSwitcher();
+        }
+        else
+        {
+            hasValidContentSwitcher = false;
+            linkedContentSwitcher = null;
+        }
+
+        if (autoFindRelatedObjects)
+        {
+            FindRelatedObjectsToChange();
+        }
+    }
+
     /// <summary>
     /// Called when object is clicked
     /// </summary>
     public void OnClick()
     {
+        // Object type detection and logging
+        if (detectObjectOnClick)
+        {
+            Debug.Log($"=== OBJECT CLICKED ===");
+            Debug.Log($"Object Name: {gameObject.name}");
+            Debug.Log($"Object Type: {objectType}");
+            Debug.Log($"Chapter: {GetChapterFromObjectType()}");
+            Debug.Log($"===================");
+        }
+
         // Trigger the Unity Event first
         OnObjectClicked?.Invoke();
 
@@ -264,6 +297,247 @@ public class ClickableObject : MonoBehaviour
             inspectableJar.enabled = enabled;
         }
     }
+
+    /// <summary>
+    /// Get the object type of this clickable object
+    /// </summary>
+    public ObjectType GetObjectType()
+    {
+        return objectType;
+    }
+
+    /// <summary>
+    /// Set the object type of this clickable object
+    /// </summary>
+    public void SetObjectType(ObjectType newObjectType)
+    {
+        objectType = newObjectType;
+    }
+
+    /// <summary>
+    /// Get the chapter type based on the object type
+    /// </summary>
+    public ChapterType GetChapterFromObjectType()
+    {
+        switch (objectType)
+        {
+            case ObjectType.ChinaCoin:
+            case ObjectType.ChinaJar:
+                return ChapterType.China;
+            case ObjectType.IndonesiaKendin:
+                return ChapterType.Indonesia;
+            case ObjectType.MesirWingedScared:
+                return ChapterType.Mesir;
+            default:
+                return ChapterType.China;
+        }
+    }
+
+    /// <summary>
+    /// Check if this object belongs to a specific chapter
+    /// </summary>
+    public bool BelongsToChapter(ChapterType chapter)
+    {
+        return GetChapterFromObjectType() == chapter;
+    }
+
+    /// <summary>
+    /// Get detailed object information as string
+    /// </summary>
+    public string GetObjectInfo()
+    {
+        return $"Object: {gameObject.name}, Type: {objectType}, Chapter: {GetChapterFromObjectType()}";
+    }
+
+    #region ContentSwitcher Integration Methods
+
+
+    /// <summary>
+    /// Validate manually assigned ContentSwitcher
+    /// </summary>
+    private void ValidateContentSwitcher()
+    {
+        if (contentSwitcherObject == null)
+        {
+            hasValidContentSwitcher = false;
+            linkedContentSwitcher = null;
+            return;
+        }
+
+        linkedContentSwitcher = contentSwitcherObject.GetComponent<ContentSwitcher>();
+        hasValidContentSwitcher = linkedContentSwitcher != null;
+    }
+
+    /// <summary>
+    /// Find objects that might be affected when ContentSwitcher completes
+    /// </summary>
+    private void FindRelatedObjectsToChange()
+    {
+        if (objectsToChange == null || objectsToChange.Length == 0)
+        {
+            // Look for child objects that might need to change
+            List<GameObject> foundObjects = new List<GameObject>();
+
+            // Add self as potential object to change
+            foundObjects.Add(gameObject);
+
+            // Look for child objects with specific keywords
+            string[] keywords = { "after", "changed", "completed", "revealed", "new" };
+
+            foreach (Transform child in GetComponentsInChildren<Transform>())
+            {
+                string childName = child.name.ToLower();
+                foreach (string keyword in keywords)
+                {
+                    if (childName.Contains(keyword))
+                    {
+                        foundObjects.Add(child.gameObject);
+                        break;
+                    }
+                }
+            }
+
+            objectsToChange = foundObjects.ToArray();
+
+        }
+    }
+
+
+    /// <summary>
+    /// Get the linked ContentSwitcher
+    /// </summary>
+    public ContentSwitcher GetLinkedContentSwitcher()
+    {
+        return linkedContentSwitcher;
+    }
+
+    /// <summary>
+    /// Check if this object has a valid ContentSwitcher linked
+    /// </summary>
+    public bool HasValidContentSwitcher()
+    {
+        return hasValidContentSwitcher && linkedContentSwitcher != null;
+    }
+
+    /// <summary>
+    /// Get the objects that should change when ContentSwitcher completes
+    /// </summary>
+    public GameObject[] GetObjectsToChange()
+    {
+        return objectsToChange;
+    }
+
+    /// <summary>
+    /// Manually set the ContentSwitcher GameObject
+    /// </summary>
+    public void SetContentSwitcherObject(GameObject contentSwitcher)
+    {
+        contentSwitcherObject = contentSwitcher;
+        ValidateContentSwitcher();
+    }
+
+    /// <summary>
+    /// Manually set objects to change
+    /// </summary>
+    public void SetObjectsToChange(GameObject[] objects)
+    {
+        objectsToChange = objects;
+    }
+
+    /// <summary>
+    /// Apply changes to all related objects (called after ContentSwitcher completes)
+    /// </summary>
+    public void ApplyContentSwitcherChanges()
+    {
+        if (objectsToChange == null || objectsToChange.Length == 0)
+            return;
+
+        foreach (GameObject obj in objectsToChange)
+        {
+            if (obj != null)
+            {
+                ApplyChangesToObject(obj);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Apply specific changes to an individual object
+    /// </summary>
+    private void ApplyChangesToObject(GameObject targetObj)
+    {
+        // 1. Enable/disable child objects
+        Transform afterImage = targetObj.transform.Find("afterImage");
+        if (afterImage != null)
+        {
+            afterImage.gameObject.SetActive(true);
+        }
+
+        // 2. Change material/color
+        Renderer renderer = targetObj.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.material.color = Color.green;
+        }
+
+        // 3. Trigger particle effects
+        ParticleSystem particles = targetObj.GetComponent<ParticleSystem>();
+        if (particles != null)
+        {
+            particles.Play();
+        }
+
+        // 4. Scale animation
+        if (targetObj.transform != null)
+        {
+            targetObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.5f, 3, 1);
+        }
+
+        // 5. Disable clickable functionality if this is the clicked object
+        if (targetObj == gameObject)
+        {
+            canChangeScene = false;
+        }
+    }
+
+    /// <summary>
+    /// Force re-setup ContentSwitcher detection (Inspector method)
+    /// </summary>
+    [ContextMenu("Re-Setup ContentSwitcher Detection")]
+    public void ForceSetupContentSwitcher()
+    {
+        SetupContentSwitcherDetection();
+    }
+
+    /// <summary>
+    /// Validate current ContentSwitcher setup (Inspector method)
+    /// </summary>
+    [ContextMenu("Validate ContentSwitcher Setup")]
+    public void ValidateSetup()
+    {
+        SetupContentSwitcherDetection();
+
+        if (hasValidContentSwitcher)
+        {
+            Debug.Log($"✅ ContentSwitcher setup is VALID for {name}");
+        }
+        else
+        {
+            Debug.LogError($"❌ ContentSwitcher setup is INVALID for {name}");
+        }
+    }
+
+    /// <summary>
+    /// Test apply changes without ContentSwitcher trigger (Inspector method)
+    /// </summary>
+    [ContextMenu("Test Apply Changes")]
+    public void TestApplyChanges()
+    {
+        ApplyContentSwitcherChanges();
+        Debug.Log($"Applied ContentSwitcher changes for {name}");
+    }
+
+    #endregion
 
     /// <summary>
     /// Show popup text with character-by-character animation (Fixed version)

@@ -12,6 +12,15 @@ public enum ChapterType
     Mesir
 }
 
+[System.Serializable]
+public enum ObjectType
+{
+    ChinaCoin,
+    ChinaJar,
+    IndonesiaKendin,
+    MesirWingedScared
+}
+
 /// <summary>
 /// ContentSwitcher handles artifact information display and transition to next artifact preview.
 /// Supports different chapter types with customizable behavior for each.
@@ -37,6 +46,7 @@ public class ContentSwitcher : MonoBehaviour
 {
     [Header("Chapter Configuration")]
     [SerializeField] private ChapterType chapterType = ChapterType.China;
+    [SerializeField] private ObjectType objectType = ObjectType.ChinaCoin;
 
     [Header("Testing Configuration")]
     [SerializeField] private ChapterType currentTestingChapter = ChapterType.China;
@@ -522,6 +532,24 @@ public class ContentSwitcher : MonoBehaviour
     public void SetChapterType(ChapterType newChapterType)
     {
         chapterType = newChapterType;
+    }
+
+    // Public method to get current object type
+    public ObjectType GetObjectType()
+    {
+        return objectType;
+    }
+
+    // Public method to set object type (useful for runtime configuration)
+    public void SetObjectType(ObjectType newObjectType)
+    {
+        objectType = newObjectType;
+    }
+
+    // Public method to get object info as string
+    public string GetObjectInfo()
+    {
+        return $"Chapter: {chapterType}, Object: {objectType}";
     }
 
     // Testing methods

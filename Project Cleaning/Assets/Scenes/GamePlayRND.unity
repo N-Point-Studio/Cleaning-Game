@@ -8921,6 +8921,7 @@ GameObject:
   - component: {fileID: 1181414301}
   - component: {fileID: 1181414302}
   - component: {fileID: 1181414303}
+  - component: {fileID: 1181414304}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -9010,6 +9011,8 @@ MonoBehaviour:
   ResumeButton: {fileID: 2086974278}
   FinishUI: {fileID: 242598037}
   FinishBackground: {fileID: 1542636678}
+  FinishButtonImage: {fileID: 1649591636}
+  useImageAsButton: 1
 --- !u!114 &1181414300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9073,7 +9076,27 @@ MonoBehaviour:
   ClearInspect: {fileID: 1472922643}
   ToolCamera: {fileID: 588808583}
   GlitterParticle: {fileID: 1062278166}
+  currentGameplayObjectType: 0
+  autoDetectObjectType: 1
+  enableSceneTransition: 1
+  transitionDelayAfterFinish: 2
   isGameFinished: 0
+--- !u!114 &1181414304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1181414294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544bd24622a6d417e9a7dc19ea47fbd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetSceneName: New Start Game Sandy
+  sceneTransitionDelay: 0.5
+  useEasyTransition: 1
+  enableDebugLogs: 1
 --- !u!1 &1190067323
 GameObject:
   m_ObjectHideFlags: 0
