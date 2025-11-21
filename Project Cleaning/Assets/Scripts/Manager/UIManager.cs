@@ -11,12 +11,28 @@ public class UIManager : MonoBehaviour
     [SerializeField] private ProgressBar progressDirts;
     [SerializeField] private ProgressBar progressDusts;
     [SerializeField] private ProgressBar progressAssemble;
+
+    [SerializeField] private GameObject progressDirtsGO;
+    [SerializeField] private GameObject progressDustsGO;
+    [SerializeField] private GameObject progressAssembleGO;
+
+
+
     [SerializeField] private GameObject settingCanvas;
     [SerializeField] private Button ExitButton;
     [SerializeField] private Button ResumeButton;
     [SerializeField] private GameObject FinishUI;
     [SerializeField] private GameObject FinishBackground;
     private bool isSettingShown = false;
+    private int minusFactor = 0;
+
+    public enum ProgressType
+    {
+        Dust,
+        Dirt,
+        Assemble
+    }
+
     private void Awake()
     {
         Instance = this;
@@ -36,7 +52,7 @@ public class UIManager : MonoBehaviour
     private void ProgressUpdate()
     {
         float dustProgress = CleanManager.Instance.GetDustProgress();
-        progressDusts.SetValue(dustProgress);
+        progressDusts.SetValue(10);
 
         float mudProgress = CleanManager.Instance.GetMudProgress();
         progressDirts.SetValue(mudProgress);
@@ -54,6 +70,25 @@ public class UIManager : MonoBehaviour
     public void ShowFinishUI(bool isShown)
     {
         FinishUI.SetActive(isShown);
+    }
+
+    public void ShowProgress(ProgressType type, bool isShown)
+    {
+        switch (type)
+        {
+            case ProgressType.Dirt:
+                progressDirtsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
+                break;
+            case ProgressType.Dust:
+                progressDustsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
+                break;
+            case ProgressType.Assemble:
+                progressAssembleGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
+                break;
+        }
     }
 
     public void ShowFinishBackground(bool isShown)
@@ -74,6 +109,7 @@ public class UIManager : MonoBehaviour
 
     public float GetAllProgressValue()
     {
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / 3;
+
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / (3 + minusFactor);
     }
 }

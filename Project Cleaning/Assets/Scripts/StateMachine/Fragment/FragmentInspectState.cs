@@ -36,11 +36,11 @@ public class FragmentInspectState : FragmentBaseState
         stateMachine.Interaction.DisableAllInteraction();
 
 
-        if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
-        {
-            // FragmentStateMachine.CurrentInspecting = null;
-            AssembleManager.Instance.SetCurrentInspectFragment(null);
-        }
+        // if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
+        // {
+        //     // FragmentStateMachine.CurrentInspecting = null;
+        //     AssembleManager.Instance.SetCurrentInspectFragment(null);
+        // }
     }
 
     private void Holding()
