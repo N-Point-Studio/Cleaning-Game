@@ -88,7 +88,7 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void Start()
     {
-        Application.targetFrameRate = 60;
+        // Application.targetFrameRate = 60;
         cameraController = TopDownCameraController.Instance;
         SetupUI();
     }

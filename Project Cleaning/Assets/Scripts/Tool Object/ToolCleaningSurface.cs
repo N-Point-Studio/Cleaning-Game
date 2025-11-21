@@ -72,7 +72,17 @@ public class ToolCleaningSurface : MonoBehaviour
         if (surface == null) return;
 
         CheckForMovement();
-        RaycastCleaningSurface();
+        // OPTIMASI: Hanya lakukan Raycast/Cleaning jika alat benar-benar bergerak!
+        // Sebelumnya fungsi ini dipanggil setiap frame meskipun diam, memicu Job System yang berat.
+        if (isMoving)
+        {
+            RaycastCleaningSurface();
+        }
+        else
+        {
+            // Jika tidak bergerak, pastikan status cleaning dimatikan
+            isActivelyCleaning = false;
+        }
         HandleEffects();
         HandleHaptics();
     }
@@ -86,7 +96,7 @@ public class ToolCleaningSurface : MonoBehaviour
 
     private void RaycastCleaningSurface()
     {
-        isActivelyCleaning = false;
+        // isActivelyCleaning = false;
 
         switch (toolType)
         {
