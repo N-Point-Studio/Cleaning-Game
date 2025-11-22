@@ -20,6 +20,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Image FinishButtonImage; // The finish button image (drag & drop)
     [SerializeField] private bool useImageAsButton = true; // Toggle untuk menggunakan Image sebagai button
     private bool isSettingShown = false;
+    private bool isSceneUnloading = false;
+
     private void Awake()
     {
         Instance = this;
@@ -138,19 +140,55 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
-        ProgressUpdate();
+        // SAFETY CHECK: Stop processing if scene is unloading
+        if (isSceneUnloading)
+            return;
+
+        try
+        {
+            ProgressUpdate();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"UIManager Update failed (likely scene unloading): {ex.Message}");
+            isSceneUnloading = true; // Stop further processing
+        }
     }
 
     private void ProgressUpdate()
     {
-        float dustProgress = CleanManager.Instance.GetDustProgress();
-        progressDusts.SetValue(10);
+        // SAFETY CHECK: Verify all progress bars still exist
+        if (progressDusts == null || progressDirts == null || progressAssemble == null)
+        {
+            Debug.LogWarning("ProgressBar destroyed - stopping UIManager updates");
+            isSceneUnloading = true;
+            return;
+        }
 
-        float mudProgress = CleanManager.Instance.GetMudProgress();
-        progressDirts.SetValue(10);
+        // SAFETY CHECK: Verify managers still exist
+        if (CleanManager.Instance == null || AssembleManager.Instance == null)
+        {
+            Debug.LogWarning("Manager destroyed - stopping UIManager updates");
+            isSceneUnloading = true;
+            return;
+        }
 
-        float attachProgress = AssembleManager.Instance.GetAttachProgress();
-        progressAssemble.SetValue(attachProgress);
+        try
+        {
+            float dustProgress = CleanManager.Instance.GetDustProgress();
+            progressDusts.SetValue(10);
+
+            float mudProgress = CleanManager.Instance.GetMudProgress();
+            progressDirts.SetValue(10);
+
+            float attachProgress = AssembleManager.Instance.GetAttachProgress();
+            progressAssemble.SetValue(attachProgress);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"ProgressUpdate failed: {ex.Message}");
+            isSceneUnloading = true;
+        }
     }
 
     public void ShowSetting(bool isShown)
@@ -161,12 +199,44 @@ public class UIManager : MonoBehaviour
 
     public void ShowFinishUI(bool isShown)
     {
-        FinishUI.SetActive(isShown);
+        // SAFETY CHECK: Verify UI objects still exist before accessing
+        if (FinishUI == null)
+        {
+            Debug.LogWarning("FinishUI has been destroyed - cannot show/hide");
+            isSceneUnloading = true;
+            return;
+        }
+
+        try
+        {
+            FinishUI.SetActive(isShown);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"ShowFinishUI failed: {ex.Message}");
+            isSceneUnloading = true;
+        }
     }
 
     public void ShowFinishBackground(bool isShown)
     {
-        FinishBackground.SetActive(isShown);
+        // SAFETY CHECK: Verify UI objects still exist before accessing
+        if (FinishBackground == null)
+        {
+            Debug.LogWarning("FinishBackground has been destroyed - cannot show/hide");
+            isSceneUnloading = true;
+            return;
+        }
+
+        try
+        {
+            FinishBackground.SetActive(isShown);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"ShowFinishBackground failed: {ex.Message}");
+            isSceneUnloading = true;
+        }
     }
 
     public void ExitButtonInteract()
@@ -200,7 +270,67 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("GamePlayManager.Instance not found! Cannot trigger scene transition.");
+            Debug.LogWarning("GamePlayManager.Instance not found! Trying alternative transition...");
+
+            // FALLBACK: Try to trigger scene transition directly via SceneTransitionManager
+            if (SceneTransitionManager.Instance != null)
+            {
+                Debug.Log("Using SceneTransitionManager fallback for button transition");
+
+                // Use a default object type for transition
+                ObjectType fallbackObjectType = ObjectType.ChinaCoin; // Default fallback
+
+                // Try to detect object type from scene name
+                string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+                if (sceneName.Contains("coin") || sceneName.Contains("china coin"))
+                {
+                    fallbackObjectType = ObjectType.ChinaCoin;
+                }
+                else if (sceneName.Contains("jar") || sceneName.Contains("china jar"))
+                {
+                    fallbackObjectType = ObjectType.ChinaJar;
+                }
+                else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
+                {
+                    fallbackObjectType = ObjectType.IndonesiaKendin;
+                }
+                else if (sceneName.Contains("winged") || sceneName.Contains("mesir"))
+                {
+                    fallbackObjectType = ObjectType.MesirWingedScared;
+                }
+
+                Debug.Log($"Using fallback ObjectType: {fallbackObjectType}");
+                SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(fallbackObjectType, "New Start Game Sandy", "UIManager");
+            }
+            else
+            {
+                Debug.LogError("SceneTransitionManager.Instance also not found! Creating one...");
+
+                // Last resort: Create SceneTransitionManager and use it
+                GameObject stmGO = new GameObject("SceneTransitionManager");
+                stmGO.AddComponent<SceneTransitionManager>();
+
+                // Wait a frame then try again
+                StartCoroutine(RetryTransitionAfterFrame());
+            }
+        }
+    }
+
+    /// <summary>
+    /// Retry transition after SceneTransitionManager is created
+    /// </summary>
+    private System.Collections.IEnumerator RetryTransitionAfterFrame()
+    {
+        yield return null; // Wait one frame
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            Debug.Log("SceneTransitionManager created successfully, triggering transition");
+            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(ObjectType.ChinaCoin, "New Start Game Sandy", "UIManager");
+        }
+        else
+        {
+            Debug.LogError("Failed to create SceneTransitionManager even after retry!");
         }
     }
 
@@ -242,5 +372,36 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("=== TESTING FINISH BUTTON ===");
         FinishButtonInteract();
+    }
+
+    /// <summary>
+    /// Prepare UIManager for scene unload - stop all processing
+    /// </summary>
+    public void PrepareForSceneTransition()
+    {
+        Debug.Log("=== PREPARING UI MANAGER FOR SCENE TRANSITION ===");
+
+        // Stop all Update() processing
+        isSceneUnloading = true;
+
+        // Stop all coroutines
+        StopAllCoroutines();
+
+        // Clear instance reference to prevent cross-scene access
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        Debug.Log("UIManager prepared for scene unload");
+    }
+
+    private void OnDestroy()
+    {
+        // Clear instance when destroyed
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 }

@@ -18,6 +18,7 @@ public class ContentSwitcherDebugger : MonoBehaviour
     [Header("Debug Settings")]
     [SerializeField] private bool enableDetailedLogs = true;
     [SerializeField] private bool autoDetectOnStart = true;
+    [SerializeField] private bool requireSceneTransitionManager = false; // Don't require in menu scenes
 
     [Header("Current Simulation")]
     [SerializeField] private ObjectType simulatedObjectType = ObjectType.ChinaCoin;
@@ -192,18 +193,34 @@ public class ContentSwitcherDebugger : MonoBehaviour
     {
         Debug.Log("\n🔍 CHECKING FOR COMMON ISSUES:");
 
-        // Check SceneTransitionManager
-        if (SceneTransitionManager.Instance == null)
+        // Check SceneTransitionManager (only if required)
+        if (requireSceneTransitionManager)
         {
-            Debug.LogError("❌ SceneTransitionManager.Instance is NULL!");
-            Debug.LogError("   Make sure SceneTransitionManager exists in the scene");
+            if (SceneTransitionManager.Instance == null)
+            {
+                Debug.LogError("❌ SceneTransitionManager.Instance is NULL!");
+                Debug.LogError("   Make sure SceneTransitionManager exists in the scene");
+            }
+            else
+            {
+                Debug.Log("✅ SceneTransitionManager found");
+                Debug.Log($"   Current ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}");
+                Debug.Log($"   Current ChapterType: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
+                Debug.Log($"   Should Trigger: {SceneTransitionManager.Instance.ShouldTriggerContentSwitcher()}");
+            }
         }
         else
         {
-            Debug.Log("✅ SceneTransitionManager found");
-            Debug.Log($"   Current ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}");
-            Debug.Log($"   Current ChapterType: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
-            Debug.Log($"   Should Trigger: {SceneTransitionManager.Instance.ShouldTriggerContentSwitcher()}");
+            if (SceneTransitionManager.Instance == null)
+            {
+                Debug.Log("ℹ️ SceneTransitionManager not found (not required in menu scenes)");
+            }
+            else
+            {
+                Debug.Log("✅ SceneTransitionManager found");
+                Debug.Log($"   Current ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}");
+                Debug.Log($"   Current ChapterType: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
+            }
         }
 
         // Check if any ContentSwitcher matches current simulation

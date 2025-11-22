@@ -63,6 +63,23 @@ public class ObjectInteractionHandler : MonoBehaviour
                 Debug.Log("=== OBJECT HANDLER - Initial mode entered ===");
             };
         }
+
+        // Subscribe to scene loaded events to refresh camera reference
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Refresh camera reference when scene loads
+        RefreshCameraReference();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
     }
     #endregion
 
@@ -70,6 +87,19 @@ public class ObjectInteractionHandler : MonoBehaviour
     public bool CheckForObjectClick(Vector2 screenPosition)
     {
         Debug.Log("=== CheckForObjectClick called ===");
+
+        // NULL CHECK: Ensure camera is valid before using it
+        if (playerCamera == null)
+        {
+            Debug.LogError("=== CAMERA NULL - Finding new camera ===");
+            playerCamera = Camera.main;
+
+            if (playerCamera == null)
+            {
+                Debug.LogError("=== NO MAIN CAMERA FOUND - Cannot process click ===");
+                return false;
+            }
+        }
 
         // STABILITY CHECK: Wait a bit after mode changes to ensure state is stable
         if (Time.time - lastModeChangeTime < clickValidationDelay)
@@ -211,8 +241,23 @@ public class ObjectInteractionHandler : MonoBehaviour
             return;
         }
 
+        // DEBUG: Check why scene change is not triggered
+        Debug.Log($"=== ZOOM CLICK DEBUG ===");
+        Debug.Log($"enableSceneChange: {enableSceneChange}");
+        Debug.Log($"clickable.CanChangeScene(): {clickable.CanChangeScene()}");
+        Debug.Log($"clickable.GetSceneName(): {clickable.GetSceneName()}");
+
         if (enableSceneChange && clickable.CanChangeScene())
+        {
+            Debug.Log("✅ Scene change conditions met - calling HandleSceneChange");
             HandleSceneChange(clickable);
+        }
+        else
+        {
+            Debug.LogWarning("❌ Scene change conditions NOT met:");
+            Debug.LogWarning($"   enableSceneChange: {enableSceneChange}");
+            Debug.LogWarning($"   clickable.CanChangeScene(): {clickable.CanChangeScene()}");
+        }
 
         PlayClickFeedback(clickable);
     }
@@ -229,13 +274,29 @@ public class ObjectInteractionHandler : MonoBehaviour
         // NEW: Store clicked object info for later use when returning from gameplay
         StoreClickedObjectInfo(clickableObject);
 
-        // Use Easy Transitions if available and enabled
-        if (clickableObject.UseTransitionAnimation() && clickableObject.GetTransitionSettings() != null)
+        // FIXED: Use SceneTransitionManager with DYNAMIC scene name from clicked object
+        if (SceneTransitionManager.Instance != null)
         {
-            EasyTransition.TransitionManager.Instance().Transition(sceneName, clickableObject.GetTransitionSettings(), 0f);
+            Debug.Log("=== Using SceneTransitionManager for scene transition ===");
+            ObjectType objectType = clickableObject.GetObjectType();
+            string objectName = clickableObject.name;
+            Vector3 objectPosition = clickableObject.transform.position;
+
+            Debug.Log($"🎯 Scene transition to: {sceneName}");
+            Debug.Log($"🎯 Object: {objectName}");
+            Debug.Log($"🎯 ObjectType: {objectType}");
+
+            // CRITICAL FIX: Use the scene name from the clicked object (not hardcoded!)
+            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(
+                objectType,
+                sceneName,  // 🔥 This is the dynamic scene name from jar.targetSceneName
+                objectName,
+                objectPosition
+            );
         }
         else
         {
+            Debug.LogWarning("SceneTransitionManager not found! Using fallback scene loading.");
             // Fallback to direct scene load
             StartCoroutine(ChangeSceneCoroutine(sceneName));
         }
@@ -325,6 +386,17 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     public Vector3 CalculateWorldPositionFromScreen(Vector2 screenPosition, Vector3 explorationPosition)
     {
+        // NULL CHECK: Ensure camera is valid
+        if (playerCamera == null)
+        {
+            playerCamera = Camera.main;
+            if (playerCamera == null)
+            {
+                Debug.LogError("No camera available for position calculation");
+                return explorationPosition;
+            }
+        }
+
         // Create a ray from camera through screen position
         var ray = playerCamera.ScreenPointToRay(screenPosition);
 
@@ -461,6 +533,55 @@ public class ObjectInteractionHandler : MonoBehaviour
         targetSwitcher.OnButtonClicked();
 
         Debug.Log($"Manual trigger completed for ObjectType: {objectType}");
+    }
+
+    /// <summary>
+    /// Refresh camera reference (useful when scene changes)
+    /// </summary>
+    public void RefreshCameraReference()
+    {
+        Camera newCamera = Camera.main;
+        if (newCamera != null)
+        {
+            playerCamera = newCamera;
+            Debug.Log($"Camera reference updated to: {playerCamera.name}");
+        }
+        else
+        {
+            Debug.LogWarning("No main camera found for refresh");
+        }
+    }
+
+    /// <summary>
+    /// Manually set camera reference (for debugging)
+    /// </summary>
+    [ContextMenu("Set Camera to Main Camera")]
+    public void SetCameraToMain()
+    {
+        playerCamera = Camera.main;
+        Debug.Log($"Camera manually set to: {(playerCamera != null ? playerCamera.name : "NULL")}");
+    }
+
+    /// <summary>
+    /// Check camera status (for debugging)
+    /// </summary>
+    [ContextMenu("Check Camera Status")]
+    public void CheckCameraStatus()
+    {
+        Debug.Log("=== CAMERA STATUS ===");
+        Debug.Log($"Player Camera: {(playerCamera != null ? playerCamera.name : "NULL")}");
+        Debug.Log($"Camera.main: {(Camera.main != null ? Camera.main.name : "NULL")}");
+        Debug.Log($"Cameras in scene: {Camera.allCamerasCount}");
+
+        if (Camera.allCamerasCount > 0)
+        {
+            Debug.Log("Available cameras:");
+            foreach (Camera cam in Camera.allCameras)
+            {
+                Debug.Log($"  - {cam.name} (Active: {cam.gameObject.activeInHierarchy})");
+            }
+        }
+        Debug.Log("====================");
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ public class InteractedObject : MonoBehaviour
 
     void Update()
     {
-        Debug.Log("Snack");
+        //Debug.Log("Snack");
         if (TouchManager.Instance.isDragging || TouchManager.Instance.isInteracting || TouchManager.Instance.isZooming || TouchManager.Instance.isRotating || !TouchManager.Instance.isClickedOn) return;
         Clicked();
     }

@@ -20,7 +20,7 @@ public class ProgressBar : MonoBehaviour
 
     public void SetValue(float value01)
     {
-        Debug.Log("progress value A : " + value01);
+        //Debug.Log("progress value A : " + value01);
         if (value01 >= 0.99)
         {
             value01 = 1;
@@ -40,8 +40,8 @@ public class ProgressBar : MonoBehaviour
     public void UpdateFill()
     {
         var progress = (float)current / maximum;
-        Debug.Log("progress value B : " + progress);
-        Debug.Log("progress value C : " + current);
+        //Debug.Log("progress value B : " + progress);
+        //Debug.Log("progress value C : " + current);
 
 
         // Debug.Log($"progress bar dari {name} adalah {current}");

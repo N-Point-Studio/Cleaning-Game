@@ -29,9 +29,11 @@ public class UITransitionController : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            Debug.Log($"🚨 UITransitionController Instance set on GameObject: {gameObject.name}");
         }
         else
         {
+            Debug.Log($"🚨 Destroying duplicate UITransitionController on GameObject: {gameObject.name}");
             Destroy(gameObject);
         }
     }
@@ -39,12 +41,39 @@ public class UITransitionController : MonoBehaviour
     private void Start()
     {
         SetupUI();
+
+        // Check if intro transition should be hidden based on SaveSystem
+        StartCoroutine(CheckAndHideIntroImagesIfNeeded());
+    }
+
+    private void OnDestroy()
+    {
+        // Kill all DOTween animations to prevent cleanup warnings
+        DOTween.Kill(this);
+
+        // Also kill any animations on our UI images
+        if (startExplorationImage != null) DOTween.Kill(startExplorationImage.transform);
+        if (additionalImage1 != null) DOTween.Kill(additionalImage1.transform);
+        if (additionalImage2 != null) DOTween.Kill(additionalImage2.transform);
+
+        // Clear singleton reference
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        Debug.Log($"🚨 UITransitionController cleanup completed on {gameObject.name}");
     }
     #endregion
 
     #region UI Setup
     public void SetupUI()
     {
+        Debug.Log($"🚨 UITransitionController.SetupUI() called on GameObject: {gameObject.name}");
+        Debug.Log($"🚨 Image references - startExplorationImage: {(startExplorationImage != null ? startExplorationImage.name : "NULL")}");
+        Debug.Log($"🚨 Image references - additionalImage1: {(additionalImage1 != null ? additionalImage1.name : "NULL")}");
+        Debug.Log($"🚨 Image references - additionalImage2: {(additionalImage2 != null ? additionalImage2.name : "NULL")}");
+
         if (startExplorationImage != null)
             SetupImageClickDetection(startExplorationImage, StartExplorationMode);
 
@@ -128,6 +157,17 @@ public class UITransitionController : MonoBehaviour
 
     public IEnumerator ShowStartButtonElegantly(float returnTransitionDuration)
     {
+        float timestamp = Time.time;
+        Debug.Log($"🚨🚨 UITransitionController.ShowStartButtonElegantly CALLED at {timestamp}");
+        Debug.Log($"🚨🚨 returnTransitionDuration: {returnTransitionDuration}");
+
+        // Check if intro transition has already been shown
+        if (SaveSystem.Instance != null && SaveSystem.Instance.IsIntroTransitionShown())
+        {
+            Debug.Log($"🚨🚨 Intro transition already shown - skipping animation");
+            yield break; // Exit the coroutine without showing the transition
+        }
+
         yield return new WaitForSeconds(returnTransitionDuration * 0.7f);
 
         var imagesToAnimate = new List<Image>();
@@ -161,12 +201,89 @@ public class UITransitionController : MonoBehaviour
         }
 
         yield return masterSequence.WaitForCompletion();
+
+        // Mark intro transition as shown
+        if (SaveSystem.Instance != null)
+        {
+            SaveSystem.Instance.SetIntroTransitionShown(true);
+            Debug.Log($"🚨🚨 Intro transition marked as shown in save system");
+        }
+
+        Debug.Log($"🚨🚨 UITransitionController.ShowStartButtonElegantly FINISHED at {Time.time}");
+        Debug.Log($"🚨🚨 UI startup images should now be visible!");
     }
 
     private void StartExplorationMode()
     {
         // Trigger the exploration mode start through GameModeManager
         StartExplorationTransition();
+    }
+
+    /// <summary>
+    /// Check if intro transition has been shown and hide intro images if needed
+    /// </summary>
+    private IEnumerator CheckAndHideIntroImagesIfNeeded()
+    {
+        // Wait a frame to ensure SaveSystem is ready
+        yield return null;
+
+        // Check if intro transition has already been shown
+        if (SaveSystem.Instance != null && SaveSystem.Instance.IsIntroTransitionShown())
+        {
+            Debug.Log($"🚨 Intro transition already shown - searching for and hiding intro images");
+            HideIntroImagesGlobally();
+        }
+        else
+        {
+            Debug.Log($"🚨 Intro transition not yet shown - keeping intro images visible");
+        }
+    }
+
+    /// <summary>
+    /// Search for and hide intro images globally (in case they're active by default)
+    /// </summary>
+    private void HideIntroImagesGlobally()
+    {
+        int hiddenCount = 0;
+
+        // Search for common intro image names
+        string[] possibleImageNames = {
+            "Start Exploration Image", "StartExplorationImage", "start exploration image",
+            "Additional Image 1", "AdditionalImage1", "additional image 1",
+            "Additional Image 2", "AdditionalImage2", "additional image 2",
+            "StartExploration", "StartExplorationButton", "StartButton"
+        };
+
+        foreach (string imageName in possibleImageNames)
+        {
+            GameObject imageObj = GameObject.Find(imageName);
+            if (imageObj != null && imageObj.activeInHierarchy)
+            {
+                Debug.Log($"🚨 Found and hiding intro image: {imageName}");
+                imageObj.SetActive(false);
+                hiddenCount++;
+            }
+        }
+
+        // Also search for Image components that might be intro images
+        UnityEngine.UI.Image[] allImages = FindObjectsOfType<UnityEngine.UI.Image>(true);
+        foreach (var image in allImages)
+        {
+            string imageName = image.gameObject.name.ToLower();
+            if (imageName.Contains("start") && imageName.Contains("exploration") ||
+                imageName.Contains("additional") && imageName.Contains("image") ||
+                imageName.Contains("intro") && imageName.Contains("transition"))
+            {
+                if (image.gameObject.activeInHierarchy)
+                {
+                    Debug.Log($"🚨 Found and hiding intro image by component search: {image.gameObject.name}");
+                    image.gameObject.SetActive(false);
+                    hiddenCount++;
+                }
+            }
+        }
+
+        Debug.Log($"🚨 Total intro images hidden: {hiddenCount}");
     }
 
     public float GetCameraDelayAfterButton() => cameraDelayAfterButton;

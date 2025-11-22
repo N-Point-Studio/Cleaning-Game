@@ -25,18 +25,27 @@ public class CameraAnimationController : MonoBehaviour
     private TopDownCameraController cameraController;
     private Vector3 originalCameraPosition, originalCameraRotation;
 
+    // FIXED: Track UI startup state to prevent re-showing startup UI
+    private bool hasShownStartupUI = false;
+    private bool isReturningFromGameplay = false;
+
     // Singleton
     public static CameraAnimationController Instance { get; private set; }
 
     #region Unity Lifecycle
     private void Awake()
     {
+        Debug.Log($"🔍 CameraAnimationController.Awake() called on {gameObject.name}");
+
         if (Instance == null)
         {
             Instance = this;
+            Debug.Log($"✅ Set as singleton instance: {gameObject.name}");
         }
         else
         {
+            Debug.LogWarning($"⚠️ DUPLICATE CameraAnimationController found on {gameObject.name}! Destroying...");
+            Debug.LogWarning($"   Existing instance: {Instance.gameObject.name}");
             Destroy(gameObject);
         }
     }
@@ -162,16 +171,54 @@ public class CameraAnimationController : MonoBehaviour
 
     private void ExitToInitialMode()
     {
+        float timestamp = Time.time;
+        Debug.Log($"=== EXITTOINITIALMODE CALLED at {timestamp} ===");
+        Debug.Log($"Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
+        Debug.Log($"Instance check - CameraAnimationController.Instance: {(Instance == this ? "THIS" : "OTHER")}");
+
         // Disable all inspectable objects when exiting to initial mode
         ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
 
         AnimateToOriginalPosition();
-        StartCoroutine(ShowStartButtonElegantly());
+
+        // FIXED: Use SaveSystem to check if intro transition should be shown
+        bool shouldShowIntroTransition = true;
+
+        // Check SaveSystem first
+        if (SaveSystem.Instance != null)
+        {
+            bool introAlreadyShown = SaveSystem.Instance.IsIntroTransitionShown();
+            shouldShowIntroTransition = !introAlreadyShown && !isReturningFromGameplay;
+            Debug.Log($"💾 SaveSystem check: introAlreadyShown={introAlreadyShown}, isReturningFromGameplay={isReturningFromGameplay}");
+        }
+        else
+        {
+            // Fallback to local flags if SaveSystem not available
+            shouldShowIntroTransition = !hasShownStartupUI && !isReturningFromGameplay;
+            Debug.Log($"🔄 Using local flags: hasShownStartupUI={hasShownStartupUI}, isReturningFromGameplay={isReturningFromGameplay}");
+        }
+
+        if (shouldShowIntroTransition)
+        {
+            Debug.Log($"🎬 Showing startup UI for first time at {timestamp}");
+            hasShownStartupUI = true;
+            StartCoroutine(ShowStartButtonElegantly());
+        }
+        else
+        {
+            Debug.Log($"🔄 Skipping startup UI - already shown or returning from gameplay at {timestamp}");
+            isReturningFromGameplay = false; // Reset the flag for next time
+        }
+        Debug.Log($"=== EXITTOINITIALMODE FINISHED at {timestamp} ===");
     }
 
     private IEnumerator ShowStartButtonElegantly()
     {
+        float timestamp = Time.time;
+        Debug.Log($"🚨 ShowStartButtonElegantly COROUTINE STARTED at {timestamp}");
+        Debug.Log($"🚨 About to call UITransitionController.ShowStartButtonElegantly...");
         yield return UITransitionController.Instance?.ShowStartButtonElegantly(returnTransitionDuration);
+        Debug.Log($"🚨 ShowStartButtonElegantly COROUTINE FINISHED at {Time.time}");
     }
     #endregion
 
@@ -221,5 +268,33 @@ public class CameraAnimationController : MonoBehaviour
     public float GetCurrentXPosition() => cameraXPositions[currentPositionIndex];
     public int GetCurrentPositionIndex() => currentPositionIndex;
     public Vector3 GetExplorationPosition() => explorationPosition;
+
+    /// <summary>
+    /// Call this method when returning from gameplay to prevent startup UI from showing again
+    /// </summary>
+    public void NotifyReturningFromGameplay()
+    {
+        float timestamp = Time.time;
+        isReturningFromGameplay = true;
+        Debug.Log($"🔄 CameraAnimationController notified: returning from gameplay at {timestamp}");
+        Debug.Log($"🔄 Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
+        Debug.Log($"🔄 This is instance: {(Instance == this ? "SINGLETON" : "NOT_SINGLETON")}");
+    }
+
+    /// <summary>
+    /// Force reset startup UI state (for debugging or special cases)
+    /// </summary>
+    [ContextMenu("Reset Startup UI State")]
+    public void ResetStartupUIState()
+    {
+        hasShownStartupUI = false;
+        isReturningFromGameplay = false;
+        Debug.Log("🔄 Startup UI state reset - will show again on next ExitToInitialMode");
+    }
+
+    /// <summary>
+    /// Check if startup UI has been shown (for debugging)
+    /// </summary>
+    public bool HasShownStartupUI() => hasShownStartupUI;
     #endregion
 }

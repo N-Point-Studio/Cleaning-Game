@@ -20,18 +20,39 @@ public class SettingManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-        SfxSlider.onValueChanged.AddListener(OnSfxSliderChanged);
-        BgmSlider.onValueChanged.AddListener(OnBgmSliderChanged);
+
+        // SAFETY CHECK: Only add listeners if sliders are assigned
+        if (SfxSlider != null)
+            SfxSlider.onValueChanged.AddListener(OnSfxSliderChanged);
+        else
+            Debug.LogWarning("SfxSlider not assigned in SettingManager");
+
+        if (BgmSlider != null)
+            BgmSlider.onValueChanged.AddListener(OnBgmSliderChanged);
+        else
+            Debug.LogWarning("BgmSlider not assigned in SettingManager");
     }
 
     private void Start()
     {
-        bgmSource.volume = .5f;
+        // SAFETY CHECK: Only set volume if bgmSource is assigned
+        if (bgmSource != null)
+        {
+            bgmSource.volume = .5f;
+        }
+        else
+        {
+            Debug.LogWarning("bgmSource not assigned in SettingManager");
+        }
     }
 
     private void Update()
     {
-        HapticManager.Instance.SetActiveHaptic(HapticSwitch.isOn);
+        // SAFETY CHECK: Prevent NullReferenceException during scene transitions
+        if (HapticManager.Instance != null && HapticSwitch != null)
+        {
+            HapticManager.Instance.SetActiveHaptic(HapticSwitch.isOn);
+        }
     }
 
     private void OnSfxSliderChanged(float value)
@@ -43,6 +64,15 @@ public class SettingManager : MonoBehaviour
     private void OnBgmSliderChanged(float value)
     {
         Debug.Log("OnBgmSliderChanged: " + value);
-        bgmSource.volume = value;
+
+        // SAFETY CHECK: Only set volume if bgmSource is assigned
+        if (bgmSource != null)
+        {
+            bgmSource.volume = value;
+        }
+        else
+        {
+            Debug.LogWarning("bgmSource is null - cannot set volume");
+        }
     }
 }

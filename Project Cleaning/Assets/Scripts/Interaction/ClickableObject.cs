@@ -165,6 +165,17 @@ public class ClickableObject : MonoBehaviour
             Debug.Log($"Object Name: {gameObject.name}");
             Debug.Log($"Object Type: {objectType}");
             Debug.Log($"Chapter: {GetChapterFromObjectType()}");
+
+            // NEW: Log completion status
+            if (IsCompleted())
+            {
+                Debug.Log($"Status: ✅ COMPLETED (Replaying)");
+            }
+            else
+            {
+                Debug.Log($"Status: 🔥 NEW");
+            }
+
             Debug.Log($"===================");
         }
 
@@ -260,7 +271,23 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     public bool CanChangeScene()
     {
-        return canChangeScene && !string.IsNullOrEmpty(targetSceneName);
+        // FIXED: Allow completed objects to be clicked again for replay
+        // This enables users to replay completed levels/objects
+
+        // Basic validation: must have scene name and be configured for scene change
+        if (!canChangeScene || string.IsNullOrEmpty(targetSceneName))
+        {
+            return false;
+        }
+
+        // REMOVED: Completion status check - allow completed objects to be replayed
+        // Original blocking code:
+        // if (SaveSystem.Instance != null && IsCompleted())
+        // {
+        //     return false;
+        // }
+
+        return true;
     }
 
     /// <summary>
@@ -349,6 +376,29 @@ public class ClickableObject : MonoBehaviour
         return $"Object: {gameObject.name}, Type: {objectType}, Chapter: {GetChapterFromObjectType()}";
     }
 
+    /// <summary>
+    /// Check if this object is already completed (saved progress)
+    /// Only works when SaveSystem is available (main scene)
+    /// </summary>
+    public bool IsCompleted()
+    {
+        // If SaveSystem not available (like in gameplay scene), assume not completed
+        if (SaveSystem.Instance == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return SaveSystem.Instance.IsObjectCompleted(gameObject.name, objectType);
+        }
+        catch (System.Exception)
+        {
+            // If any error occurs, assume not completed
+            return false;
+        }
+    }
+
     #region ContentSwitcher Integration Methods
 
 
@@ -357,15 +407,42 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     private void ValidateContentSwitcher()
     {
+        Debug.Log($"=== VALIDATING CONTENT SWITCHER FOR {gameObject.name} ===");
+
         if (contentSwitcherObject == null)
         {
+            Debug.LogError($"❌ ContentSwitcher Object is NULL for {gameObject.name}");
             hasValidContentSwitcher = false;
             linkedContentSwitcher = null;
             return;
         }
 
+        Debug.Log($"✅ ContentSwitcher Object assigned: {contentSwitcherObject.name}");
+
         linkedContentSwitcher = contentSwitcherObject.GetComponent<ContentSwitcher>();
-        hasValidContentSwitcher = linkedContentSwitcher != null;
+
+        if (linkedContentSwitcher != null)
+        {
+            Debug.Log($"✅ ContentSwitcher component found on {contentSwitcherObject.name}");
+            Debug.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
+            Debug.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
+            hasValidContentSwitcher = true;
+        }
+        else
+        {
+            Debug.LogError($"❌ NO ContentSwitcher component found on {contentSwitcherObject.name}");
+            Debug.LogError($"   Available components on {contentSwitcherObject.name}:");
+
+            Component[] allComponents = contentSwitcherObject.GetComponents<Component>();
+            foreach (Component comp in allComponents)
+            {
+                Debug.LogError($"   - {comp.GetType().Name}");
+            }
+
+            hasValidContentSwitcher = false;
+        }
+
+        Debug.Log($"=== VALIDATION RESULT: {(hasValidContentSwitcher ? "VALID" : "INVALID")} ===");
     }
 
     /// <summary>
@@ -416,7 +493,45 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     public bool HasValidContentSwitcher()
     {
-        return hasValidContentSwitcher && linkedContentSwitcher != null;
+        Debug.Log($"=== CHECKING VALIDITY FOR {gameObject.name} ===");
+        Debug.Log($"hasValidContentSwitcher: {hasValidContentSwitcher}");
+        Debug.Log($"linkedContentSwitcher != null: {linkedContentSwitcher != null}");
+        Debug.Log($"contentSwitcherObject != null: {contentSwitcherObject != null}");
+
+        if (contentSwitcherObject != null)
+        {
+            Debug.Log($"Assigned ContentSwitcher Object: {contentSwitcherObject.name}");
+
+            // Re-validate in case something changed
+            var currentComponent = contentSwitcherObject.GetComponent<ContentSwitcher>();
+            Debug.Log($"ContentSwitcher component currently exists: {currentComponent != null}");
+
+            // FAILSAFE: Auto re-validation if state inconsistent
+            if (!hasValidContentSwitcher && currentComponent != null)
+            {
+                Debug.LogWarning($"⚠️ Auto-fixing validation state for {gameObject.name}");
+                linkedContentSwitcher = currentComponent;
+                hasValidContentSwitcher = true;
+            }
+            else if (hasValidContentSwitcher && currentComponent == null)
+            {
+                Debug.LogWarning($"⚠️ ContentSwitcher component lost! Invalidating for {gameObject.name}");
+                linkedContentSwitcher = null;
+                hasValidContentSwitcher = false;
+            }
+        }
+        else if (hasValidContentSwitcher)
+        {
+            // If ContentSwitcher object is null but we think it's valid, fix this
+            Debug.LogWarning($"⚠️ ContentSwitcher Object is null! Invalidating for {gameObject.name}");
+            hasValidContentSwitcher = false;
+            linkedContentSwitcher = null;
+        }
+
+        bool isValid = hasValidContentSwitcher && linkedContentSwitcher != null;
+        Debug.Log($"FINAL VALIDATION RESULT: {isValid}");
+
+        return isValid;
     }
 
     /// <summary>
@@ -493,10 +608,13 @@ public class ClickableObject : MonoBehaviour
             targetObj.transform.DOPunchScale(Vector3.one * 0.2f, 0.5f, 3, 1);
         }
 
-        // 5. Disable clickable functionality if this is the clicked object
+        // 5. FIXED: Keep clickable functionality enabled for replay
+        // Original: canChangeScene = false; (disabled replay)
+        // NEW: Keep enabled so user can replay completed objects
+
         if (targetObj == gameObject)
         {
-            canChangeScene = false;
+            Debug.Log($"✅ Object {gameObject.name} marked as completed but remains clickable for replay");
         }
     }
 
@@ -515,16 +633,56 @@ public class ClickableObject : MonoBehaviour
     [ContextMenu("Validate ContentSwitcher Setup")]
     public void ValidateSetup()
     {
+        Debug.Log($"=== MANUAL VALIDATION STARTED FOR {name} ===");
+
         SetupContentSwitcherDetection();
 
         if (hasValidContentSwitcher)
         {
             Debug.Log($"✅ ContentSwitcher setup is VALID for {name}");
+            Debug.Log($"   Linked ContentSwitcher: {linkedContentSwitcher.name}");
+            Debug.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
+            Debug.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
         }
         else
         {
             Debug.LogError($"❌ ContentSwitcher setup is INVALID for {name}");
+
+            if (contentSwitcherObject == null)
+            {
+                Debug.LogError("   Problem: No ContentSwitcher Object assigned!");
+                Debug.LogError("   Solution: Drag a GameObject with ContentSwitcher component to Content Switcher Object field");
+            }
+            else
+            {
+                var component = contentSwitcherObject.GetComponent<ContentSwitcher>();
+                if (component == null)
+                {
+                    Debug.LogError($"   Problem: Object '{contentSwitcherObject.name}' has no ContentSwitcher component!");
+                    Debug.LogError("   Solution: Add ContentSwitcher component to the assigned GameObject");
+                }
+            }
         }
+
+        Debug.Log($"=== MANUAL VALIDATION COMPLETED ===");
+    }
+
+    /// <summary>
+    /// Force refresh ContentSwitcher validation (Inspector method)
+    /// </summary>
+    [ContextMenu("Force Refresh ContentSwitcher")]
+    public void ForceRefreshContentSwitcher()
+    {
+        Debug.Log($"=== FORCE REFRESHING CONTENT SWITCHER FOR {name} ===");
+
+        // Reset validation state
+        hasValidContentSwitcher = false;
+        linkedContentSwitcher = null;
+
+        // Re-run validation
+        ValidateContentSwitcher();
+
+        Debug.Log($"=== FORCE REFRESH COMPLETED ===");
     }
 
     /// <summary>
@@ -708,9 +866,51 @@ public class ClickableObject : MonoBehaviour
             StartShakeAnimation();
     }
 
-    private void OnDestroy()
+    /// <summary>
+    /// Clean up current scene before transitioning to new scene
+    /// Called before scene change to free up memory and resources
+    /// </summary>
+    public static void CleanupCurrentScene()
     {
-        // Clean up DOTween animations
+        Debug.Log("=== CLEANING UP CURRENT SCENE ===");
+
+        // 1. Stop all DOTween animations
+        DOTween.KillAll();
+
+        // 2. Clean up all ClickableObjects
+        ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
+        foreach (ClickableObject clickable in allClickables)
+        {
+            clickable.CleanupObject();
+        }
+
+        // 3. Clean up particle systems
+        ParticleSystem[] allParticles = FindObjectsOfType<ParticleSystem>();
+        foreach (ParticleSystem particles in allParticles)
+        {
+            particles.Stop();
+            particles.Clear();
+        }
+
+        // 4. Clean up audio sources
+        AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audio in allAudioSources)
+        {
+            audio.Stop();
+        }
+
+        // 5. Force garbage collection
+        System.GC.Collect();
+
+        Debug.Log($"Scene cleanup completed. Cleaned {allClickables.Length} clickables, {allParticles.Length} particles, {allAudioSources.Length} audio sources");
+    }
+
+    /// <summary>
+    /// Cleanup this specific ClickableObject
+    /// </summary>
+    private void CleanupObject()
+    {
+        // Stop animations
         if (currentTextSequence != null && currentTextSequence.IsActive())
         {
             currentTextSequence.Kill();
@@ -720,6 +920,29 @@ public class ClickableObject : MonoBehaviour
         {
             currentShakeSequence.Kill();
         }
+
+        // Hide popup
+        if (isPopupVisible)
+        {
+            HidePopupText();
+        }
+
+        // Stop shake animation
+        StopShakeAnimation();
+
+        // Disable inspectable functionality
+        if (inspectableJar != null)
+        {
+            inspectableJar.enabled = false;
+        }
+
+        // Clear focus
+        isFocused = false;
+    }
+
+    private void OnDestroy()
+    {
+        CleanupObject();
     }
 
     // NOTE: Unity's built-in mouse events are disabled to prevent conflicts with AdvancedInputManager

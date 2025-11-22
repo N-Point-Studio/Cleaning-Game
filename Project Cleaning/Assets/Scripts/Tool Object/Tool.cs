@@ -43,7 +43,7 @@ public class Tool : MonoBehaviour
 
     private void StickToSurface()
     {
-        Debug.Log("[surface] stick to ");
+        //Debug.Log("[surface] stick to ");
         Vector3 targetPos = surfaceDetection.RaycastTipPos;
         Vector3 targetNormal = surfaceDetection.RaycastTipNormal;
         //NOTE PENTING! kalo mau ubah ke koordinat X, Y ubah ke Vector3.up!
@@ -56,7 +56,7 @@ public class Tool : MonoBehaviour
 
     private void ReturnToInitial()
     {
-        Debug.Log("[surface] initial to ");
+        //Debug.Log("[surface] initial to ");
         transform.position = Vector3.Lerp(transform.position, initialPosition.position, Time.deltaTime * moveSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * rotateSpeed);
     }
