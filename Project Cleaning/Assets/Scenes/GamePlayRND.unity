@@ -9094,8 +9094,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 544bd24622a6d417e9a7dc19ea47fbd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSceneName: New Start Game Sandy
-  sceneTransitionDelay: 0.5
+  sceneTransitionDelay: 1.5
   useEasyTransition: 1
   defaultTransitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8,
     type: 2}

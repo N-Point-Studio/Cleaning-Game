@@ -449,7 +449,7 @@ MonoBehaviour:
   isInspectable: 1
   objectType: 2
   detectObjectOnClick: 1
-  contentSwitcherObject: {fileID: 0}
+  contentSwitcherObject: {fileID: 291932388}
   objectsToChange: []
   autoFindRelatedObjects: 1
   OnObjectClicked:
@@ -2175,7 +2175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chapterType: 1
   objectType: 2
-  currentTestingChapter: 0
+  currentTestingChapter: 1
   enableTestingMode: 0
   triggerButton: {fileID: 0}
   initialText: {fileID: 347007618}
@@ -3378,7 +3378,7 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
-  objectType: 0
+  objectType: 3
   detectObjectOnClick: 1
   contentSwitcherObject: {fileID: 0}
   objectsToChange: []
@@ -4624,7 +4624,7 @@ MonoBehaviour:
   isInspectable: 1
   objectType: 1
   detectObjectOnClick: 1
-  contentSwitcherObject: {fileID: 0}
+  contentSwitcherObject: {fileID: 1682662417}
   objectsToChange: []
   autoFindRelatedObjects: 1
   OnObjectClicked:
@@ -6660,7 +6660,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &875540789
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8174,7 +8174,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1175986787
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8853,7 +8853,7 @@ MonoBehaviour:
   shakeDuration: 2
   shakeOnlyWhenFocused: 1
   isInspectable: 1
-  objectType: 0
+  objectType: 2
   detectObjectOnClick: 1
   contentSwitcherObject: {fileID: 0}
   objectsToChange: []
@@ -9548,7 +9548,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1400816673
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11752,9 +11752,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chapterType: 0
-  objectType: 0
-  currentTestingChapter: 0
+  chapterType: 2
+  objectType: 3
+  currentTestingChapter: 2
   enableTestingMode: 1
   triggerButton: {fileID: 0}
   initialText: {fileID: 1239572956}
@@ -12083,7 +12083,7 @@ MonoBehaviour:
   isInspectable: 1
   objectType: 3
   detectObjectOnClick: 1
-  contentSwitcherObject: {fileID: 0}
+  contentSwitcherObject: {fileID: 2005872833}
   objectsToChange: []
   autoFindRelatedObjects: 1
   OnObjectClicked:

@@ -42,8 +42,23 @@ public class UITransitionController : MonoBehaviour
     {
         SetupUI();
 
-        // Check if intro transition should be hidden based on SaveSystem
-        StartCoroutine(CheckAndHideIntroImagesIfNeeded());
+        // New, more robust logic: Only show intro images if the transition has NOT been shown yet.
+        // This requires the images to be INACTIVE by default in the scene.
+        if (SaveSystem.Instance != null && !SaveSystem.Instance.IsIntroTransitionShown())
+        {
+            Debug.Log($"🚨 Intro transition has not been shown. Activating intro images.");
+            if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(true);
+            if (additionalImage1 != null) additionalImage1.gameObject.SetActive(true);
+            if (additionalImage2 != null) additionalImage2.gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.Log($"🚨 Intro transition has already been shown. Intro images will remain inactive.");
+            // Make sure they are inactive, just in case
+            if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(false);
+            if (additionalImage1 != null) additionalImage1.gameObject.SetActive(false);
+            if (additionalImage2 != null) additionalImage2.gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()
