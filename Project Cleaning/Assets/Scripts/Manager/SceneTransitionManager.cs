@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using DG.Tweening;
+// Removed DG.Tweening - minimal usage replaced with manual cleanup
 
 /// <summary>
 /// Manages data persistence across scene transitions and triggers ContentSwitcher
@@ -33,6 +33,10 @@ public class SceneTransitionManager : MonoBehaviour
     private string clickedObjectName = "";
     private Vector3 clickedObjectPosition = Vector3.zero;
     private bool shouldUpdateClickedObject = false;
+
+    // NEW: Camera state persistence for focus restoration
+    private Transform savedFocusTarget = null;
+    private bool shouldRestoreCameraFocus = false;
 
     // Events for notification
     public System.Action<ObjectType> OnObjectTypeSet;
@@ -150,7 +154,7 @@ public class SceneTransitionManager : MonoBehaviour
             return;
         }
 
-        // Store transition data
+        // Store transition data FIRST
         targetSceneName = sceneName;
         clickedObjectName = objectName;
         clickedObjectPosition = objectPosition;
@@ -164,7 +168,29 @@ public class SceneTransitionManager : MonoBehaviour
         Debug.Log($"Target Scene: {sceneName}");
         Debug.Log($"==============================");
 
+        // NEW: Save camera state IMMEDIATELY before any transition begins
+        SaveCameraStateForRestore();
+
+        // ONLY start transition AFTER saving state
         StartCoroutine(PerformSceneTransition());
+    }
+
+
+    /// <summary>
+    /// SIMPLE APPROACH: Just save the clicked object name - forget complex camera state
+    /// </summary>
+    private void SaveCameraStateForRestore()
+    {
+        Debug.Log("=== SIMPLE APPROACH: SAVING FOCUS STATE ===");
+
+        // We already have clickedObjectName from the method parameters!
+        // Just ensure we'll restore focus when returning
+        shouldRestoreCameraFocus = !string.IsNullOrEmpty(clickedObjectName);
+
+        Debug.Log($"✅ SIMPLE STATE SAVE COMPLETED");
+        Debug.Log($"Clicked Object Name: '{clickedObjectName}'");
+        Debug.Log($"Clicked Object Position: {clickedObjectPosition}");
+        Debug.Log($"Will Restore Focus: {shouldRestoreCameraFocus}");
     }
 
     /// <summary>
@@ -949,8 +975,76 @@ public class SceneTransitionManager : MonoBehaviour
             }
         }
 
-        // Alternative: Simple scale animation using DOTween
-        targetObject.transform.DOPunchScale(Vector3.one * 0.1f, 0.5f, 5);
+        // Alternative: Simple scale animation using coroutine (replaced DOTween)
+        StartCoroutine(PunchScaleAnimation(targetObject.transform, Vector3.one * 0.1f, 0.5f));
+    }
+
+    /// <summary>
+    /// Manual cleanup of UI animations to replace DOTween.Kill
+    /// </summary>
+    private void CleanupUIAnimationsManually()
+    {
+        // Find all Animator components and disable them
+        Animator[] animators = FindObjectsOfType<Animator>();
+        foreach (Animator animator in animators)
+        {
+            if (animator != null && animator.gameObject.activeInHierarchy)
+            {
+                // Stop current animation and disable
+                animator.enabled = false;
+            }
+        }
+
+        // Find all Animation components and stop them
+        Animation[] animations = FindObjectsOfType<Animation>();
+        foreach (Animation animation in animations)
+        {
+            if (animation != null && animation.isPlaying)
+            {
+                animation.Stop();
+            }
+        }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("Manual UI animation cleanup completed (replaced DOTween.Kill)");
+        }
+    }
+
+    /// <summary>
+    /// Simple scale animation coroutine to replace DOTween.DOPunchScale
+    /// </summary>
+    private IEnumerator PunchScaleAnimation(Transform target, Vector3 punch, float duration)
+    {
+        if (target == null) yield break;
+
+        Vector3 originalScale = target.localScale;
+        Vector3 targetScale = originalScale + punch;
+
+        float elapsed = 0f;
+        float halfDuration = duration * 0.5f;
+
+        // Scale up
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / halfDuration;
+            target.localScale = Vector3.Lerp(originalScale, targetScale, progress);
+            yield return null;
+        }
+
+        // Scale back down
+        elapsed = 0f;
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / halfDuration;
+            target.localScale = Vector3.Lerp(targetScale, originalScale, progress);
+            yield return null;
+        }
+
+        // Ensure exact original scale
+        target.localScale = originalScale;
     }
 
     /// <summary>
@@ -972,12 +1066,7 @@ public class SceneTransitionManager : MonoBehaviour
         // RESET: Clear clicked object data when returning to menu scene
         if (scene.name.Contains("New Start Game Sandy") || scene.name.Contains("Menu") || scene.name.Contains("Main"))
         {
-            Debug.Log("🔄 RETURNING TO MENU - Clearing clicked object data but keeping ContentSwitcher trigger");
-
-            // Clear clicked object data (prevent searching for old objects)
-            clickedObjectName = "";
-            clickedObjectPosition = Vector3.zero;
-            shouldUpdateClickedObject = false;
+            Debug.Log("🔄 RETURNING TO MENU - Processing camera restoration FIRST");
 
             // FIXED: Notify CameraAnimationController that we're returning from gameplay
             // This prevents startup UI (UITapToPlay, NPoint) from showing again
@@ -991,6 +1080,25 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 Debug.LogWarning("⚠️ CameraAnimationController.Instance is NULL! Cannot notify!");
             }
+
+            // NEW: Restore camera focus state FIRST before clearing data
+            Debug.Log($"🔍 RESTORE CHECK: shouldRestoreCameraFocus={shouldRestoreCameraFocus}, clickedObjectName='{clickedObjectName}'");
+            if (shouldRestoreCameraFocus)
+            {
+                Debug.Log("🎯 RESTORING CAMERA FOCUS STATE after returning from gameplay");
+                StartCoroutine(RestoreCameraStateAfterDelay());
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ RESTORE SKIPPED - shouldRestoreCameraFocus is false");
+            }
+
+            // MOVED: Clear clicked object data AFTER camera restoration is started
+            Debug.Log("🧹 Clearing clicked object data after restoration started");
+            // NOTE: Don't clear clickedObjectName here as RestoreCameraStateAfterDelay() needs it
+            // clickedObjectName = "";  // COMMENTED OUT - Let restoration coroutine handle this
+            // clickedObjectPosition = Vector3.zero;  // COMMENTED OUT
+            shouldUpdateClickedObject = false;
 
             // Keep shouldTriggerContentSwitcher = true so menu ContentSwitcher still works
             // Don't call ResetTransitionData() here as it would disable ContentSwitcher in menu
@@ -1439,6 +1547,89 @@ public class SceneTransitionManager : MonoBehaviour
     }
 
     /// <summary>
+    /// NEW: Restore camera state after a delay to ensure everything is loaded
+    /// </summary>
+    private IEnumerator RestoreCameraStateAfterDelay()
+    {
+        Debug.Log("=== STARTING CAMERA STATE RESTORATION ===");
+        Debug.Log($"Saved Focus Target: {(savedFocusTarget != null ? savedFocusTarget.name : "NULL")}");
+
+        // Wait for ContentSwitcher to complete first
+        yield return new WaitForSeconds(1.5f);
+
+        // Find the camera controller in the current scene
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController == null)
+        {
+            Debug.LogError("❌ TopDownCameraController not found in scene - cannot restore camera state");
+            shouldRestoreCameraFocus = false;
+            yield break;
+        }
+
+        // Find the target object by name using clickedObjectName (simple approach)
+        if (!string.IsNullOrEmpty(clickedObjectName))
+        {
+            Debug.Log($"🔍 Looking for focus target object by name: '{clickedObjectName}'");
+
+            // Try to find the object in current scene
+            GameObject targetObject = GameObject.Find(clickedObjectName);
+            if (targetObject != null)
+            {
+                Debug.Log($"✅ Found target object in scene: {targetObject.name}");
+
+                // Set the focus target in camera controller
+                cameraController.SetFocusTarget(targetObject.transform);
+
+                // Wait a frame for focus target to be set
+                yield return null;
+
+                // Restore camera to the stored state (focus mode)
+                Debug.Log("🎯 RESTORING CAMERA TO FOCUS MODE");
+                cameraController.TransitionToStoredState();
+
+                // Reset the restoration flag and clear data
+                shouldRestoreCameraFocus = false;
+                clickedObjectName = "";  // Clear now after restoration is done
+                clickedObjectPosition = Vector3.zero;
+                Debug.Log("✅ CAMERA STATE RESTORATION COMPLETED");
+                Debug.Log("🧹 Cleared clicked object data after restoration");
+            }
+            else
+            {
+                Debug.LogWarning($"⚠️ Could not find target object '{clickedObjectName}' in current scene");
+                Debug.LogWarning("Listing all GameObjects in scene for debugging:");
+
+                // Debug: List all GameObjects to see what's available
+                GameObject[] allObjects = FindObjectsOfType<GameObject>();
+                int count = 0;
+                foreach (GameObject obj in allObjects)
+                {
+                    if (!obj.name.StartsWith("UI") && !obj.name.Contains("Canvas") && count < 10)
+                    {
+                        Debug.LogWarning($"   Available object: {obj.name}");
+                        count++;
+                    }
+                }
+
+                shouldRestoreCameraFocus = false;
+                clickedObjectName = "";  // Clear data on error too
+                clickedObjectPosition = Vector3.zero;
+                Debug.Log("🧹 Cleared clicked object data after failed restoration");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ No clickedObjectName available for restoration - clickedObjectName: '{clickedObjectName}'");
+            shouldRestoreCameraFocus = false;
+            clickedObjectName = "";  // Clear data on no restore case too
+            clickedObjectPosition = Vector3.zero;
+            Debug.Log("🧹 Cleared clicked object data - no restoration needed");
+        }
+
+        Debug.Log("=== CAMERA STATE RESTORATION FINISHED ===");
+    }
+
+    /// <summary>
     /// Clean up specific scene managers
     /// </summary>
     private void CleanupSceneManagers()
@@ -1473,8 +1664,8 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private void CleanupUIElements()
     {
-        // Stop all UI animations
-        DOTween.Kill("UI");
+        // Stop all UI animations - replaced DOTween.Kill with manual cleanup
+        CleanupUIAnimationsManually();
 
         // Find and clean up UI canvases
         Canvas[] allCanvases = FindObjectsOfType<Canvas>();

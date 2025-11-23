@@ -133,13 +133,49 @@ public class AdvancedInputManager : MonoBehaviour
         gameModeManager = GameModeManager.Instance;
         uiController = UITransitionController.Instance;
         objectHandler = ObjectInteractionHandler.Instance;
+
+        // DEFENSIVE: Ensure cameraAnimator is valid, retry if needed
         cameraAnimator = CameraAnimationController.Instance;
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogWarning("⚠️ CameraAnimationController.Instance is null or destroyed, retrying in next frame");
+            StartCoroutine(RetryInitializeCameraAnimator());
+        }
+
         doubleTapDetector = DoubleTapDetector.Instance;
 
         // Subscribe to game mode events
         if (gameModeManager != null)
         {
             gameModeManager.OnModeChanged += OnGameModeChanged;
+        }
+    }
+
+    /// <summary>
+    /// Retry mechanism to ensure CameraAnimationController is properly initialized
+    /// </summary>
+    private System.Collections.IEnumerator RetryInitializeCameraAnimator()
+    {
+        int retryCount = 0;
+        const int maxRetries = 10;
+
+        while ((cameraAnimator == null || cameraAnimator.gameObject == null) && retryCount < maxRetries)
+        {
+            yield return null; // Wait one frame
+
+            cameraAnimator = CameraAnimationController.Instance;
+            retryCount++;
+
+            if (cameraAnimator != null && cameraAnimator.gameObject != null)
+            {
+                Debug.Log($"✅ CameraAnimationController successfully initialized after {retryCount} retries");
+                break;
+            }
+        }
+
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogError($"❌ Failed to initialize CameraAnimationController after {maxRetries} retries - swipe functionality will not work");
         }
     }
 
@@ -410,12 +446,33 @@ public class AdvancedInputManager : MonoBehaviour
     #region Gesture Handling
     private void HandleSwipeGesture(SwipeDirection direction)
     {
+        Debug.Log($"🎯 HandleSwipeGesture called - Direction: {direction}");
+
+        // DEFENSIVE: Check if cameraAnimator is still valid
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogError("❌ CameraAnimationController is null or destroyed - cannot perform swipe. Attempting to reinitialize...");
+            cameraAnimator = CameraAnimationController.Instance;
+
+            if (cameraAnimator == null)
+            {
+                Debug.LogError("❌ CameraAnimationController.Instance is still null - swipe will not work");
+                return;
+            }
+            else
+            {
+                Debug.Log("✅ CameraAnimationController successfully reinitialized");
+            }
+        }
+
         switch (direction)
         {
             case SwipeDirection.Right:
+                Debug.Log($"🎯 Performing PerformSwipeLeft on {cameraAnimator.name}");
                 cameraAnimator?.PerformSwipeLeft();
                 break;
             case SwipeDirection.Left:
+                Debug.Log($"🎯 Performing PerformSwipeRight on {cameraAnimator.name}");
                 cameraAnimator?.PerformSwipeRight();
                 break;
         }
@@ -504,6 +561,26 @@ public class AdvancedInputManager : MonoBehaviour
     public bool IsInExplorationMode() => gameModeManager?.IsInExplorationMode() ?? false;
     public float GetCurrentXPosition() => cameraAnimator?.GetCurrentXPosition() ?? 0f;
     public int GetCurrentPositionIndex() => cameraAnimator?.GetCurrentPositionIndex() ?? 0;
+    #endregion
+
+    #region Unity Lifecycle Cleanup
+    private void OnDestroy()
+    {
+        Debug.Log($"🔍 AdvancedInputManager.OnDestroy() called");
+
+        // Unsubscribe from events to prevent memory leaks
+        if (gameModeManager != null)
+        {
+            gameModeManager.OnModeChanged -= OnGameModeChanged;
+        }
+
+        // Clear singleton instance if this is the current instance
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("✅ AdvancedInputManager singleton instance cleared");
+        }
+    }
     #endregion
 }
 

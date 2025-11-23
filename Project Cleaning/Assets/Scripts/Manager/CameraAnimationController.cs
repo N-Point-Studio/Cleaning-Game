@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using DG.Tweening;
+// Removed DG.Tweening - replaced with Lerp
 
 /// <summary>
 /// Controls camera animations and positioning for different game modes
@@ -29,6 +29,11 @@ public class CameraAnimationController : MonoBehaviour
     private bool hasShownStartupUI = false;
     private bool isReturningFromGameplay = false;
 
+    // Lerp animation system
+    private Coroutine currentSwipeAnimation;
+    private Coroutine currentTransitionAnimation;
+    private bool isAnimating = false;
+
     // Singleton
     public static CameraAnimationController Instance { get; private set; }
 
@@ -52,7 +57,7 @@ public class CameraAnimationController : MonoBehaviour
 
     private void Start()
     {
-        cameraController = TopDownCameraController.Instance;
+        InitializeCameraController();
 
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
@@ -60,6 +65,33 @@ public class CameraAnimationController : MonoBehaviour
             // GameModeManager.Instance.OnEnterExplorationMode += BeginExplorationMode; // This is the line that causes the bug
             GameModeManager.Instance.OnEnterInitialMode += ExitToInitialMode;
             GameModeManager.Instance.OnEnterZoomMode += () => { }; // Zoom handling is done through EnterZoomMode method
+        }
+    }
+
+    /// <summary>
+    /// Initialize camera controller with retry mechanism
+    /// </summary>
+    private void InitializeCameraController()
+    {
+        cameraController = TopDownCameraController.Instance;
+
+        if (cameraController == null)
+        {
+            Debug.LogWarning("⚠️ TopDownCameraController.Instance is null in Start(), will retry in Update()");
+        }
+        else
+        {
+            Debug.Log("✅ CameraAnimationController successfully linked to TopDownCameraController in Start()");
+        }
+    }
+
+    private void Update()
+    {
+        // AUTO-REINITIALIZE: If cameraController becomes null, try to get it again
+        if (cameraController == null && TopDownCameraController.Instance != null)
+        {
+            Debug.Log("🔄 Auto-reinitializing cameraController in Update()");
+            cameraController = TopDownCameraController.Instance;
         }
     }
     #endregion
@@ -89,13 +121,24 @@ public class CameraAnimationController : MonoBehaviour
         yield return new WaitForSeconds(cameraDelayAfterButton);
 
         var cameraTransform = cameraController.transform;
-        DOTween.Kill(cameraTransform);
 
-        var sequence = DOTween.Sequence();
-        sequence.Append(cameraTransform.DOMove(explorationPosition, explorationTransitionDuration).SetEase(Ease.OutCubic));
-        sequence.Join(cameraTransform.DORotate(explorationRotation, explorationTransitionDuration).SetEase(Ease.OutCubic));
+        // Stop any existing animations
+        if (currentTransitionAnimation != null)
+        {
+            StopCoroutine(currentTransitionAnimation);
+        }
 
-        yield return sequence.WaitForCompletion();
+        // Start Lerp-based transition
+        currentTransitionAnimation = StartCoroutine(LerpCameraTransition(
+            cameraTransform.position,
+            cameraTransform.rotation.eulerAngles,
+            explorationPosition,
+            explorationRotation,
+            explorationTransitionDuration
+        ));
+
+        yield return currentTransitionAnimation;
+        currentTransitionAnimation = null;
     }
 
     public void EnterZoomMode(Transform targetObject)
@@ -158,10 +201,19 @@ public class CameraAnimationController : MonoBehaviour
         // Disable all inspectable objects when leaving zoom mode
         ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
 
-        // Kill any ongoing animations to prevent conflicts
-        if (cameraController != null)
+        // Stop any ongoing animations to prevent conflicts
+        if (currentSwipeAnimation != null)
         {
-            DOTween.Kill(cameraController.transform);
+            StopCoroutine(currentSwipeAnimation);
+            currentSwipeAnimation = null;
+            Debug.Log("🛑 Stopped existing swipe animation for return to exploration");
+        }
+
+        if (currentTransitionAnimation != null)
+        {
+            StopCoroutine(currentTransitionAnimation);
+            currentTransitionAnimation = null;
+            Debug.Log("🛑 Stopped existing transition animation for return to exploration");
         }
 
         // Use fast or normal transition
@@ -230,36 +282,205 @@ public class CameraAnimationController : MonoBehaviour
 
     public void AnimateToPositionWithDuration(float xPosition, float duration)
     {
-        if (cameraController == null) return;
+        if (cameraController == null)
+        {
+            Debug.LogError("❌ cameraController is null in AnimateToPositionWithDuration");
+            return;
+        }
 
         var targetPosition = new Vector3(xPosition, explorationPosition.y, explorationPosition.z);
-        cameraController.transform.DOMove(targetPosition, duration).SetEase(Ease.OutCubic);
+        var currentPosition = cameraController.transform.position;
+
+        Debug.Log($"🎯 AnimateToPositionWithDuration (Lerp):");
+        Debug.Log($"   Current Position: {currentPosition}");
+        Debug.Log($"   Target Position: {targetPosition}");
+        Debug.Log($"   Duration: {duration}s");
+        Debug.Log($"   Distance: {Vector3.Distance(currentPosition, targetPosition):F2}");
+
+        // Stop any existing swipe animation
+        if (currentSwipeAnimation != null)
+        {
+            StopCoroutine(currentSwipeAnimation);
+            Debug.Log("🛑 Stopped existing swipe animation");
+        }
+
+        // Start new Lerp-based animation
+        isAnimating = true;
+        currentSwipeAnimation = StartCoroutine(LerpCameraPosition(currentPosition, targetPosition, duration));
+    }
+
+    /// <summary>
+    /// Lerp-based camera position animation - replaces DOTween
+    /// </summary>
+    private IEnumerator LerpCameraPosition(Vector3 startPos, Vector3 targetPos, float duration)
+    {
+        Debug.Log($"🎬 Lerp animation STARTED - moving to {targetPos}");
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Check if cameraController still exists
+            if (cameraController == null)
+            {
+                Debug.LogError("❌ cameraController became null during Lerp animation");
+                break;
+            }
+
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / duration;
+
+            // Apply easing (OutCubic equivalent)
+            float easedProgress = 1f - Mathf.Pow(1f - progress, 3f);
+
+            Vector3 currentPos = Vector3.Lerp(startPos, targetPos, easedProgress);
+            cameraController.transform.position = currentPos;
+
+            yield return null;
+        }
+
+        // Ensure we end at exact target position
+        if (cameraController != null)
+        {
+            cameraController.transform.position = targetPos;
+            Debug.Log($"✅ Lerp animation COMPLETED - final position: {cameraController.transform.position}");
+        }
+
+        isAnimating = false;
+        currentSwipeAnimation = null;
+    }
+
+    /// <summary>
+    /// Lerp-based camera transition with position and rotation - replaces DOTween Sequence
+    /// </summary>
+    private IEnumerator LerpCameraTransition(Vector3 startPos, Vector3 startRot, Vector3 targetPos, Vector3 targetRot, float duration)
+    {
+        Debug.Log($"🎬 Lerp transition STARTED - moving to {targetPos}, rotating to {targetRot}");
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            // Check if cameraController still exists
+            if (cameraController == null)
+            {
+                Debug.LogError("❌ cameraController became null during Lerp transition");
+                break;
+            }
+
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / duration;
+
+            // Apply easing (InOutQuart equivalent for transitions)
+            float easedProgress;
+            if (progress < 0.5f)
+            {
+                easedProgress = 8f * progress * progress * progress * progress;
+            }
+            else
+            {
+                float f = progress - 1f;
+                easedProgress = 1f - 8f * f * f * f * f;
+            }
+
+            Vector3 currentPos = Vector3.Lerp(startPos, targetPos, easedProgress);
+            Vector3 currentRot = Vector3.Lerp(startRot, targetRot, easedProgress);
+
+            cameraController.transform.position = currentPos;
+            cameraController.transform.rotation = Quaternion.Euler(currentRot);
+
+            yield return null;
+        }
+
+        // Ensure we end at exact target position and rotation
+        if (cameraController != null)
+        {
+            cameraController.transform.position = targetPos;
+            cameraController.transform.rotation = Quaternion.Euler(targetRot);
+            Debug.Log($"✅ Lerp transition COMPLETED - final position: {cameraController.transform.position}, rotation: {targetRot}");
+        }
+
+        isAnimating = false;
+        currentTransitionAnimation = null;
     }
 
     private void AnimateToOriginalPosition()
     {
         if (cameraController == null) return;
 
-        var sequence = DOTween.Sequence();
-        sequence.Append(cameraController.transform.DOMove(originalCameraPosition, returnTransitionDuration).SetEase(Ease.InOutQuart));
-        sequence.Join(cameraController.transform.DORotate(originalCameraRotation, returnTransitionDuration).SetEase(Ease.InOutQuart));
+        // Stop any existing transition animation
+        if (currentTransitionAnimation != null)
+        {
+            StopCoroutine(currentTransitionAnimation);
+        }
+
+        // Start Lerp-based return animation
+        currentTransitionAnimation = StartCoroutine(LerpCameraTransition(
+            cameraController.transform.position,
+            cameraController.transform.rotation.eulerAngles,
+            originalCameraPosition,
+            originalCameraRotation,
+            returnTransitionDuration
+        ));
     }
 
     public void PerformSwipeRight()
     {
+        Debug.Log($"🎯 PerformSwipeRight called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
+
+        // ENHANCED DEFENSIVE: Ensure cameraController is valid with gentle reinitialization
+        if (cameraController == null)
+        {
+            Debug.Log("🔄 cameraController is null in PerformSwipeRight, reinitializing...");
+            cameraController = TopDownCameraController.Instance;
+
+            if (cameraController == null)
+            {
+                Debug.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
+                return;
+            }
+            Debug.Log("✅ cameraController reinitialized successfully for swipe");
+        }
+
         if (currentPositionIndex < cameraXPositions.Length - 1)
         {
             currentPositionIndex++;
+            Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
+        }
+        else
+        {
+            Debug.Log("🚫 Already at rightmost position, cannot swipe right further");
         }
     }
 
     public void PerformSwipeLeft()
     {
+        Debug.Log($"🎯 PerformSwipeLeft called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
+
+        // ENHANCED DEFENSIVE: Ensure cameraController is valid with gentle reinitialization
+        if (cameraController == null)
+        {
+            Debug.Log("🔄 cameraController is null in PerformSwipeLeft, reinitializing...");
+            cameraController = TopDownCameraController.Instance;
+
+            if (cameraController == null)
+            {
+                Debug.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
+                return;
+            }
+            Debug.Log("✅ cameraController reinitialized successfully for swipe");
+        }
+
         if (currentPositionIndex > 0)
         {
             currentPositionIndex--;
+            Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
+        }
+        else
+        {
+            Debug.Log("🚫 Already at leftmost position, cannot swipe left further");
         }
     }
     #endregion
@@ -296,5 +517,34 @@ public class CameraAnimationController : MonoBehaviour
     /// Check if startup UI has been shown (for debugging)
     /// </summary>
     public bool HasShownStartupUI() => hasShownStartupUI;
+    #endregion
+
+    #region Unity Lifecycle Cleanup
+    private void OnDestroy()
+    {
+        Debug.Log($"🔍 CameraAnimationController.OnDestroy() called on {gameObject.name}");
+
+        // Stop all running animations
+        if (currentSwipeAnimation != null)
+        {
+            StopCoroutine(currentSwipeAnimation);
+            currentSwipeAnimation = null;
+            Debug.Log("🛑 Stopped swipe animation in OnDestroy");
+        }
+
+        if (currentTransitionAnimation != null)
+        {
+            StopCoroutine(currentTransitionAnimation);
+            currentTransitionAnimation = null;
+            Debug.Log("🛑 Stopped transition animation in OnDestroy");
+        }
+
+        // Clear singleton instance if this is the current instance
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("✅ CameraAnimationController singleton instance cleared");
+        }
+    }
     #endregion
 }

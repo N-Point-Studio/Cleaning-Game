@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using DG.Tweening;
+// Removed DG.Tweening - replaced with Lerp
 
 public class TopDownCameraController : StateMachine
 {
@@ -37,6 +37,10 @@ public class TopDownCameraController : StateMachine
     // Camera state tracking
     private Vector3 overviewPosition;
     private Vector3 overviewRotation;
+
+    // Lerp animation system - replaces DOTween
+    private Coroutine currentTransition;
+    private bool isTransitioningLerp = false;
 
     public static TopDownCameraController Instance { get; private set; }
 
@@ -103,7 +107,13 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void SetFocusTarget(Transform target)
     {
+        Debug.Log($"=== SetFocusTarget called ===");
+        Debug.Log($"Previous target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        Debug.Log($"New target: {(target != null ? target.name : "NULL")}");
+
         currentFocusTarget = target;
+
+        Debug.Log($"✅ Focus target set to: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
     }
 
     /// <summary>
@@ -127,12 +137,40 @@ public class TopDownCameraController : StateMachine
         float targetX = camAnimController.GetCurrentXPosition();
         Vector3 explorationBasePos = camAnimController.GetExplorationPosition();
         Vector3 targetPos = new Vector3(targetX, explorationBasePos.y, explorationBasePos.z);
-        
+
         // Use the standard exploration rotation
         Vector3 targetRot = new Vector3(90f, 0f, 0f);
         float targetFOV = overviewFOV;
 
         StartTransition(targetPos, targetRot, targetFOV);
+    }
+
+    /// <summary>
+    /// NEW: Transition to the appropriate state based on stored focus target
+    /// This method should be called when returning from gameplay to restore the correct camera state
+    /// </summary>
+    public void TransitionToStoredState()
+    {
+        Debug.Log($"TransitionToStoredState called - currentFocusTarget: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+
+        // If we have a focus target, return to focus mode
+        if (currentFocusTarget != null)
+        {
+            Debug.Log($"Restoring focus on target: {currentFocusTarget.name}");
+            TransitionToFocus();
+
+            // Notify the target object that it's focused again
+            ClickableObject clickable = currentFocusTarget.GetComponent<ClickableObject>();
+            if (clickable != null)
+            {
+                clickable.SetFocusState(true);
+            }
+        }
+        else
+        {
+            Debug.Log("No focus target stored, transitioning to overview");
+            TransitionToOverview();
+        }
     }
 
     /// <summary>
@@ -222,28 +260,79 @@ public class TopDownCameraController : StateMachine
     }
 
     /// <summary>
-    /// Start smooth transition between camera states using DoTween
+    /// Start smooth transition between camera states using Lerp
     /// </summary>
     private void StartTransition(Vector3 targetPos, Vector3 targetRot, float targetFOV)
     {
-        // Kill any existing transition and force it to completion to ensure OnComplete callbacks are fired
-        DOTween.Kill(transform, true);
-        DOTween.Kill(cam, true);
+        // Stop any existing transition
+        if (currentTransition != null)
+        {
+            StopCoroutine(currentTransition);
+            Debug.Log("🛑 Stopped existing transition");
+        }
 
         // Set transitioning state
         isTransitioning = true;
+        isTransitioningLerp = true;
 
-        // Create smooth transition sequence with DoTween
-        Sequence transitionSequence = DOTween.Sequence();
-        transitionSequence.Append(transform.DOMove(targetPos, transitionDuration).SetEase(Ease.OutQuart));
-        transitionSequence.Join(transform.DORotate(targetRot, transitionDuration).SetEase(Ease.OutQuart));
-        transitionSequence.Join(DOTween.To(() => cam.fieldOfView, x => cam.fieldOfView = x, targetFOV, transitionDuration).SetEase(Ease.OutQuart));
+        // Start Lerp-based transition
+        currentTransition = StartCoroutine(LerpCameraTransition(
+            transform.position,
+            transform.rotation.eulerAngles,
+            cam.fieldOfView,
+            targetPos,
+            targetRot,
+            targetFOV,
+            transitionDuration
+        ));
+    }
 
-        // Set completion callback
-        transitionSequence.OnComplete(() => {
-            isTransitioning = false;
-            AdvancedInputManager.EndTransitionLock(); // Release the global lock
-        });
+    /// <summary>
+    /// Lerp-based camera transition - replaces DOTween
+    /// </summary>
+    private IEnumerator LerpCameraTransition(Vector3 startPos, Vector3 startRot, float startFOV,
+                                           Vector3 targetPos, Vector3 targetRot, float targetFOV,
+                                           float duration)
+    {
+        Debug.Log($"🎬 TopDown Lerp transition STARTED - pos: {targetPos}, rot: {targetRot}, FOV: {targetFOV}");
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / duration;
+
+            // Apply easing (OutQuart equivalent)
+            float easedProgress = 1f - Mathf.Pow(1f - progress, 4f);
+
+            // Lerp position, rotation, and FOV
+            Vector3 currentPos = Vector3.Lerp(startPos, targetPos, easedProgress);
+            Vector3 currentRot = Vector3.Lerp(startRot, targetRot, easedProgress);
+            float currentFOV = Mathf.Lerp(startFOV, targetFOV, easedProgress);
+
+            // Apply to transform and camera
+            transform.position = currentPos;
+            transform.rotation = Quaternion.Euler(currentRot);
+            cam.fieldOfView = currentFOV;
+
+            yield return null;
+        }
+
+        // Ensure exact final values
+        transform.position = targetPos;
+        transform.rotation = Quaternion.Euler(targetRot);
+        cam.fieldOfView = targetFOV;
+
+        // Clear transitioning state
+        isTransitioning = false;
+        isTransitioningLerp = false;
+        currentTransition = null;
+
+        // Release the global transition lock
+        AdvancedInputManager.EndTransitionLock();
+
+        Debug.Log($"✅ TopDown Lerp transition COMPLETED - final pos: {transform.position}, rot: {targetRot}, FOV: {cam.fieldOfView}");
     }
 
     /// <summary>
@@ -259,6 +348,12 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public Transform GetCurrentFocus()
     {
+        Debug.Log($"=== GetCurrentFocus called ===");
+        Debug.Log($"Current focus target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        if (currentFocusTarget != null && currentFocusTarget.gameObject != null)
+        {
+            Debug.Log($"Target is valid and active: {currentFocusTarget.gameObject.activeInHierarchy}");
+        }
         return currentFocusTarget;
     }
 
@@ -277,9 +372,13 @@ public class TopDownCameraController : StateMachine
     {
         if (target == null) return;
 
-        // Kill any existing transitions
-        DOTween.Kill(transform);
-        DOTween.Kill(cam);
+        // Stop any existing transitions
+        if (currentTransition != null)
+        {
+            StopCoroutine(currentTransition);
+            currentTransition = null;
+            Debug.Log("🛑 Stopped transition for immediate focus");
+        }
 
         Vector3 targetPosition = CalculateFocusPosition(target);
         Vector3 targetRotation = new Vector3(90f, 0f, 0f); // Top-down view
@@ -290,6 +389,7 @@ public class TopDownCameraController : StateMachine
 
         currentFocusTarget = target;
         isTransitioning = false;
+        isTransitioningLerp = false;
     }
 
     /// <summary>
@@ -335,6 +435,29 @@ public class TopDownCameraController : StateMachine
             Vector3 focusPos = CalculateFocusPosition(currentFocusTarget);
             Gizmos.DrawWireCube(focusPos, Vector3.one);
             Gizmos.DrawLine(focusPos, currentFocusTarget.position);
+        }
+    }
+
+    /// <summary>
+    /// Cleanup when TopDownCameraController is destroyed
+    /// </summary>
+    private void OnDestroy()
+    {
+        Debug.Log($"🔍 TopDownCameraController.OnDestroy() called");
+
+        // Stop any running transitions
+        if (currentTransition != null)
+        {
+            StopCoroutine(currentTransition);
+            currentTransition = null;
+            Debug.Log("🛑 Stopped transition in OnDestroy");
+        }
+
+        // Clear singleton instance if this is the current instance
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("✅ TopDownCameraController singleton instance cleared");
         }
     }
 }
