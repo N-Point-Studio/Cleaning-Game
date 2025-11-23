@@ -465,6 +465,13 @@ public class AdvancedInputManager : MonoBehaviour
             }
         }
 
+        // ADDITIONAL FIX: Ensure game mode is correct before performing swipe
+        if (gameModeManager != null && !gameModeManager.IsInExplorationMode())
+        {
+            Debug.LogWarning("⚠️ Not in exploration mode - ensuring exploration mode is active before swipe");
+            gameModeManager.ReturnToExplorationMode();
+        }
+
         switch (direction)
         {
             case SwipeDirection.Right:

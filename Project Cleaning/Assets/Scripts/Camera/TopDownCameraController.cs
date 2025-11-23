@@ -121,6 +121,15 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToOverview()
     {
+        Debug.Log("🔧 TransitionToOverview called - ensuring exploration mode is properly initialized");
+
+        // CRITICAL FIX: Ensure exploration mode is properly set up first
+        if (GameModeManager.Instance != null && !GameModeManager.Instance.IsInExplorationMode())
+        {
+            Debug.Log("🔄 Setting GameModeManager to exploration mode");
+            GameModeManager.Instance.ReturnToExplorationMode();
+        }
+
         // Get the correct exploration position from the animation controller
         var camAnimController = CameraAnimationController.Instance;
         if (camAnimController == null)
@@ -129,6 +138,8 @@ public class TopDownCameraController : StateMachine
             Vector3 targetPosFallback = overviewPosition;
             Vector3 targetRotFallback = overviewRotation;
             float targetFOVFallback = overviewFOV;
+
+            Debug.Log("⚠️ CameraAnimationController not found, using fallback overview position");
             StartTransition(targetPosFallback, targetRotFallback, targetFOVFallback);
             return;
         }
@@ -142,6 +153,7 @@ public class TopDownCameraController : StateMachine
         Vector3 targetRot = new Vector3(90f, 0f, 0f);
         float targetFOV = overviewFOV;
 
+        Debug.Log($"✅ Transitioning to overview - X: {targetX}, Position: {targetPos}");
         StartTransition(targetPos, targetRot, targetFOV);
     }
 
@@ -178,12 +190,25 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToFocus()
     {
-        if (currentFocusTarget == null) return;
+        if (currentFocusTarget == null)
+        {
+            Debug.LogWarning("❌ TransitionToFocus called but currentFocusTarget is null");
+            return;
+        }
+
+        Debug.Log($"🎯 TransitionToFocus called for target: {currentFocusTarget.name}");
 
         Vector3 targetPos = CalculateFocusPosition(currentFocusTarget);
         Vector3 targetRot = new Vector3(90f, 0f, 0f); // FOCUS MODE specific rotation (top-down)
         float targetFOV = focusFOV;
 
+        // Notify the target object that it's being focused
+        ClickableObject clickable = currentFocusTarget.GetComponent<ClickableObject>();
+        if (clickable != null)
+        {
+            Debug.Log($"📍 Setting focus state on target object: {currentFocusTarget.name}");
+            clickable.SetFocusState(true);
+        }
 
         StartTransition(targetPos, targetRot, targetFOV);
     }

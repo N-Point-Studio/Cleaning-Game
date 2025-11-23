@@ -1566,16 +1566,54 @@ public class SceneTransitionManager : MonoBehaviour
             yield break;
         }
 
-        // Find the target object by name using clickedObjectName (simple approach)
+        // CRITICAL FIX: First ensure basic systems are ready, but don't force exploration mode yet
+        Debug.Log("🔧 PREPARING CAMERA SYSTEMS FOR RESTORATION");
+
+        // Step 1: Ensure CameraAnimationController is ready
+        if (CameraAnimationController.Instance != null)
+        {
+            Debug.Log("🔄 Re-initializing CameraAnimationController exploration mode");
+            CameraAnimationController.Instance.BeginExplorationMode();
+        }
+
+        // Step 2: Wait for basic initialization to complete
+        yield return new WaitForSeconds(0.3f);
+
+        // Find the target object by name using clickedObjectName
         if (!string.IsNullOrEmpty(clickedObjectName))
         {
             Debug.Log($"🔍 Looking for focus target object by name: '{clickedObjectName}'");
 
-            // Try to find the object in current scene
+            // Method 1: Try to find the object by exact name
             GameObject targetObject = GameObject.Find(clickedObjectName);
+
+            // Method 2: If exact name not found, search all ClickableObjects
+            if (targetObject == null)
+            {
+                Debug.Log($"🔍 Exact name not found, searching ClickableObjects...");
+                ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
+
+                foreach (ClickableObject clickable in allClickables)
+                {
+                    if (clickable.name.Contains(clickedObjectName) || clickedObjectName.Contains(clickable.name))
+                    {
+                        targetObject = clickable.gameObject;
+                        Debug.Log($"✅ Found similar object: {targetObject.name}");
+                        break;
+                    }
+                }
+            }
+
             if (targetObject != null)
             {
-                Debug.Log($"✅ Found target object in scene: {targetObject.name}");
+                Debug.Log($"✅ Found target object for focus restoration: {targetObject.name}");
+
+                // IMPORTANT: Set GameModeManager to zoom mode first
+                if (GameModeManager.Instance != null)
+                {
+                    Debug.Log("🔄 Setting GameModeManager to zoom mode for focus restoration");
+                    GameModeManager.Instance.EnterZoomMode();
+                }
 
                 // Set the focus target in camera controller
                 cameraController.SetFocusTarget(targetObject.transform);
@@ -1583,50 +1621,60 @@ public class SceneTransitionManager : MonoBehaviour
                 // Wait a frame for focus target to be set
                 yield return null;
 
-                // Restore camera to the stored state (focus mode)
+                // Restore camera to focus mode directly (not using TransitionToStoredState)
                 Debug.Log("🎯 RESTORING CAMERA TO FOCUS MODE");
-                cameraController.TransitionToStoredState();
+                cameraController.TransitionToFocus();
 
                 // Reset the restoration flag and clear data
                 shouldRestoreCameraFocus = false;
                 clickedObjectName = "";  // Clear now after restoration is done
                 clickedObjectPosition = Vector3.zero;
-                Debug.Log("✅ CAMERA STATE RESTORATION COMPLETED");
+                Debug.Log("✅ FOCUS MODE RESTORATION COMPLETED");
                 Debug.Log("🧹 Cleared clicked object data after restoration");
             }
             else
             {
                 Debug.LogWarning($"⚠️ Could not find target object '{clickedObjectName}' in current scene");
-                Debug.LogWarning("Listing all GameObjects in scene for debugging:");
+                Debug.LogWarning("Falling back to exploration mode without focus");
 
-                // Debug: List all GameObjects to see what's available
-                GameObject[] allObjects = FindObjectsOfType<GameObject>();
-                int count = 0;
-                foreach (GameObject obj in allObjects)
-                {
-                    if (!obj.name.StartsWith("UI") && !obj.name.Contains("Canvas") && count < 10)
-                    {
-                        Debug.LogWarning($"   Available object: {obj.name}");
-                        count++;
-                    }
-                }
-
+                // Fallback: Go to exploration mode
+                RestoreToExplorationModeFallback(cameraController);
                 shouldRestoreCameraFocus = false;
-                clickedObjectName = "";  // Clear data on error too
+                clickedObjectName = "";
                 clickedObjectPosition = Vector3.zero;
-                Debug.Log("🧹 Cleared clicked object data after failed restoration");
+                Debug.Log("✅ EXPLORATION MODE FALLBACK COMPLETED");
             }
         }
         else
         {
-            Debug.LogWarning($"⚠️ No clickedObjectName available for restoration - clickedObjectName: '{clickedObjectName}'");
+            Debug.LogWarning($"⚠️ No clickedObjectName available for restoration - going to exploration mode");
+            RestoreToExplorationModeFallback(cameraController);
             shouldRestoreCameraFocus = false;
-            clickedObjectName = "";  // Clear data on no restore case too
+            clickedObjectName = "";
             clickedObjectPosition = Vector3.zero;
-            Debug.Log("🧹 Cleared clicked object data - no restoration needed");
+            Debug.Log("✅ EXPLORATION MODE DEFAULT COMPLETED");
         }
 
         Debug.Log("=== CAMERA STATE RESTORATION FINISHED ===");
+    }
+
+    /// <summary>
+    /// Helper method for fallback to exploration mode
+    /// </summary>
+    private void RestoreToExplorationModeFallback(TopDownCameraController cameraController)
+    {
+        Debug.Log("🔧 FALLBACK: Restoring to exploration mode");
+
+        // Set GameModeManager to exploration mode
+        if (GameModeManager.Instance != null)
+        {
+            Debug.Log("🔄 Setting GameModeManager to exploration mode");
+            GameModeManager.Instance.ReturnToExplorationMode();
+        }
+
+        // Transition camera to overview/exploration state
+        Debug.Log("🔄 Transitioning camera to exploration overview state");
+        cameraController.TransitionToOverview();
     }
 
     /// <summary>
