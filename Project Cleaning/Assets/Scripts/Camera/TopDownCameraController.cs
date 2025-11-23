@@ -114,6 +114,10 @@ public class TopDownCameraController : StateMachine
         currentFocusTarget = target;
 
         Debug.Log($"✅ Focus target set to: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+
+        // REMOVED AUTO-SAVE: This was causing "destroyed object" errors during scene transitions
+        // CameraStateManager will save state at appropriate times (before scene transitions)
+        // No need for immediate auto-save on every SetFocusTarget call
     }
 
     /// <summary>

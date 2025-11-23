@@ -231,7 +231,26 @@ public class CameraAnimationController : MonoBehaviour
         // Disable all inspectable objects when exiting to initial mode
         ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
 
-        AnimateToOriginalPosition();
+        // FIXED: Check if CameraStateManager has a valid state to restore
+        // If so, let CameraStateManager handle camera positioning instead of AnimateToOriginalPosition
+        var cameraStateManager = FindObjectOfType<CameraStateManager>();
+        bool letCameraStateManagerHandle = false;
+
+        if (cameraStateManager != null && cameraStateManager.HasValidStateToRestore())
+        {
+            letCameraStateManagerHandle = true;
+            Debug.Log("✅ CameraStateManager has valid state - letting it handle camera restoration instead of AnimateToOriginalPosition");
+        }
+        else
+        {
+            Debug.Log("📝 No valid camera state to restore - using default AnimateToOriginalPosition");
+        }
+
+        // Only animate to original position if CameraStateManager isn't handling it
+        if (!letCameraStateManagerHandle)
+        {
+            AnimateToOriginalPosition();
+        }
 
         // FIXED: Use SaveSystem to check if intro transition should be shown
         bool shouldShowIntroTransition = true;
