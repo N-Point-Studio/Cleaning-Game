@@ -88,8 +88,11 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void Start()
     {
-        // Application.targetFrameRate = 60;
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+        Time.fixedDeltaTime = 0.02f;
         cameraController = TopDownCameraController.Instance;
+        ScalableBufferManager.ResizeBuffers(0.8f, 0.8f);
         SetupUI();
     }
 
