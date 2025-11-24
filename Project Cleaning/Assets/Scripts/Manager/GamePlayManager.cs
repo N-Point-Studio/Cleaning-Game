@@ -18,8 +18,13 @@ public class GamePlayManager : MonoBehaviour
 
     [Header("Scene Transition")]
     [SerializeField] private bool enableSceneTransition = true;
-    [SerializeField] private float transitionDelayAfterFinish = 2f;
     [SerializeField] private float environmentAnimationDuration = 3f; // Time to complete environment animation
+
+    [Header("Return Scene Transition")]
+    [SerializeField] private bool useStagedReturnTransition = true;
+    [SerializeField] private string returnIntermediaryScene = "TransitionScreen";
+    [SerializeField] private float returnIntermediaryDelay = 3.0f;
+    [SerializeField] private EasyTransition.TransitionSettings returnTransitionSettings;
 
     public bool isGameFinished = false;
     private bool transitionTriggered = false;
@@ -239,37 +244,13 @@ public class GamePlayManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Trigger scene transition after a delay when game is finished
+    /// Triggers the finish button logic, unifying the automatic and manual finish process.
     /// </summary>
     private IEnumerator TriggerSceneTransitionAfterDelay()
     {
-        Debug.Log($"=== GAME FINISHED - Starting transition in {transitionDelayAfterFinish} seconds ===");
-
-        // Wait for the specified delay
-        yield return new WaitForSeconds(transitionDelayAfterFinish);
-
-        // Ensure SceneTransitionManager exists
-        if (SceneTransitionManager.Instance == null)
-        {
-            Debug.LogError("SceneTransitionManager not found! Creating one...");
-            GameObject stmGO = new GameObject("SceneTransitionManager");
-            stmGO.AddComponent<SceneTransitionManager>();
-        }
-
-        Debug.Log($"=== TRIGGERING SCENE TRANSITION ===");
-        Debug.Log($"Object Type: {currentGameplayObjectType}");
-
-        // Get the target scene from SceneTransitionManager data (from originally clicked object)
-        string targetScene = GetTargetSceneForReturn();
-        Debug.Log($"Target Scene: {targetScene}");
-
-        // Trigger the scene transition with ContentSwitcher
-        SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(currentGameplayObjectType, targetScene);
-
-        // CLEANUP: Prepare for scene unload AFTER transition starts
-        // Give transition animation time to start properly
-        yield return new WaitForSeconds(0.5f);
-        PrepareForSceneTransition();
+        Debug.Log($"=== GAME FINISHED - Triggering finish button logic. ===");
+        yield return null; // Wait a frame to ensure all state is updated before triggering the button action.
+        TriggerFinishButton();
     }
 
     /// <summary>
@@ -369,6 +350,7 @@ public class GamePlayManager : MonoBehaviour
             Debug.LogError("SceneTransitionManager not found! Creating one...");
             GameObject stmGO = new GameObject("SceneTransitionManager");
             stmGO.AddComponent<SceneTransitionManager>();
+            yield return null; // Wait a frame for it to initialize
         }
 
         Debug.Log($"=== TRIGGERING SCENE TRANSITION FROM BUTTON ===");
@@ -378,8 +360,23 @@ public class GamePlayManager : MonoBehaviour
         string targetScene = GetTargetSceneForReturn();
         Debug.Log($"Target Scene: {targetScene}");
 
-        // Trigger the scene transition with ContentSwitcher (preserves your transition animation)
-        SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(currentGameplayObjectType, targetScene);
+        // Check if we should use a staged transition for the return trip
+        if (useStagedReturnTransition)
+        {
+            Debug.Log("Using STAGED transition to return to menu.");
+            SceneTransitionManager.Instance.StartStagedTransition(
+                returnIntermediaryScene,
+                targetScene,
+                returnIntermediaryDelay,
+                returnTransitionSettings // Pass the specific transition settings
+            );
+        }
+        else
+        {
+            Debug.Log("Using DIRECT transition to return to menu.");
+            // This direct transition will use the default transition settings in SceneTransitionManager
+            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(currentGameplayObjectType, targetScene);
+        }
 
         // CLEANUP: Prepare for scene unload AFTER transition animation has time to start
         // Give transition animation more time to properly initialize

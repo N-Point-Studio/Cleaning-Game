@@ -267,38 +267,37 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (clickableObject?.CanChangeScene() != true)
             return;
 
-        string sceneName = clickableObject.GetSceneName();
-        if (string.IsNullOrEmpty(sceneName))
+        string finalSceneName = clickableObject.GetSceneName();
+        if (string.IsNullOrEmpty(finalSceneName))
             return;
 
-        // NEW: Store clicked object info for later use when returning from gameplay
-        StoreClickedObjectInfo(clickableObject);
-
-        // FIXED: Use SceneTransitionManager with DYNAMIC scene name from clicked object
+        // Store object info for the return trip, but only if the SceneTransitionManager is available.
+        // This is now separate from the outgoing transition logic.
         if (SceneTransitionManager.Instance != null)
         {
-            Debug.Log("=== Using SceneTransitionManager for scene transition ===");
-            ObjectType objectType = clickableObject.GetObjectType();
-            string objectName = clickableObject.name;
-            Vector3 objectPosition = clickableObject.transform.position;
+            StoreClickedObjectInfo(clickableObject);
+        }
 
-            Debug.Log($"🎯 Scene transition to: {sceneName}");
-            Debug.Log($"🎯 Object: {objectName}");
-            Debug.Log($"🎯 ObjectType: {objectType}");
+        // --- New Self-Contained Transition Logic ---
 
-            // CRITICAL FIX: Use the scene name from the clicked object (not hardcoded!)
-            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(
-                objectType,
-                sceneName,  // 🔥 This is the dynamic scene name from jar.targetSceneName
-                objectName,
-                objectPosition
+        // If a staged transition is needed, use the self-contained runner.
+        if (clickableObject.UseStagedTransition())
+        {
+            Debug.Log("=== Starting Staged Scene Transition (Standalone) ===");
+            GameObject transitionerGO = new GameObject("StagedTransitionRunner");
+            DontDestroyOnLoad(transitionerGO);
+            var runner = transitionerGO.AddComponent<StagedTransitionRunner>();
+            runner.StartTransition(
+                clickableObject.GetIntermediarySceneName(),
+                finalSceneName,
+                clickableObject.GetIntermediaryDelay()
             );
         }
+        // Otherwise, perform a simple, direct scene change.
         else
         {
-            Debug.LogWarning("SceneTransitionManager not found! Using fallback scene loading.");
-            // Fallback to direct scene load
-            StartCoroutine(ChangeSceneCoroutine(sceneName));
+            Debug.Log("=== Using Direct Scene Transition (Standalone) ===");
+            StartCoroutine(ChangeSceneCoroutine(finalSceneName));
         }
     }
 

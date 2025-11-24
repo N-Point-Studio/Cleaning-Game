@@ -201,6 +201,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -238,6 +241,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -435,6 +441,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 347007618}
   textMeshPro: {fileID: 347007619}
   characterAnimationSpeed: 0.1
@@ -570,6 +579,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 1209202976}
   textMeshPro: {fileID: 1209202977}
   characterAnimationSpeed: 0.1
@@ -936,6 +948,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 206321102}
   textMeshPro: {fileID: 206321103}
   characterAnimationSpeed: 0.1
@@ -1050,6 +1065,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -1555,6 +1573,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -3368,6 +3389,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 1239572956}
   textMeshPro: {fileID: 1239572957}
   characterAnimationSpeed: 0.1
@@ -4243,6 +4267,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 1
+  intermediarySceneName: TransitionScreen
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 179735223}
   textMeshPro: {fileID: 179735224}
   characterAnimationSpeed: 0.1
@@ -4262,7 +4289,19 @@ MonoBehaviour:
   autoFindRelatedObjects: 1
   OnObjectClicked:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: StagedSceneTransition, Assembly-CSharp
+        m_MethodName: BeginStagedTransition
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &525686419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4477,6 +4516,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 179735224}
   characterAnimationSpeed: 0.1
@@ -4612,6 +4654,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 922827017}
   textMeshPro: {fileID: 922827018}
   characterAnimationSpeed: 0.1
@@ -4747,6 +4792,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 206321102}
   textMeshPro: {fileID: 206321103}
   characterAnimationSpeed: 0.1
@@ -7111,6 +7159,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -7148,6 +7199,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -7849,6 +7903,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 1209202976}
   textMeshPro: {fileID: 1209202977}
   characterAnimationSpeed: 0.1
@@ -8635,6 +8692,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 347007618}
   textMeshPro: {fileID: 347007619}
   characterAnimationSpeed: 0.1
@@ -9289,6 +9349,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1390159515}
   - component: {fileID: 1390159516}
+  - component: {fileID: 1390159517}
   m_Layer: 0
   m_Name: TransitionManager
   m_TagString: Untagged
@@ -9325,6 +9386,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   transitionTemplate: {fileID: 5276914992623515724, guid: 616d511151a6c554caddf1c754e4f91d,
     type: 3}
+--- !u!114 &1390159517
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1390159514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 413c1f5d253414220afceae1d4112c19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1400816672
 GameObject:
   m_ObjectHideFlags: 0
@@ -10819,6 +10892,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -10856,6 +10932,9 @@ MonoBehaviour:
   canChangeScene: 0
   useTransitionAnimation: 1
   transitionSettings: {fileID: 0}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 0}
   textMeshPro: {fileID: 0}
   characterAnimationSpeed: 0.05
@@ -11266,6 +11345,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 922827017}
   textMeshPro: {fileID: 922827018}
   characterAnimationSpeed: 0.1
@@ -11832,6 +11914,9 @@ MonoBehaviour:
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
+  useStagedTransition: 0
+  intermediarySceneName: SceneTransition
+  intermediaryDelay: 3
   popupTextGameObject: {fileID: 1239572956}
   textMeshPro: {fileID: 1239572957}
   characterAnimationSpeed: 0.1

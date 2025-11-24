@@ -17,10 +17,11 @@ public class SceneTransitionManager : MonoBehaviour
     [Header("Scene Configuration")]
     [SerializeField] private float sceneTransitionDelay = 0.5f;
     [SerializeField] private bool useEasyTransition = true;
-    [SerializeField] private EasyTransition.TransitionSettings defaultTransitionSettings;
-
     [Header("Debug Settings")]
     [SerializeField] private bool enableDebugLogs = true; // Re-enable to debug remaining issue
+    [Header("Fallback Transition")]
+    [Tooltip("Assign a default TransitionSettings asset here to be used when no other settings are found.")]
+    [SerializeField] private EasyTransition.TransitionSettings fallbackTransitionSettings;
 
     // Data to persist across scenes
     private ObjectType currentObjectType;
@@ -41,6 +42,13 @@ public class SceneTransitionManager : MonoBehaviour
     private WaitForSeconds cachedSceneTransitionDelay;
     private readonly WaitForEndOfFrame cachedWaitForEndOfFrame = new WaitForEndOfFrame();
     private readonly WaitForSeconds cachedSmallDelay = new WaitForSeconds(0.1f);
+
+    // Staged transition data
+    private string stagedFinalDestinationScene;
+    private float stagedDelay;
+    private bool isStagedTransition = false;
+    private string intermediarySceneName;
+    private EasyTransition.TransitionSettings stagedFinalTransitionSettings; // Renamed for clarity
 
     private void Awake()
     {
@@ -169,6 +177,30 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(PerformSceneTransition());
     }
 
+    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings)
+    {
+        if (isTransitionInProgress)
+        {
+            Debug.LogWarning("Staged scene transition already in progress!");
+            return;
+        }
+
+        stagedFinalDestinationScene = finalDestinationScene;
+        stagedDelay = delay;
+        isStagedTransition = true;
+        intermediarySceneName = intermediaryScene;
+        targetSceneName = intermediaryScene;
+        stagedFinalTransitionSettings = settings; // Store for the final leg
+
+        if (enableDebugLogs)
+        {
+            Debug.Log($"=== STAGED TRANSITION STARTED ===\nIntermediary: {intermediaryScene}\nFinal: {finalDestinationScene}");
+        }
+        
+        SaveCameraStateForRestore();
+        StartCoroutine(PerformSceneTransition(settings)); // Use settings for the first leg
+    }
+
 
     /// <summary>
     /// SIMPLE APPROACH: Use SimpleCameraFocusRestore system - removes complex dependencies
@@ -239,7 +271,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// <summary>
     /// Perform the actual scene transition with proper cleanup
     /// </summary>
-    private IEnumerator PerformSceneTransition()
+    private IEnumerator PerformSceneTransition(EasyTransition.TransitionSettings settings = null)
     {
         isTransitionInProgress = true;
 
@@ -248,289 +280,194 @@ public class SceneTransitionManager : MonoBehaviour
             Debug.Log($"Starting scene transition to: {targetSceneName}");
         }
 
-        // STEP 1: Optional delay before transition (for animation setup time)
         if (sceneTransitionDelay > 0)
         {
             yield return cachedSceneTransitionDelay;
         }
 
-        // STEP 2: Load the target scene (BEFORE cleanup to preserve animations)
         if (useEasyTransition)
         {
-            bool transitionSuccessful = TryEasyTransition();
-            if (!transitionSuccessful)
+            if (!TryEasyTransition(settings))
             {
-                // Fallback to standard scene loading
-                if (enableDebugLogs)
-                {
-                    Debug.Log("EasyTransition not available, using standard scene loading");
-                }
-
-                // CLEANUP: Only cleanup if fallback to standard loading
+                if (enableDebugLogs) Debug.Log("EasyTransition failed, using standard scene loading");
                 CleanupCurrentSceneForTransition();
-                yield return new WaitForSeconds(0.1f); // Brief delay for cleanup
                 SceneManager.LoadScene(targetSceneName);
             }
-            // If Easy Transition successful, it handles the scene loading internally
         }
         else
         {
-            // Standard Unity scene loading with cleanup
             CleanupCurrentSceneForTransition();
-            yield return new WaitForSeconds(0.1f); // Brief delay for cleanup
             SceneManager.LoadScene(targetSceneName);
         }
     }
 
-    /// <summary>
-    /// Try to use EasyTransition for scene loading with proper animation support
-    /// </summary>
-    private bool TryEasyTransition()
+    private IEnumerator ContinueStagedTransition()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"...continuing staged transition, waiting {stagedDelay}s...");
+        }
+
+        if (stagedDelay > 0)
+        {
+            yield return new WaitForSeconds(stagedDelay);
+        }
+
+        targetSceneName = stagedFinalDestinationScene;
+        EasyTransition.TransitionSettings finalSettings = stagedFinalTransitionSettings;
+
+        // Reset staged data before starting next transition
+        isStagedTransition = false;
+        stagedFinalDestinationScene = null;
+        stagedDelay = 0;
+        intermediarySceneName = null;
+        stagedFinalTransitionSettings = null;
+
+        if (enableDebugLogs)
+        {
+            Debug.Log($"...wait over, transitioning to final scene: {targetSceneName}");
+        }
+        StartCoroutine(PerformSceneTransition(finalSettings));
+    }
+
+    private bool TryEasyTransition(EasyTransition.TransitionSettings settings)
     {
         try
         {
             // METHOD 1: Try to find EasyTransition.TransitionManager in scene
             var transitionManager = FindObjectOfType<EasyTransition.TransitionManager>();
-            if (transitionManager != null)
+            if (transitionManager == null)
             {
-                if (enableDebugLogs)
-                {
-                    Debug.Log("=== USING EASY TRANSITION ANIMATION ===");
-                    Debug.Log($"Found TransitionManager: {transitionManager.name}");
-                }
-
-                // Use EasyTransition with proper animation
-                // Try different method signatures
-                try
-                {
-                    if (enableDebugLogs)
-                    {
-                       
-                    }
-
-                  
-                    // Try to find ANY TransitionSettings in the project
-                    EasyTransition.TransitionSettings[] allTransitionSettings = Resources.FindObjectsOfTypeAll<EasyTransition.TransitionSettings>();
-                    for (int i = 0; i < allTransitionSettings.Length; i++)
-                    {
-                    }
-
-                    // Method A: Check if defaultTransitionSettings is properly assigned
-                    if (defaultTransitionSettings != null)
-                    {
-
-                        // DEEP INSPECT: Check ALL fields in TransitionSettings to see what's NULL
-                        var settingsType = defaultTransitionSettings.GetType();
-                        var allFields = settingsType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                        foreach (var field in allFields)
-                        {
-                            try
-                            {
-                                var value = field.GetValue(defaultTransitionSettings);
-                                string status = value == null ? "❌ NULL" : "✅ HAS VALUE";
-                                if (value != null && value.ToString() != "")
-                                {
-                                }
-                            }
-                            catch (System.Exception ex)
-                            {
-                            }
-                        }
-
-                        // FIXED: Use transitionTime from TransitionSettings instead of hardcoded duration
-                        try
-                        {
-                            // Get the transition time from TransitionSettings object
-                            var transitionTimeField = defaultTransitionSettings.GetType().GetField("transitionTime");
-                            float transitionTime = 1f; // default fallback
-                            if (transitionTimeField != null)
-                            {
-                                transitionTime = (float)transitionTimeField.GetValue(defaultTransitionSettings);
-                                if (enableDebugLogs)
-                                {
-                                    Debug.Log($"Using TransitionSettings transitionTime: {transitionTime}s");
-                                }
-                            }
-
-                            // CRITICAL FIX: Reset runningTransition state before calling transition
-                            var runningTransitionField = transitionManager.GetType().GetField("runningTransition",
-                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (runningTransitionField != null)
-                            {
-                                bool currentRunningState = (bool)runningTransitionField.GetValue(transitionManager);
-
-                                if (currentRunningState)
-                                {
-                                    runningTransitionField.SetValue(transitionManager, false);
-                                }
-                            }
-
-                            // Call EasyTransition with proper duration from settings
-                            transitionManager.Transition(targetSceneName, defaultTransitionSettings, transitionTime);
-
-                            if (enableDebugLogs)
-                            {
-                                Debug.Log("✅ EasyTransition called successfully with proper settings!");
-                                Debug.Log($"   Scene: {targetSceneName}");
-                                Debug.Log($"   Transition: {defaultTransitionSettings.name}");
-                                Debug.Log($"   Duration: {transitionTime}s");
-                            }
-                            return true;
-                        }
-                        catch (System.Exception ex)
-                        {
-                            Debug.LogError($"❌ EasyTransition call failed: {ex.Message}");
-                            Debug.LogError($"   Exception Type: {ex.GetType().Name}");
-                            Debug.LogError($"   Will try fallback methods...");
-                            throw; // Continue to reflection methods
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("❌ Default TransitionSettings is null!");
-                        Debug.LogWarning("Trying to find alternative TransitionSettings...");
-
-                        // EMERGENCY FALLBACK 1: Use any TransitionSettings found in project
-                        if (allTransitionSettings.Length > 0)
-                        {
-                            EasyTransition.TransitionSettings emergencySettings = allTransitionSettings[0];
-                            Debug.LogError($"🚨 EMERGENCY: Using first available TransitionSettings: {emergencySettings.name}");
-
-                            // Try using the emergency settings
-                            var emergencyTransitionTimeField = emergencySettings.GetType().GetField("transitionTime");
-                            float emergencyTransitionTime = 1f;
-                            if (emergencyTransitionTimeField != null)
-                            {
-                                emergencyTransitionTime = (float)emergencyTransitionTimeField.GetValue(emergencySettings);
-                            }
-
-                            transitionManager.Transition(targetSceneName, emergencySettings, emergencyTransitionTime);
-                            Debug.LogError("🚨 Emergency transition call successful!");
-                            return true;
-                        }
-
-                        // FALLBACK 2: Try to find TransitionSettings from ClickableObjects in scene
-                        EasyTransition.TransitionSettings fallbackSettings = FindTransitionSettingsInScene();
-                        if (fallbackSettings != null)
-                        {
-                            Debug.Log($"✅ Found fallback TransitionSettings: {fallbackSettings.name}");
-
-                            // FIXED: Use transitionTime from fallback settings too (not 0f)
-                            var fallbackTransitionTimeField = fallbackSettings.GetType().GetField("transitionTime");
-                            float fallbackTransitionTime = 1f; // default fallback
-                            if (fallbackTransitionTimeField != null)
-                            {
-                                fallbackTransitionTime = (float)fallbackTransitionTimeField.GetValue(fallbackSettings);
-                                Debug.Log($"Using fallback TransitionSettings transitionTime: {fallbackTransitionTime}s");
-                            }
-
-                            transitionManager.Transition(targetSceneName, fallbackSettings, fallbackTransitionTime);
-                            Debug.Log("✅ Fallback transition call successful!");
-                            return true;
-                        }
-
-                        // Last resort: Try to create a default fade transition
-                        Debug.LogError("No TransitionSettings found anywhere! Will try reflection...");
-                        throw new System.Exception("No TransitionSettings available");
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogError($"❌ EasyTransition direct call FAILED: {ex.Message}");
-                    Debug.LogError($"Exception type: {ex.GetType()}");
-                    Debug.LogError($"Stack trace: {ex.StackTrace}");
-                    Debug.LogWarning("Trying reflection fallback methods...");
-
-                    // Method B: Try different reflection approaches
-                    if (TryReflectionTransition(transitionManager))
-                    {
-                        Debug.Log("✅ Reflection fallback succeeded!");
-                        return true;
-                    }
-                    else
-                    {
-                        Debug.LogError("❌ All fallback methods failed!");
-                    }
-                }
-            }
-
-            // METHOD 2: Try to access EasyTransition.TransitionManager.Instance()
-            var easyTransitionType = System.Type.GetType("EasyTransition.TransitionManager");
-            if (easyTransitionType != null)
-            {
-                // Use reflection to call Instance().Transition()
-                var instanceMethod = easyTransitionType.GetMethod("Instance");
-                if (instanceMethod != null)
-                {
-                    var instance = instanceMethod.Invoke(null, null);
-                    if (instance != null)
-                    {
-                        // Try different method signatures
-                        System.Reflection.MethodInfo transitionMethod = null;
-
-                        // Try Method A: Transition(string, TransitionSettings, float)
-                        transitionMethod = easyTransitionType.GetMethod("Transition",
-                            new[] { typeof(string), typeof(UnityEngine.Object), typeof(float) });
-
-                        // Try Method B: Transition(string, float)
-                        if (transitionMethod == null)
-                        {
-                            transitionMethod = easyTransitionType.GetMethod("Transition",
-                                new[] { typeof(string), typeof(float) });
-                        }
-
-                        // Try Method C: Transition(string)
-                        if (transitionMethod == null)
-                        {
-                            transitionMethod = easyTransitionType.GetMethod("Transition",
-                                new[] { typeof(string) });
-                        }
-
-                        if (transitionMethod != null)
-                        {
-                            if (enableDebugLogs)
-                            {
-                                Debug.Log("=== USING EASY TRANSITION VIA REFLECTION ===");
-                                Debug.Log($"Using method: {transitionMethod.Name} with {transitionMethod.GetParameters().Length} parameters");
-                            }
-
-                            // Call with appropriate parameters based on method signature
-                            var parameters = transitionMethod.GetParameters();
-                            if (parameters.Length == 3)
-                            {
-                                // Use 1f instead of 0f for reflection calls too
-                                transitionMethod.Invoke(instance, new object[] { targetSceneName, null, 1f });
-                            }
-                            else if (parameters.Length == 2)
-                            {
-                                // Use 1f instead of 0f for reflection calls too
-                                transitionMethod.Invoke(instance, new object[] { targetSceneName, 1f });
-                            }
-                            else
-                            {
-                                transitionMethod.Invoke(instance, new object[] { targetSceneName });
-                            }
-                            return true;
-                        }
-                    }
-                }
+                if (enableDebugLogs) Debug.LogWarning("EasyTransition.TransitionManager not found. Using standard scene loading.");
+                return false;
             }
 
             if (enableDebugLogs)
             {
-                Debug.LogWarning("EasyTransition not found - will use standard scene loading");
+                Debug.Log("=== USING EASY TRANSITION ANIMATION ===");
+                Debug.Log($"Found TransitionManager: {transitionManager.name}");
             }
+
+            EasyTransition.TransitionSettings transitionToUse = settings;
+
+            // If no settings are provided via parameters, try to find them from the specific clicked object
+            if (transitionToUse == null && !string.IsNullOrEmpty(clickedObjectName))
+            {
+                Debug.Log($"Attempting to find settings from clicked object: {clickedObjectName}");
+                GameObject clickedGO = GameObject.Find(clickedObjectName);
+                if (clickedGO != null)
+                {
+                    ClickableObject clickable = clickedGO.GetComponent<ClickableObject>();
+                    if (clickable != null)
+                    {
+                        transitionToUse = clickable.GetTransitionSettings();
+                        if (transitionToUse != null)
+                        {
+                            Debug.Log($"✅ Found TransitionSettings '{transitionToUse.name}' on clicked object '{clickedObjectName}'.");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"⚠️ Clicked object '{clickedObjectName}' found, but it has no TransitionSettings assigned.");
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"⚠️ Could not find GameObject for clicked object name: '{clickedObjectName}'.");
+                }
+            }
+            
+            // If still no settings, use the broader search fallbacks
+            if (transitionToUse == null)
+            {
+                if (enableDebugLogs) Debug.Log("No specific transition settings found, searching for fallbacks in scene...");
+                transitionToUse = FindTransitionSettingsInScene(); // Broader search in scene
+            }
+
+            // If still null, try the inspector-assigned fallback on this manager
+            if (transitionToUse == null)
+            {
+                if (fallbackTransitionSettings != null)
+                {
+                    if (enableDebugLogs) Debug.LogWarning("Using fallback transition settings assigned directly on SceneTransitionManager.");
+                    transitionToUse = fallbackTransitionSettings;
+                }
+            }
+
+            // Final attempt: search all loaded resources
+            if (transitionToUse == null)
+            {
+                EasyTransition.TransitionSettings[] allTransitionSettings = Resources.FindObjectsOfTypeAll<EasyTransition.TransitionSettings>();
+                if (allTransitionSettings.Length > 0)
+                {
+                    transitionToUse = allTransitionSettings[0];
+                    if (enableDebugLogs) Debug.LogWarning($"Using first available TransitionSettings found in project assets: {transitionToUse.name}");
+                }
+            }
+
+            if (transitionToUse != null)
+            {
+                try
+                {
+                    // Get the transition time from TransitionSettings object using reflection
+                    var transitionTimeField = transitionToUse.GetType().GetField("transitionTime");
+                    float transitionTime = 1f; // default fallback
+                    if (transitionTimeField != null)
+                    {
+                        transitionTime = (float)transitionTimeField.GetValue(transitionToUse);
+                        if (enableDebugLogs) Debug.Log($"Using TransitionSettings transitionTime: {transitionTime}s");
+                    }
+
+                    // CRITICAL FIX: Reset runningTransition state before calling transition
+                    var runningTransitionField = transitionManager.GetType().GetField("runningTransition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (runningTransitionField != null)
+                    {
+                        if ((bool)runningTransitionField.GetValue(transitionManager))
+                        {
+                            if (enableDebugLogs) Debug.Log("Resetting 'runningTransition' flag on TransitionManager.");
+                            runningTransitionField.SetValue(transitionManager, false);
+                        }
+                    }
+
+                    // Call EasyTransition with proper duration from settings
+                    transitionManager.Transition(targetSceneName, transitionToUse, transitionTime);
+
+                    if (enableDebugLogs)
+                    {
+                        Debug.Log($"✅ EasyTransition called successfully with proper settings: Scene '{targetSceneName}', Transition '{transitionToUse.name}', Duration '{transitionTime}s'");
+                    }
+                    
+                    return true;
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"❌ EasyTransition direct call FAILED: {ex.Message}. Stack Trace: {ex.StackTrace}");
+                    Debug.LogWarning("Trying reflection fallback methods...");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ No TransitionSettings found anywhere! Cannot perform animated transition. Trying reflection fallback...");
+            }
+
+            // Fallback to reflection if settings-based approach failed or wasn't possible
+            if (TryReflectionTransition(transitionManager))
+            {
+                if (enableDebugLogs) Debug.Log("✅ Reflection fallback for transition succeeded!");
+                return true;
+            }
+
+            Debug.LogError("❌ All EasyTransition methods failed!");
+            return false;
         }
         catch (System.Exception ex)
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"EasyTransition attempt failed: {ex.Message}");
+                Debug.LogWarning($"EasyTransition attempt failed globally: {ex.Message}");
             }
+            return false;
         }
-
-        return false;
     }
 
     /// <summary>
@@ -997,6 +934,16 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         isTransitionInProgress = false;
+
+        // Check if we just loaded the intermediary scene of a staged transition
+        if (isStagedTransition && scene.name == intermediarySceneName)
+        {
+            // We've entered the intermediary scene, so the first stage is done.
+            // Do not reset isStagedTransition here, it will be reset when ContinueStagedTransition starts the final load.
+            StartCoroutine(ContinueStagedTransition());
+            // Do not perform other OnSceneLoaded logic for the intermediary scene
+            return; 
+        }
 
         // CRITICAL FIX: Re-enable TouchManager with proper timing
         StartCoroutine(ReenableTouchAfterUIReady());

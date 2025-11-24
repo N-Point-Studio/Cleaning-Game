@@ -18,6 +18,14 @@ public class ClickableObject : MonoBehaviour
     [SerializeField] private bool useTransitionAnimation = true;
     [SerializeField] private EasyTransition.TransitionSettings transitionSettings;
 
+    [Header("Staged Scene Transition")]
+    [Tooltip("Enable this to use a two-stage transition via an intermediary scene.")]
+    [SerializeField] private bool useStagedTransition = false;
+    [Tooltip("The name of the intermediary scene to load first.")]
+    [SerializeField] private string intermediarySceneName = "SceneTransition";
+    [Tooltip("The delay in seconds to wait in the intermediary scene.")]
+    [SerializeField] private float intermediaryDelay = 3.0f;
+
     [Header("Text Popup")]
     [SerializeField] private GameObject popupTextGameObject;
     [SerializeField] private TextMeshProUGUI textMeshPro;
@@ -311,6 +319,30 @@ public class ClickableObject : MonoBehaviour
     public EasyTransition.TransitionSettings GetTransitionSettings()
     {
         return transitionSettings;
+    }
+
+    /// <summary>
+    /// Check if this object should use a staged scene transition.
+    /// </summary>
+    public bool UseStagedTransition()
+    {
+        return useStagedTransition;
+    }
+
+    /// <summary>
+    /// Get the name of the intermediary scene for a staged transition.
+    /// </summary>
+    public string GetIntermediarySceneName()
+    {
+        return intermediarySceneName;
+    }
+
+    /// <summary>
+    /// Get the delay in the intermediary scene for a staged transition.
+    /// </summary>
+    public float GetIntermediaryDelay()
+    {
+        return intermediaryDelay;
     }
 
     /// <summary>
