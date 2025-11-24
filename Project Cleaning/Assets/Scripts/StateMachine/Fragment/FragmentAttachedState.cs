@@ -22,6 +22,15 @@ public class FragmentAttachedState : FragmentBaseState
         stateMachine.Interaction.isTapAvailable = false;
         stateMachine.Interaction.isDragAvailable = false;
         moveRoutine = stateMachine.StartCoroutine(MoveToCorrectPosition());
+
+        // --- TAMBAHAN TUTORIAL ---
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteStep(4); // Index 4 = Assemble
+        }
+        // -------------------------
+
+        moveRoutine = stateMachine.StartCoroutine(MoveToCorrectPosition());
     }
 
     public override void Tick(float deltaTime)
