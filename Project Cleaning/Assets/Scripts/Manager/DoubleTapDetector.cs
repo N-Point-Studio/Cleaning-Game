@@ -12,6 +12,7 @@ public class DoubleTapDetector : MonoBehaviour
     [SerializeField] private bool enableDoubleTapZoom = true; // Enable double tap as backup to pinch
     [SerializeField] private bool instantSingleTapReturn = false; // Single tap in zoom mode instantly returns (no double tap needed)
     [SerializeField] private float gestureCooldown = 0.5f; // Increased cooldown to prevent conflicts
+    [SerializeField] private float zoomExitCooldownBypass = 0.15f; // Allow early exit double-tap even if global cooldown is active
 
     // Double tap detection state
     private float lastTapTime = 0f;
@@ -42,17 +43,25 @@ public class DoubleTapDetector : MonoBehaviour
         if (!enableDoubleTapZoom) return false;
 
         float currentTime = Time.time;
+        float timeSinceLastGesture = currentTime - lastGestureTime;
+        bool inZoomMode = GameModeManager.Instance?.GetCurrentMode() == GameModeManager.GameMode.Zoom;
 
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
 
         // ENHANCED COOLDOWN: Block rapid taps more strictly to prevent conflicts
-        if (currentTime - lastGestureTime < gestureCooldown)
+        if (timeSinceLastGesture < gestureCooldown)
         {
-            Debug.Log($"=== GESTURE COOLDOWN - Time since last gesture: {currentTime - lastGestureTime:F2}s, Mode: {currentMode} ===");
-
-            // Always respect full cooldown period to prevent timing conflicts
-            Debug.Log("=== GESTURE BLOCKED - Too rapid, waiting for cooldown ===");
-            return false;
+            // Allow a quick exit from zoom even if we're still inside the global cooldown window.
+            if (inZoomMode && timeSinceLastGesture >= zoomExitCooldownBypass)
+            {
+                Debug.Log($"=== COOLDOWN BYPASS FOR ZOOM EXIT: {timeSinceLastGesture:F2}s since last gesture (bypass after {zoomExitCooldownBypass:F2}s) ===");
+            }
+            else
+            {
+                Debug.Log($"=== GESTURE COOLDOWN - Time since last gesture: {timeSinceLastGesture:F2}s, Mode: {currentMode} ===");
+                Debug.Log("=== GESTURE BLOCKED - Too rapid, waiting for cooldown ===");
+                return false;
+            }
         }
 
         // INSTANT SINGLE TAP RETURN: If in zoom mode and instant return is enabled, return immediately

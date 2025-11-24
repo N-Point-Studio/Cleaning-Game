@@ -1011,16 +1011,17 @@ public class SceneTransitionManager : MonoBehaviour
     {
         Debug.Log("🎯 [HARDCODE] Starting ForceHardcodedCameraView coroutine.");
 
-        // 1. Wait for the Camera Controller to be available.
-        yield return new WaitForSeconds(0.1f); // Brief delay for initialization
+        // Try to grab the camera controller immediately so the camera is already in place on the first frame after the transition.
+        TopDownCameraController controller = TopDownCameraController.Instance;
         int attempts = 0;
-        while (TopDownCameraController.Instance == null && attempts < 50)
+        while (controller == null && attempts < 50)
         {
             yield return new WaitForSeconds(0.1f);
             attempts++;
+            controller = TopDownCameraController.Instance;
         }
 
-        if (TopDownCameraController.Instance == null)
+        if (controller == null)
         {
             Debug.LogError("[HARDCODE] Failed to find TopDownCameraController instance. Aborting.");
             yield break;
@@ -1033,7 +1034,14 @@ public class SceneTransitionManager : MonoBehaviour
         Quaternion hardcodedRotation = Quaternion.Euler(90f, 0f, 0f);
 
         // 3. Call the new method on the camera controller.
-        TopDownCameraController.Instance.SetHardcodedFocusPosition(hardcodedPosition, hardcodedRotation);
+        controller.SetHardcodedFocusPosition(hardcodedPosition, hardcodedRotation);
+
+        // Keep input logic in sync with the forced camera view so double-tap knows we're already in zoom.
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.ForceEnterZoomMode();
+            Debug.Log("[HARDCODE] GameMode set to Zoom to match forced camera view.");
+        }
 
         // 4. Wait for the camera to settle.
         yield return new WaitForSeconds(0.5f); // Wait for half a second after forcing position.
