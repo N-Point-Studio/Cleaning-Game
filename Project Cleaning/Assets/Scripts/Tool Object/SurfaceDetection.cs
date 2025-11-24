@@ -99,5 +99,13 @@ public class SurfaceDetection : MonoBehaviour
         TextureSurface = hit.textureCoord;
         Debug.Log("hitting: " + hit.transform.name + "is surface detected: " + IsSurfaceDetected);
 
+        // --- TAMBAHAN TUTORIAL ---
+        // Jika terdeteksi menyentuh permukaan, anggap user sudah bisa cleaning
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteStep(1); // Index 1 = Cleaning
+        }
+        // -------------------------
+
     }
 }

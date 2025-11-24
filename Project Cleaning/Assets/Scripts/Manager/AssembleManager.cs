@@ -11,7 +11,7 @@ public class AssembleManager : MonoBehaviour
     public ClusterStateMachine CurrentClusterInspected;
     public List<AssemblyTarget> assemblyTargets = new();
     public List<ClusterStateMachine> clusters = new List<ClusterStateMachine>();
-    public int TotalFragments;
+    public int TotalFragments = 0;
 
     [Header("Progress")]
     [Range(0, 1f)]
@@ -26,11 +26,6 @@ public class AssembleManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    private void Start()
-    {
-        TotalFragments = assemblyTargets.Count;
     }
 
     private void Update()
@@ -120,4 +115,13 @@ public class AssembleManager : MonoBehaviour
         return progressAttach;
     }
 
+    public void ShowingAssembleProgress()
+    {
+        Debug.Log("Showing Assemble Progress " + assemblyTargets.Count);
+        TotalFragments = assemblyTargets.Count;
+        if (assemblyTargets.Count == 0)
+        {
+            UIManager.Instance.ShowProgress(UIManager.ProgressType.Assemble, false);
+        }
+    }
 }

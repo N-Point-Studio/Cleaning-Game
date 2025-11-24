@@ -21,6 +21,11 @@ public class FragmentReturningState : FragmentBaseState
         stateMachine.CurrentStatus = "Returning";
         stateMachine.transform.SetParent(null);
 
+        if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
+        {
+            AssembleManager.Instance.SetCurrentInspectFragment(null);
+        }
+
         if (AssembleManager.Instance.CurrentClusterInspected != null)
         {
             AssembleManager.Instance.CurrentClusterInspected.DestroyingCluster();

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ecdad67285e4111b58296d98da9caa, type: 3}
+  m_Name: Horse
+  m_EditorClassIdentifier: 
+  artifactName: Paperweight in the shape of a horse
+  code: CH0420
+  history: "This silver standing horse very likely functioned as a paperweight on
+    a scholar\u2019s desk. The horse\u2019s combination of naturalistic details and
+    archaistic pose matches archaeologically recovered depictions in bronze and stone
+    dating to the late thirteenth century."
+  artefacts:
+  - fragment: {fileID: 2023501092284782827, guid: 0352e65ac67094ab1a361be75b37ad8f,
+      type: 3}
+    correctPosition: {fileID: 0}

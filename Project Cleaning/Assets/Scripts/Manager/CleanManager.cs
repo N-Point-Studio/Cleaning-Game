@@ -101,4 +101,13 @@ public class CleanManager : MonoBehaviour
         return progressCleanMud;
     }
 
+    public void ShowingMudProgress()
+    {
+        var totalMud = allCleanMud.Count;
+        if (totalMud == 0)
+        {
+            UIManager.Instance.ShowProgress(UIManager.ProgressType.Dirt, false);
+        }
+    }
+
 }
