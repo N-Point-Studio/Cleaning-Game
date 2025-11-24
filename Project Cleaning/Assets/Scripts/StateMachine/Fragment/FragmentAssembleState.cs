@@ -70,5 +70,7 @@ public class FragmentAssembledState : FragmentBaseState
             AssembleManager.Instance.SetCurrentInspectCluster(newCluster);
             AssembleManager.Instance.SetCurrentInspectFragment(null);
         }
+
+        stateMachine.audioSource.PlayOneShot(stateMachine.assembleSound);
     }
 }

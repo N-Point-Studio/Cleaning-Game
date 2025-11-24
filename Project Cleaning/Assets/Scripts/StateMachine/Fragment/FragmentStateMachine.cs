@@ -4,6 +4,7 @@ using Unity.Burst.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(FragmentInteraction))]
+[RequireComponent(typeof(AudioSource))]
 public class FragmentStateMachine : StateMachine
 {
     public List<FragmentStateMachine> StateMachineConnected = new List<FragmentStateMachine>();
@@ -11,10 +12,9 @@ public class FragmentStateMachine : StateMachine
     public Camera MainCamera { get; private set; }
     [SerializeField] public Vector3 InitialPosition { get; set; }
     [SerializeField] public Quaternion InitialRotation { get; set; }
-
     public AudioClip putSound;
     public AudioClip assembleSound;
-
+    [SerializeField] public AudioSource audioSource;
 
     public string CurrentStatus;
 
@@ -25,9 +25,20 @@ public class FragmentStateMachine : StateMachine
         InitialRotation = transform.rotation;
     }
 
+    void OnEnable()
+    {
+        SettingManager.OnSfxVolumeChanged += SetSFXVolume;
+    }
+
+    void OnDisable()
+    {
+        SettingManager.OnSfxVolumeChanged -= SetSFXVolume;
+    }
+
     private void Start()
     {
         Interaction = GetComponent<FragmentInteraction>();
+        audioSource = GetComponent<AudioSource>();
         Interaction.SetInitialPos(InitialPosition);
         SwitchState(new FragmentIdleState(this));
     }
@@ -37,5 +48,10 @@ public class FragmentStateMachine : StateMachine
         Interaction.isDragAvailable = false;
         Interaction.isTapAvailable = false;
         Interaction.isHoldAvailable = false;
+    }
+
+    private void SetSFXVolume(float vol)
+    {
+        audioSource.volume = vol;
     }
 }

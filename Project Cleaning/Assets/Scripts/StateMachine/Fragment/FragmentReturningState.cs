@@ -16,6 +16,8 @@ public class FragmentReturningState : FragmentBaseState
 
     public override void Enter()
     {
+
+        stateMachine.audioSource.PlayOneShot(stateMachine.putSound);
         Debug.Log(stateMachine.name + "is returning");
         stateMachine.Interaction.DisableAllInteraction();
         stateMachine.CurrentStatus = "Returning";
