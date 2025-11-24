@@ -1050,7 +1050,7 @@ public class SceneTransitionManager : MonoBehaviour
         Debug.Log("📷 [HARDCODE] STEP 1: Forcing camera position.");
 
         // 2. Define the hardcoded position and rotation.
-        Vector3 hardcodedPosition = new Vector3(-4.634338f, 2f, -0.2875449f);
+        Vector3 hardcodedPosition = new Vector3(-4.634338f, 2f, -0.2877529f);
         Quaternion hardcodedRotation = Quaternion.Euler(90f, 0f, 0f);
 
         // 3. Call the new method on the camera controller.
@@ -1287,17 +1287,6 @@ public class SceneTransitionManager : MonoBehaviour
     public bool IsTransitionInProgress() => isTransitionInProgress;
 
     /// <summary>
-    /// Manual trigger for testing
-    /// </summary>
-    [System.Obsolete("For testing only")]
-    public void TestTransitionWithObjectType(ObjectType testObjectType)
-    {
-        Debug.Log($"=== TESTING SCENE TRANSITION ===");
-        Debug.Log($"Test Object Type: {testObjectType}");
-        TransitionToMainSceneWithContentSwitcher(testObjectType, "New Start Game Sandy", "TestObject");
-    }
-
-    /// <summary>
     /// Load saved progress and apply completion status to objects in scene
     /// </summary>
     private IEnumerator LoadAndApplySavedProgressAfterDelay()
@@ -1487,137 +1476,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// PRIORITY: Zoom camera FIRST, then trigger ContentSwitcher
-    /// This ensures correct sequence: ZOOM → ContentSwitcher
-    /// </summary>
-    private IEnumerator PriorityZoomThenContentSwitcher()
-    {
-        Debug.Log("🎯 === PRIORITY ZOOM THEN CONTENT SWITCHER ===");
 
-        // Wait for scene to be ready
-        yield return new WaitForSeconds(0.5f);
-
-        // STEP 1: ZOOM CAMERA FIRST (highest priority)
-        Debug.Log("📷 STEP 1: Executing camera zoom restoration");
-
-        var simpleCameraRestore = FindObjectOfType<SimpleCameraFocusRestore>();
-        if (simpleCameraRestore != null)
-        {
-            // Trigger zoom restoration and wait for it to complete
-            simpleCameraRestore.RestoreFocus();
-
-            // Wait for zoom animation to complete
-            yield return new WaitForSeconds(1.5f);
-
-            Debug.Log("✅ Camera zoom restoration completed");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ SimpleCameraFocusRestore not available");
-        }
-
-        // STEP 2: NOW TRIGGER CONTENT SWITCHER
-        Debug.Log("🎨 STEP 2: Now triggering ContentSwitcher after zoom");
-
-        // Re-enable and trigger ContentSwitcher manually
-        shouldTriggerContentSwitcher = true;
-
-        bool contentSwitcherSuccess = TriggerContentSwitcher();
-        if (contentSwitcherSuccess)
-        {
-            Debug.Log("✅ ContentSwitcher triggered successfully after zoom");
-            OnContentSwitcherTriggered?.Invoke();
-        }
-        else
-        {
-            Debug.LogError("❌ ContentSwitcher failed after zoom");
-        }
-
-        Debug.Log("🎯 === PRIORITY SEQUENCE COMPLETED ===");
-    }
-
-    /// <summary>
-    /// BASIC FALLBACK: Simple direct camera restoration without complex systems
-    /// </summary>
-    private IEnumerator BasicCameraRestoreAfterDelay()
-    {
-        Debug.Log("=== BASIC CAMERA RESTORATION STARTED ===");
-
-        // Wait for scene to fully initialize
-        yield return new WaitForSeconds(1.0f);
-
-        if (string.IsNullOrEmpty(clickedObjectName))
-        {
-            Debug.LogWarning("⚠️ No clicked object name for basic restoration");
-            yield break;
-        }
-
-        // Find camera controller
-        var topDownCamera = TopDownCameraController.Instance;
-        if (topDownCamera == null)
-        {
-            Debug.LogError("❌ TopDownCameraController not found");
-            yield break;
-        }
-
-        // Find target object
-        GameObject targetObject = GameObject.Find(clickedObjectName);
-        if (targetObject == null)
-        {
-            Debug.LogWarning($"⚠️ Target object '{clickedObjectName}' not found");
-            yield break;
-        }
-
-        Debug.Log($"✅ Found target object: {targetObject.name}");
-
-        // Simple restoration without complex state management
-        bool restorationSuccess = false;
-        try
-        {
-            // Set focus target
-            topDownCamera.SetFocusTarget(targetObject.transform);
-            restorationSuccess = true;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"❌ Basic camera restoration failed: {ex.Message}");
-        }
-
-        if (restorationSuccess)
-        {
-            yield return new WaitForSeconds(0.1f);
-
-            // Force game mode
-            if (GameModeManager.Instance != null)
-            {
-                GameModeManager.Instance.ForceEnterZoomMode();
-            }
-
-            // Switch to focus state
-            topDownCamera.SwitchState(topDownCamera.focusState);
-
-            Debug.Log("✅ Basic camera restoration completed successfully");
-        }
-
-        // Clear data
-        clickedObjectName = "";
-        clickedObjectPosition = Vector3.zero;
-
-        Debug.Log("=== BASIC CAMERA RESTORATION COMPLETED ===");
-    }
-
-    /*
-    /// <summary>
-    /// DEPRECATED: Complex camera state restoration - replaced with simple approaches above
-    /// </summary>
-    private IEnumerator RestoreCameraStateAfterDelay()
-    {
-        // This method is deprecated and commented out to prevent compilation errors
-        // The functionality has been replaced by SimpleCameraFocusRestore system
-        yield break;
-    }
-    */
 
     /// <summary>
     /// Helper method for fallback to exploration mode
