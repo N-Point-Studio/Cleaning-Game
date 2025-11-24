@@ -145,171 +145,131 @@ public class SimpleCameraFocusRestore : MonoBehaviour
     #region Internal Implementation
     private IEnumerator RestoreFocusCoroutine()
     {
-        LogDebug("🔄 Starting focus restoration coroutine");
+        LogDebug("🔄 [Robust] Starting focus restoration coroutine...");
 
-        // Wait for scene to be fully loaded
-        yield return new WaitForSeconds(0.5f);
-
-        // Find the target object
-        GameObject targetObject = FindTargetObject();
-        if (targetObject == null)
-        {
-            LogDebug($"❌ Could not find target object: {savedFocusData.objectName}");
-            yield break;
-        }
-
-        LogDebug($"✅ Found target object: {targetObject.name}");
-
-        // Wait for TopDownCameraController to be ready
+        // 1. Wait for TopDownCameraController to be ready to prevent null references.
         TopDownCameraController cameraController = null;
         int attempts = 0;
         while (attempts < 20) // 2 seconds max
         {
-            try
+            cameraController = TopDownCameraController.Instance;
+            if (cameraController != null && cameraController.enabled)
             {
-                cameraController = TopDownCameraController.Instance;
-                if (cameraController != null && cameraController.gameObject != null && cameraController.enabled)
-                {
-                    break;
-                }
+                break;
             }
-            catch (System.Exception ex)
-            {
-                LogDebug($"⚠️ Waiting for camera controller (attempt {attempts + 1}): {ex.Message}");
-            }
-
             yield return new WaitForSeconds(0.1f);
             attempts++;
         }
 
         if (cameraController == null)
         {
-            LogDebug("❌ TopDownCameraController not available after waiting");
+            Debug.LogError("[SimpleCameraFocusRestore] ABORT: TopDownCameraController not found after waiting. Cannot restore focus.");
+            yield break;
+        }
+        LogDebug("✅ [Robust] TopDownCameraController is ready.");
+
+        // 2. Find the target object using the robust search method.
+        GameObject targetObject = FindTargetObject();
+
+        // 3. CRITICAL: Handle the case where the object is not found.
+        if (targetObject == null)
+        {
+            // Log a clear error message for debugging.
+            Debug.LogError($"[SimpleCameraFocusRestore] RESTORATION FAILED: Could not find target object '{savedFocusData.objectName}' in the current scene. Defaulting to overview mode.");
+            
+            // Explicitly fall back to the overview state. This makes failure predictable.
+            cameraController.TransitionToOverview();
+
+            // Clean up the invalid data.
+            ClearFocusData();
             yield break;
         }
 
-        LogDebug("✅ TopDownCameraController ready, proceeding with focus");
+        LogDebug($"✅ [Robust] Found target object: {targetObject.name}. Proceeding with zoom.");
 
-        // DIRECT ZOOM RESTORATION - Mimic TopDownCameraController click behavior
-        LogDebug("🎯 MIMICKING TOPDOWNCAMERACONTROLLER CLICK BEHAVIOR");
-
-        bool restorationSuccess = false;
+        // 4. If object is found, proceed with the zoom restoration.
         try
         {
-            // Step 1: Set focus target (same as TopDownCameraController.SetFocusTarget)
+            GameModeManager.Instance?.ForceEnterZoomMode();
             cameraController.SetFocusTarget(targetObject.transform);
-            LogDebug("✅ Focus target set");
-
-            // Step 2: IMMEDIATELY call TransitionToFocus (same as ClickableObject click)
             cameraController.TransitionToFocus();
-            LogDebug("✅ TransitionToFocus called - zoom animation should start");
 
-            restorationSuccess = true;
+            var clickableComponent = targetObject.GetComponent<ClickableObject>();
+            clickableComponent?.SetFocusState(true);
+
+            LogDebug($"✅ [Robust] Focus restoration commands sent successfully for {targetObject.name}.");
         }
         catch (System.Exception ex)
         {
-            LogDebug($"❌ Error during zoom restoration: {ex.Message}");
+            Debug.LogError($"[SimpleCameraFocusRestore] An exception occurred during the focus restoration process for '{targetObject.name}': {ex.Message}");
+            cameraController.TransitionToOverview(); // Fallback on error
         }
-
-        if (restorationSuccess)
-        {
-            // Wait for zoom transition to begin
-            yield return new WaitForSeconds(0.2f);
-
-            // Step 3: Ensure GameModeManager is in zoom mode
-            try
-            {
-                if (GameModeManager.Instance != null)
-                {
-                    GameModeManager.Instance.ForceEnterZoomMode();
-                    LogDebug("✅ GameModeManager set to zoom mode");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                LogDebug($"❌ Error setting game mode: {ex.Message}");
-            }
-
-            // Step 4: Update clickable object state
-            try
-            {
-                var clickableComponent = targetObject.GetComponent<ClickableObject>();
-                if (clickableComponent != null)
-                {
-                    clickableComponent.SetFocusState(true);
-                    LogDebug($"✅ Updated clickable object focus state");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                LogDebug($"❌ Error updating clickable object: {ex.Message}");
-            }
-
-            LogDebug("🎯 ZOOM RESTORATION COMPLETED - CAMERA SHOULD BE ZOOMING TO TARGET");
-        }
+        
+        // 5. Clean up the focus data now that it has been used.
+        ClearFocusData();
     }
 
     private GameObject FindTargetObject()
     {
-        LogDebug($"🔍 Searching for object: {savedFocusData.objectName}");
+        LogDebug($"🔍 [Robust] Searching for '{savedFocusData.objectName}' (Pos: {savedFocusData.objectPosition}, Type: {savedFocusData.objectType})");
 
-        // Method 1: Direct GameObject.Find
+        // Method 1: Direct name search (fastest)
         GameObject directFind = GameObject.Find(savedFocusData.objectName);
         if (directFind != null)
         {
-            LogDebug($"✅ Found by direct search: {directFind.name}");
+            LogDebug($"✅ [Robust] Found via direct GameObject.Find: {directFind.name}");
             return directFind;
         }
 
-        // Method 2: Search through all ClickableObjects
+        // Method 2: Search all ClickableObjects (more reliable)
         ClickableObject[] clickableObjects = FindObjectsOfType<ClickableObject>();
-        LogDebug($"🔍 Searching {clickableObjects.Length} ClickableObjects");
+        LogDebug($"🔍 [Robust] Searching through {clickableObjects.Length} ClickableObjects.");
 
         // Priority 1: Exact name match
         foreach (var clickable in clickableObjects)
         {
-            if (clickable.name.Equals(savedFocusData.objectName, System.StringComparison.OrdinalIgnoreCase))
+            if (clickable.name.Equals(savedFocusData.objectName, System.StringComparison.Ordinal))
             {
-                LogDebug($"✅ Found by exact name: {clickable.name}");
+                LogDebug($"✅ [Robust] Found by EXACT name match: {clickable.name}");
                 return clickable.gameObject;
             }
         }
 
-        // Priority 2: Contains match
-        foreach (var clickable in clickableObjects)
-        {
-            if (clickable.name.Contains(savedFocusData.objectName) ||
-                savedFocusData.objectName.Contains(clickable.name))
-            {
-                LogDebug($"✅ Found by partial name: {clickable.name}");
-                return clickable.gameObject;
-            }
-        }
-
-        // Priority 3: Position match
+        // Priority 2: Position-based search (very reliable if position is saved)
         if (savedFocusData.objectPosition != Vector3.zero)
         {
-            GameObject closest = null;
+            GameObject closestMatch = null;
             float closestDistance = float.MaxValue;
+            const float searchRadius = 1.0f; 
 
             foreach (var clickable in clickableObjects)
             {
                 float distance = Vector3.Distance(clickable.transform.position, savedFocusData.objectPosition);
-                if (distance < 1f && distance < closestDistance)
+                if (distance < searchRadius && distance < closestDistance)
                 {
-                    closest = clickable.gameObject;
+                    closestMatch = clickable.gameObject;
                     closestDistance = distance;
                 }
             }
 
-            if (closest != null)
+            if (closestMatch != null)
             {
-                LogDebug($"✅ Found by position: {closest.name} (distance: {closestDistance:F2})");
-                return closest;
+                LogDebug($"✅ [Robust] Found by POSITION match: {closestMatch.name} (Distance: {closestDistance:F2})");
+                return closestMatch;
             }
         }
 
-        LogDebug($"❌ Object not found: {savedFocusData.objectName}");
+        // Priority 3: ObjectType match (last resort, can be inaccurate)
+        foreach (var clickable in clickableObjects)
+        {
+            if (clickable.GetObjectType() == savedFocusData.objectType)
+            {
+                LogDebug($"⚠️ [Robust] Found by ObjectType match (LAST RESORT): {clickable.name}. This may not be the correct object.");
+                return clickable.gameObject;
+            }
+        }
+
+        LogDebug($"❌ [Robust] Target object '{savedFocusData.objectName}' not found in scene after all search methods.");
         return null;
     }
 

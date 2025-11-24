@@ -179,6 +179,13 @@ public class ClickableObject : MonoBehaviour
             Debug.Log($"===================");
         }
 
+        // CRITICAL FIX: Immediately save focus state the moment an object is clicked.
+        // This prevents the focus data from being lost before a scene transition.
+        if (SimpleCameraFocusRestore.Instance != null)
+        {
+            SimpleCameraFocusRestore.Instance.SaveCurrentFocus();
+        }
+
         // Trigger the Unity Event first
         OnObjectClicked?.Invoke();
 

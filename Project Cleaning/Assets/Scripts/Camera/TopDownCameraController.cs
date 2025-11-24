@@ -438,6 +438,39 @@ public class TopDownCameraController : StateMachine
     }
 
     /// <summary>
+    /// NEW: Force the camera to a hardcoded position and rotation, then enter focus state.
+    /// This is used when returning from gameplay to a specific, non-object-based focus view.
+    /// </summary>
+    public void SetHardcodedFocusPosition(Vector3 position, Quaternion rotation)
+    {
+        Debug.Log($"[HARDCODE] Forcing camera to Pos: {position}, Rot: {rotation.eulerAngles}");
+
+        // Stop any existing transitions to prevent conflicts
+        if (currentTransition != null)
+        {
+            StopCoroutine(currentTransition);
+            currentTransition = null;
+        }
+
+        // Set state immediately, without animation
+        transform.position = position;
+        transform.rotation = rotation;
+        cam.fieldOfView = focusFOV;
+        
+        // We are not focused on a specific object
+        currentFocusTarget = null;
+        
+        // Ensure the camera is in the focus state for correct controls and behavior
+        SwitchState(focusState);
+
+        isTransitioning = false;
+        isTransitioningLerp = false;
+        AdvancedInputManager.EndTransitionLock();
+
+        Debug.Log("[HARDCODE] Camera position forced and switched to focus state.");
+    }
+
+    /// <summary>
     /// Get current transition speed
     /// </summary>
     public float GetTransitionSpeed()

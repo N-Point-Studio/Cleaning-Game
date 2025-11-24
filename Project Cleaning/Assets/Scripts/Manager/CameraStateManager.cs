@@ -213,7 +213,7 @@ public class CameraStateManager : MonoBehaviour
         if (IsMenuScene(scene.name))
         {
             // Delay restoration to ensure all systems are initialized
-            StartCoroutine(DelayedAutoRestore());
+            // StartCoroutine(DelayedAutoRestore());
         }
     }
 

@@ -999,70 +999,83 @@ public class SceneTransitionManager : MonoBehaviour
         isTransitionInProgress = false;
 
         // CRITICAL FIX: Re-enable TouchManager with proper timing
-        // Wait for UI system to be fully initialized before enabling touch
         StartCoroutine(ReenableTouchAfterUIReady());
 
-        // RESET: Clear clicked object data when returning to menu scene
+        // When returning to the menu, force a hardcoded camera view.
         if (scene.name.Contains("New Start Game Sandy") || scene.name.Contains("Menu") || scene.name.Contains("Main"))
         {
-            Debug.Log("🔄 RETURNING TO MENU - ZOOM FIRST, THEN CONTENT SWITCHER");
-
-            // CRITICAL: Camera zoom MUST happen BEFORE ContentSwitcher
-            var simpleCameraRestore = FindObjectOfType<SimpleCameraFocusRestore>();
-            if (simpleCameraRestore != null && simpleCameraRestore.HasValidFocusData())
-            {
-                Debug.Log("🎯 PRIORITY: Camera zoom restoration FIRST");
-                // Start camera restoration immediately with high priority
-                StartCoroutine(PriorityZoomThenContentSwitcher());
-
-                // DISABLE normal ContentSwitcher trigger since we handle it after zoom
-                shouldTriggerContentSwitcher = false;
-                Debug.Log("🔧 Disabled normal ContentSwitcher - will trigger after zoom completes");
-            }
-            else
-            {
-                Debug.Log("📝 No camera restoration needed - normal ContentSwitcher will proceed");
-                // Normal flow if no camera restoration needed
-            }
-
-            // Notify CameraAnimationController
-            if (CameraAnimationController.Instance != null)
-            {
-                CameraAnimationController.Instance.NotifyReturningFromGameplay();
-            }
-
-            // Cleanup completed
+            Debug.Log("🔄 [HARDCODE] Returning to menu scene. Forcing hardcoded camera view.");
+            StartCoroutine(ForceHardcodedCameraView());
+            
+            // We are handling the camera and content switcher in the coroutine, so disable the default trigger.
+            shouldTriggerContentSwitcher = false;
         }
 
-        // Check if we need to trigger ContentSwitcher
-        Debug.Log($"=== SCENE LOADED DEBUG ===");
-        Debug.Log($"Scene name: {scene.name}");
-        Debug.Log($"Target scene name: {targetSceneName}");
-        Debug.Log($"shouldTriggerContentSwitcher: {shouldTriggerContentSwitcher}");
-        Debug.Log($"currentObjectType: {currentObjectType}");
-
-        // FIXED: Always trigger ContentSwitcher if shouldTriggerContentSwitcher is true
-        // This allows menu ContentSwitcher to work after returning from gameplay
+        // Check if we need to trigger ContentSwitcher for other scenarios
         if (shouldTriggerContentSwitcher)
         {
             Debug.Log("✅ Starting ContentSwitcher trigger...");
             StartCoroutine(TriggerContentSwitcherAfterDelay());
         }
-        else
-        {
-            Debug.LogWarning("❌ ContentSwitcher NOT triggered:");
-            Debug.LogWarning($"   shouldTriggerContentSwitcher: {shouldTriggerContentSwitcher}");
-            Debug.LogWarning($"   Scene: {scene.name}");
-            Debug.LogWarning($"   Target Scene: {targetSceneName}");
-        }
-
-        // SIMPLIFIED: ContentSwitcher handles all visual changes
 
         // LOAD SAVED PROGRESS: Apply completion status to objects that were previously completed
         if (scene.name == targetSceneName)
         {
             StartCoroutine(LoadAndApplySavedProgressAfterDelay());
         }
+    }
+
+    /// <summary>
+    /// NEW: Forces the camera to a hardcoded position, then triggers the content switcher.
+    /// </summary>
+    private IEnumerator ForceHardcodedCameraView()
+    {
+        Debug.Log("🎯 [HARDCODE] Starting ForceHardcodedCameraView coroutine.");
+
+        // 1. Wait for the Camera Controller to be available.
+        yield return new WaitForSeconds(0.1f); // Brief delay for initialization
+        int attempts = 0;
+        while (TopDownCameraController.Instance == null && attempts < 50)
+        {
+            yield return new WaitForSeconds(0.1f);
+            attempts++;
+        }
+
+        if (TopDownCameraController.Instance == null)
+        {
+            Debug.LogError("[HARDCODE] Failed to find TopDownCameraController instance. Aborting.");
+            yield break;
+        }
+        
+        Debug.Log("📷 [HARDCODE] STEP 1: Forcing camera position.");
+
+        // 2. Define the hardcoded position and rotation.
+        Vector3 hardcodedPosition = new Vector3(-4.634338f, 2f, -0.2875449f);
+        Quaternion hardcodedRotation = Quaternion.Euler(90f, 0f, 0f);
+
+        // 3. Call the new method on the camera controller.
+        TopDownCameraController.Instance.SetHardcodedFocusPosition(hardcodedPosition, hardcodedRotation);
+
+        // 4. Wait for the camera to settle.
+        yield return new WaitForSeconds(0.5f); // Wait for half a second after forcing position.
+        Debug.Log("✅ [HARDCODE] Camera position has been set.");
+
+        // 5. NOW TRIGGER CONTENT SWITCHER
+        Debug.Log("🎨 [HARDCODE] STEP 2: Now triggering ContentSwitcher.");
+        shouldTriggerContentSwitcher = true;
+        bool contentSwitcherSuccess = TriggerContentSwitcher();
+
+        if (contentSwitcherSuccess)
+        {
+            Debug.Log("✅ [HARDCODE] ContentSwitcher triggered successfully after forcing camera view.");
+            OnContentSwitcherTriggered?.Invoke();
+        }
+        else
+        {
+            Debug.LogError("❌ [HARDCODE] ContentSwitcher failed after forcing camera view.");
+        }
+
+        Debug.Log("🎯 [HARDCODE] Coroutine completed.");
     }
 
     /// <summary>
