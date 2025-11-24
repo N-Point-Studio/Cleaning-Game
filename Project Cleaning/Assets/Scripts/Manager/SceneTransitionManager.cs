@@ -29,6 +29,7 @@ public class SceneTransitionManager : MonoBehaviour
     private string targetSceneName = ""; // Dynamic scene name from clicked object
     private bool shouldTriggerContentSwitcher = false;
     private bool isTransitionInProgress = false;
+    private bool isReturningFromGameplay = false; // mark when coming back from gameplay
 
     // NEW: Track which specific object was clicked
     private string clickedObjectName = "";
@@ -199,6 +200,14 @@ public class SceneTransitionManager : MonoBehaviour
         
         SaveCameraStateForRestore();
         StartCoroutine(PerformSceneTransition(settings)); // Use settings for the first leg
+    }
+
+    /// <summary>
+    /// Mark that the upcoming transition is a return from gameplay to menu.
+    /// </summary>
+    public void MarkReturningFromGameplay()
+    {
+        isReturningFromGameplay = true;
     }
 
 
@@ -957,6 +966,14 @@ public class SceneTransitionManager : MonoBehaviour
         else if (shouldTriggerContentSwitcher)
         {
             StartCoroutine(TriggerContentSwitcherAfterDelay());
+        }
+
+        // If we just returned from gameplay, prevent intro UI from reappearing.
+        if (isMenuScene && isReturningFromGameplay)
+        {
+            CameraAnimationController.Instance?.NotifyReturningFromGameplay();
+            isReturningFromGameplay = false;
+            Debug.Log("🔄 Returned from gameplay - intro UI will stay hidden.");
         }
 
         // Re-enable touch input and load progress

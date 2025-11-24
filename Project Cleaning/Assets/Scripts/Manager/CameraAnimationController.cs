@@ -253,21 +253,8 @@ public class CameraAnimationController : MonoBehaviour
         }
 
         // FIXED: Use SaveSystem to check if intro transition should be shown
-        bool shouldShowIntroTransition = true;
-
-        // Check SaveSystem first
-        if (SaveSystem.Instance != null)
-        {
-            bool introAlreadyShown = SaveSystem.Instance.IsIntroTransitionShown();
-            shouldShowIntroTransition = !introAlreadyShown && !isReturningFromGameplay;
-            Debug.Log($"💾 SaveSystem check: introAlreadyShown={introAlreadyShown}, isReturningFromGameplay={isReturningFromGameplay}");
-        }
-        else
-        {
-            // Fallback to local flags if SaveSystem not available
-            shouldShowIntroTransition = !hasShownStartupUI && !isReturningFromGameplay;
-            Debug.Log($"🔄 Using local flags: hasShownStartupUI={hasShownStartupUI}, isReturningFromGameplay={isReturningFromGameplay}");
-        }
+        bool shouldShowIntroTransition = !hasShownStartupUI && !isReturningFromGameplay;
+        Debug.Log($"🔄 Intro decision - hasShownStartupUI={hasShownStartupUI}, isReturningFromGameplay={isReturningFromGameplay}, shouldShowIntroTransition={shouldShowIntroTransition}");
 
         if (shouldShowIntroTransition)
         {
@@ -508,6 +495,7 @@ public class CameraAnimationController : MonoBehaviour
     public float GetCurrentXPosition() => cameraXPositions[currentPositionIndex];
     public int GetCurrentPositionIndex() => currentPositionIndex;
     public Vector3 GetExplorationPosition() => explorationPosition;
+    public bool IsReturningFromGameplay() => isReturningFromGameplay;
 
     /// <summary>
     /// Call this method when returning from gameplay to prevent startup UI from showing again

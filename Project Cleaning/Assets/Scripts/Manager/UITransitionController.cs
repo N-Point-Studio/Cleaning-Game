@@ -42,19 +42,24 @@ public class UITransitionController : MonoBehaviour
     {
         SetupUI();
 
-        // New, more robust logic: Only show intro images if the transition has NOT been shown yet.
-        // This requires the images to be INACTIVE by default in the scene.
-        if (SaveSystem.Instance != null && !SaveSystem.Instance.IsIntroTransitionShown())
+        // Show intro controls only when entering from menu fresh, not when returning from gameplay.
+        bool returningFromGameplay = CameraAnimationController.Instance != null &&
+                                     CameraAnimationController.Instance.IsReturningFromGameplay();
+        bool introAlreadyShownThisSession = CameraAnimationController.Instance != null &&
+                                            CameraAnimationController.Instance.HasShownStartupUI();
+
+        bool shouldShowIntro = !returningFromGameplay && !introAlreadyShownThisSession;
+
+        Debug.Log($"🚨 UITransitionController Start - returningFromGameplay={returningFromGameplay}, introAlreadyShownThisSession={introAlreadyShownThisSession}, shouldShowIntro={shouldShowIntro}");
+
+        if (shouldShowIntro)
         {
-            Debug.Log($"🚨 Intro transition has not been shown. Activating intro images.");
             if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(true);
             if (additionalImage1 != null) additionalImage1.gameObject.SetActive(true);
             if (additionalImage2 != null) additionalImage2.gameObject.SetActive(true);
         }
         else
         {
-            Debug.Log($"🚨 Intro transition has already been shown. Intro images will remain inactive.");
-            // Make sure they are inactive, just in case
             if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(false);
             if (additionalImage1 != null) additionalImage1.gameObject.SetActive(false);
             if (additionalImage2 != null) additionalImage2.gameObject.SetActive(false);
