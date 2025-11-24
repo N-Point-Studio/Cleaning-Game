@@ -12,6 +12,10 @@ public class FragmentStateMachine : StateMachine
     [SerializeField] public Vector3 InitialPosition { get; set; }
     [SerializeField] public Quaternion InitialRotation { get; set; }
 
+    public AudioClip putSound;
+    public AudioClip assembleSound;
+
+
     public string CurrentStatus;
 
     private void Awake()
