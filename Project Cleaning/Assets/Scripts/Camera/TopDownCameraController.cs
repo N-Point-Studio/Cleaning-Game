@@ -419,6 +419,10 @@ public class TopDownCameraController : StateMachine
         currentFocusTarget = target;
         isTransitioning = false;
         isTransitioningLerp = false;
+
+        // CRITICAL FIX: Switch the state machine to focusState to prevent other states from overriding the position.
+        SwitchState(focusState);
+        Debug.Log($"[ImmediateFocus] Switched camera state to FocusState for target {target.name}");
     }
 
     /// <summary>

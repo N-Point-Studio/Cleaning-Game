@@ -538,7 +538,7 @@ public class AdvancedInputManager : MonoBehaviour
         StartTransitionLock();
 
         // Ensure all objects lose focus and stop shaking.
-        objectHandler?.DisableAllInspectableObjects();
+        objectHandler?.ResetAllObjectStates();
 
         var cameraController = TopDownCameraController.Instance;
         if (cameraController == null)

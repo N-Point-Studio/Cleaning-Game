@@ -41,9 +41,6 @@ public class ClickableObject : MonoBehaviour
     [SerializeField] private float shakeDuration = 3f;
     [SerializeField] private bool shakeOnlyWhenFocused = true;
 
-    [Header("Inspectable Object")]
-    [SerializeField] private bool isInspectable = true;
-
     [Header("Object Identification")]
     [SerializeField] private ObjectType objectType = ObjectType.ChinaCoin;
     [SerializeField] private bool detectObjectOnClick = true;
@@ -74,9 +71,6 @@ public class ClickableObject : MonoBehaviour
     private Vector3 originalPosition;
     private Sequence currentShakeSequence;
 
-    // Inspectable components
-    private InspectableJar inspectableJar;
-
     // ContentSwitcher integration
     private ContentSwitcher linkedContentSwitcher;
     private bool hasValidContentSwitcher = false;
@@ -85,7 +79,7 @@ public class ClickableObject : MonoBehaviour
     {
         SetupPopupImage();
         SetupShakeAnimation();
-        SetupInspectableObject();
+
         SetupContentSwitcherDetection();
     }
 
@@ -127,21 +121,7 @@ public class ClickableObject : MonoBehaviour
         // Don't start shake animation automatically - only when focused/clicked
     }
 
-    private void SetupInspectableObject()
-    {
-        if (isInspectable)
-        {
-            // Get or add InspectableJar component
-            inspectableJar = GetComponent<InspectableJar>();
-            if (inspectableJar == null)
-            {
-                inspectableJar = gameObject.AddComponent<InspectableJar>();
-            }
 
-            // Disable inspectable functionality initially - only enable when focused in zoom mode
-            inspectableJar.enabled = false;
-        }
-    }
 
     private void SetupContentSwitcherDetection()
     {
@@ -225,11 +205,7 @@ public class ClickableObject : MonoBehaviour
             StopShakeAnimation();
         }
 
-        // Disable inspectable functionality when losing focus
-        if (isInspectable && inspectableJar != null)
-        {
-            inspectableJar.enabled = false;
-        }
+
     }
 
 
@@ -262,14 +238,7 @@ public class ClickableObject : MonoBehaviour
                 }
             }
 
-            // Enable inspectable functionality when entering zoom mode
-            if (isInspectable && inspectableJar != null && AdvancedInputManager.Instance != null)
-            {
-                if (AdvancedInputManager.Instance.IsInZoomMode())
-                {
-                    inspectableJar.enabled = true;
-                }
-            }
+
         }
     }
 
@@ -345,24 +314,7 @@ public class ClickableObject : MonoBehaviour
         return intermediaryDelay;
     }
 
-    /// <summary>
-    /// Check if this object can be inspected with pinch/zoom gestures
-    /// </summary>
-    public bool IsInspectable()
-    {
-        return isInspectable;
-    }
 
-    /// <summary>
-    /// Enable or disable inspectable functionality
-    /// </summary>
-    public void SetInspectableEnabled(bool enabled)
-    {
-        if (isInspectable && inspectableJar != null)
-        {
-            inspectableJar.enabled = enabled;
-        }
-    }
 
     /// <summary>
     /// Get the object type of this clickable object
@@ -969,11 +921,7 @@ public class ClickableObject : MonoBehaviour
         // Stop shake animation
         StopShakeAnimation();
 
-        // Disable inspectable functionality
-        if (inspectableJar != null)
-        {
-            inspectableJar.enabled = false;
-        }
+
 
         // Clear focus
         isFocused = false;

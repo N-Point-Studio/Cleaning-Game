@@ -199,7 +199,7 @@ public class CameraAnimationController : MonoBehaviour
     private void ReturnToExplorationModeWithSpeed(bool useFastTransition)
     {
         // Disable all inspectable objects when leaving zoom mode
-        ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
+        ObjectInteractionHandler.Instance?.ResetAllObjectStates();
 
         // Stop any ongoing animations to prevent conflicts
         if (currentSwipeAnimation != null)
@@ -229,7 +229,7 @@ public class CameraAnimationController : MonoBehaviour
         Debug.Log($"Instance check - CameraAnimationController.Instance: {(Instance == this ? "THIS" : "OTHER")}");
 
         // Disable all inspectable objects when exiting to initial mode
-        ObjectInteractionHandler.Instance?.DisableAllInspectableObjects();
+        ObjectInteractionHandler.Instance?.ResetAllObjectStates();
 
         // FIXED: Check if CameraStateManager has a valid state to restore
         // If so, let CameraStateManager handle camera positioning instead of AnimateToOriginalPosition

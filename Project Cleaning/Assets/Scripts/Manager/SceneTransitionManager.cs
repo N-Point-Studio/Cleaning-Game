@@ -935,40 +935,72 @@ public class SceneTransitionManager : MonoBehaviour
 
         isTransitionInProgress = false;
 
-        // Check if we just loaded the intermediary scene of a staged transition
         if (isStagedTransition && scene.name == intermediarySceneName)
         {
-            // We've entered the intermediary scene, so the first stage is done.
-            // Do not reset isStagedTransition here, it will be reset when ContinueStagedTransition starts the final load.
             StartCoroutine(ContinueStagedTransition());
-            // Do not perform other OnSceneLoaded logic for the intermediary scene
-            return; 
+            return;
         }
 
-        // CRITICAL FIX: Re-enable TouchManager with proper timing
-        StartCoroutine(ReenableTouchAfterUIReady());
+        // --- CAMERA AND CONTENT SWITCHER LOGIC ---
+        bool isMenuScene = scene.name.Contains("New Start Game Sandy") || scene.name.Contains("Menu") || scene.name.Contains("Main");
+        bool hasObjectContext = !string.IsNullOrEmpty(clickedObjectName);
 
-        // When returning to the menu, force a hardcoded camera view.
-        if (scene.name.Contains("New Start Game Sandy") || scene.name.Contains("Menu") || scene.name.Contains("Main"))
+        if (isMenuScene && hasObjectContext)
         {
-            Debug.Log("🔄 [HARDCODE] Returning to menu scene. Forcing hardcoded camera view.");
+            // This runs synchronously BEFORE the first frame is rendered.
+            SetupInstantFocus();
+        }
+        else if (isMenuScene)
+        {
             StartCoroutine(ForceHardcodedCameraView());
-            
-            // We are handling the camera and content switcher in the coroutine, so disable the default trigger.
-            shouldTriggerContentSwitcher = false;
         }
-
-        // Check if we need to trigger ContentSwitcher for other scenarios
-        if (shouldTriggerContentSwitcher)
+        else if (shouldTriggerContentSwitcher)
         {
-            Debug.Log("✅ Starting ContentSwitcher trigger...");
             StartCoroutine(TriggerContentSwitcherAfterDelay());
         }
 
-        // LOAD SAVED PROGRESS: Apply completion status to objects that were previously completed
-        if (scene.name == targetSceneName)
+        // Re-enable touch input and load progress
+        if (isMenuScene)
         {
+            StartCoroutine(ReenableTouchAfterUIReady());
             StartCoroutine(LoadAndApplySavedProgressAfterDelay());
+        }
+    }
+
+    private void SetupInstantFocus()
+    {
+        Debug.Log("[InstantFocus] Setting up camera position synchronously in OnSceneLoaded.");
+
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController == null)
+        {
+            Debug.LogError("[InstantFocus] Camera controller not found! Cannot perform instant focus.");
+            return;
+        }
+
+        cameraController.enabled = false;
+
+        ClickableObject targetObject = FindClickedObjectInScene();
+        if (targetObject != null)
+        {
+            if (GameModeManager.Instance != null)
+            {
+                GameModeManager.Instance.ForceEnterZoomMode();
+            }
+            
+            cameraController.FocusOnObjectImmediate(targetObject.transform);
+            
+            cameraController.enabled = true;
+            Debug.Log("[InstantFocus] Camera setup complete. Controller re-enabled.");
+
+            shouldTriggerContentSwitcher = true;
+            StartCoroutine(TriggerContentSwitcherAfterDelay());
+        }
+        else
+        {
+            cameraController.enabled = true; // Always re-enable
+            Debug.LogWarning("[InstantFocus] Could not find the last clicked object. Defaulting to hardcoded view.");
+            StartCoroutine(ForceHardcodedCameraView());
         }
     }
 
@@ -1024,6 +1056,8 @@ public class SceneTransitionManager : MonoBehaviour
 
         Debug.Log("🎯 [HARDCODE] Coroutine completed.");
     }
+
+
 
     /// <summary>
     /// Trigger ContentSwitcher after scene is fully loaded

@@ -22,7 +22,6 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     // Core components
     private Camera playerCamera;
-    private bool justEnteredZoomMode = false;
     private float lastModeChangeTime = 0f;
 
     // Singleton
@@ -48,17 +47,14 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.OnEnterZoomMode += () => {
-                justEnteredZoomMode = true;
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Zoom mode entered ===");
             };
             GameModeManager.Instance.OnEnterExplorationMode += () => {
-                justEnteredZoomMode = false;
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Exploration mode entered ===");
             };
             GameModeManager.Instance.OnEnterInitialMode += () => {
-                justEnteredZoomMode = false;
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Initial mode entered ===");
             };
@@ -226,41 +222,49 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
     }
 
-    private void HandleZoomClick(ClickableObject clickable)
-    {
-        if (justEnteredZoomMode)
-        {
-            justEnteredZoomMode = false;
-            PlayClickFeedback(clickable);
+        private void HandleZoomClick(ClickableObject clickable)
 
-            // Enable inspectable functionality for focused object in zoom mode
-            if (clickable.IsInspectable())
+        {
+
+            // The 'justEnteredZoomMode' logic has been removed to ensure the first click in zoom mode triggers the scene change.
+
+    
+
+            // DEBUG: Check scene change conditions
+
+            Debug.Log($"=== ZOOM CLICK DEBUG ===");
+
+            Debug.Log($"enableSceneChange: {enableSceneChange}");
+
+            Debug.Log($"clickable.CanChangeScene(): {clickable.CanChangeScene()}");
+
+            Debug.Log($"clickable.GetSceneName(): {clickable.GetSceneName()}");
+
+    
+
+            if (enableSceneChange && clickable.CanChangeScene())
+
             {
-                clickable.SetInspectableEnabled(true);
+
+                Debug.Log("✅ Scene change conditions met, initiating scene change...");
+
+                PlayClickFeedback(clickable); // Play feedback before changing scene.
+
+                HandleSceneChange(clickable);
+
             }
-            return;
-        }
 
-        // DEBUG: Check why scene change is not triggered
-        Debug.Log($"=== ZOOM CLICK DEBUG ===");
-        Debug.Log($"enableSceneChange: {enableSceneChange}");
-        Debug.Log($"clickable.CanChangeScene(): {clickable.CanChangeScene()}");
-        Debug.Log($"clickable.GetSceneName(): {clickable.GetSceneName()}");
+            else
 
-        if (enableSceneChange && clickable.CanChangeScene())
-        {
-            Debug.Log("✅ Scene change conditions met - calling HandleSceneChange");
-            HandleSceneChange(clickable);
-        }
-        else
-        {
-            Debug.LogWarning("❌ Scene change conditions NOT met:");
-            Debug.LogWarning($"   enableSceneChange: {enableSceneChange}");
-            Debug.LogWarning($"   clickable.CanChangeScene(): {clickable.CanChangeScene()}");
-        }
+            {
 
-        PlayClickFeedback(clickable);
-    }
+                Debug.LogWarning("❌ Scene change conditions not met. Playing feedback only.");
+
+                PlayClickFeedback(clickable);
+
+            }
+
+        }
 
     private void HandleSceneChange(ClickableObject clickableObject)
     {
@@ -369,17 +373,13 @@ public class ObjectInteractionHandler : MonoBehaviour
         // TriggerContentSwitcherForObject(clickable);
     }
 
-    public void DisableAllInspectableObjects()
+    public void ResetAllObjectStates()
     {
-        // Find all clickable objects and disable their inspectable functionality
+        // Find all clickable objects and reset their focus state
         ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
         foreach (var clickable in allClickables)
         {
-            if (clickable.IsInspectable())
-            {
-                clickable.SetInspectableEnabled(false);
-                clickable.SetFocusState(false);
-            }
+            clickable.SetFocusState(false);
         }
     }
 
