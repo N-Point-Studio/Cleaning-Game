@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using EasyTransition;
 
 public class GamePlayManager : MonoBehaviour
 {
@@ -11,6 +12,12 @@ public class GamePlayManager : MonoBehaviour
     [SerializeField] Transform ClearInspect;
     [SerializeField] Camera ToolCamera;
     [SerializeField] ParticleSystem GlitterParticle;
+
+    [Header("Return Transition")]
+    [SerializeField] private bool useStagedReturnTransition = true;
+    [SerializeField] private string returnIntermediaryScene = "TransitionScreen";
+    [SerializeField] private float returnIntermediaryDelay = 0.5f;
+    [SerializeField] private TransitionSettings returnTransitionSettings;
 
     public bool isGameFinished = false;
 
@@ -115,5 +122,78 @@ public class GamePlayManager : MonoBehaviour
     public bool IsGameFinished()
     {
         return isGameFinished;
+    }
+
+    /// <summary>
+    /// Public entry point for finish button to re-run finish logic safely.
+    /// </summary>
+    public void TriggerFinishButton()
+    {
+        Debug.Log("=== FINISH BUTTON TRIGGERED FROM UI ===");
+
+        // Pastikan state selesai di-set
+        FinishedGame();
+
+        // Lanjutkan transition ke menu
+        StartSceneTransition();
+    }
+
+    private void StartSceneTransition()
+    {
+        // Pastikan SceneTransitionManager ada
+        if (SceneTransitionManager.Instance == null)
+        {
+            Debug.LogWarning("SceneTransitionManager not found, creating one...");
+            var stmGO = new GameObject("SceneTransitionManager");
+            stmGO.AddComponent<SceneTransitionManager>();
+        }
+
+        // Deteksi ObjectType dari nama scene sebagai fallback
+        ObjectType objectType = DetectObjectTypeFromScene();
+        string targetScene = "New Start Game Sandy"; // main menu default
+
+        Debug.Log($"Triggering transition to '{targetScene}' with ObjectType '{objectType}'");
+
+        if (useStagedReturnTransition)
+        {
+            Debug.Log($"Using staged return transition via '{returnIntermediaryScene}' (delay {returnIntermediaryDelay}s)");
+            SceneTransitionManager.Instance.MarkReturningFromGameplay();
+            SceneTransitionManager.Instance.StartStagedTransition(
+                returnIntermediaryScene,
+                targetScene,
+                returnIntermediaryDelay,
+                returnTransitionSettings
+            );
+        }
+        else
+        {
+            SceneTransitionManager.Instance.MarkReturningFromGameplay();
+            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(objectType, targetScene, "GamePlayManager");
+        }
+    }
+
+    private ObjectType DetectObjectTypeFromScene()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+
+        if (sceneName.Contains("coin") || sceneName.Contains("china coin"))
+        {
+            return ObjectType.ChinaCoin;
+        }
+        else if (sceneName.Contains("jar") || sceneName.Contains("china jar"))
+        {
+            return ObjectType.ChinaJar;
+        }
+        else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
+        {
+            return ObjectType.IndonesiaKendin;
+        }
+        else if (sceneName.Contains("winged") || sceneName.Contains("mesir"))
+        {
+            return ObjectType.MesirWingedScared;
+        }
+
+        // Default fallback
+        return ObjectType.ChinaCoin;
     }
 }

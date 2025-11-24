@@ -58,12 +58,15 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
     void OnEnable()
     {
-        inputSystem.Input.Enable();
+        if (inputSystem != null)
+            inputSystem.Input.Enable();
     }
 
     void OnDisable()
     {
-        inputSystem.Input.Disable();
+        // Add null check to prevent NullReferenceException during scene cleanup
+        if (inputSystem != null)
+            inputSystem.Input.Disable();
     }
 
     public void OnPress(InputAction.CallbackContext context)

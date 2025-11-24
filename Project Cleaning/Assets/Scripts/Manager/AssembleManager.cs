@@ -100,13 +100,13 @@ public class AssembleManager : MonoBehaviour
                 if (fragment.CurrentStatus == "Attached")
                 {
                     progressAttachment += 1;
-                    Debug.Log("persentase naik");
+                    //Debug.Log("persentase naik");
                 }
             }
         }
 
         var overallProgress = progressAttachment / TotalFragments;
-        Debug.Log($"Progress attach ({progressAttachment}/{TotalFragments}): {overallProgress}");
+        //Debug.Log($"Progress attach ({progressAttachment}/{TotalFragments}): {overallProgress}");
         progressAttach = overallProgress;
     }
 

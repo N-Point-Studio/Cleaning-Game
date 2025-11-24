@@ -9111,6 +9111,7 @@ GameObject:
   - component: {fileID: 1181414301}
   - component: {fileID: 1181414302}
   - component: {fileID: 1181414303}
+  - component: {fileID: 1181414304}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -9189,15 +9190,14 @@ MonoBehaviour:
   progressDirts: {fileID: 213281018}
   progressDusts: {fileID: 1774078599}
   progressAssemble: {fileID: 353650395}
-  progressDirtsGO: {fileID: 992195913}
-  progressDustsGO: {fileID: 31513781}
-  progressAssembleGO: {fileID: 241564836}
+  artefactNameText: {fileID: 0}
   settingCanvas: {fileID: 933797011}
   ExitButton: {fileID: 590683623}
   ResumeButton: {fileID: 2086974278}
   FinishUI: {fileID: 242598037}
   FinishBackground: {fileID: 1542636678}
-  ArtefactNameText: {fileID: 948767583}
+  FinishButtonImage: {fileID: 1649591636}
+  useImageAsButton: 1
 --- !u!114 &1181414300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9262,6 +9262,22 @@ MonoBehaviour:
   ToolCamera: {fileID: 588808583}
   GlitterParticle: {fileID: 1062278166}
   isGameFinished: 0
+--- !u!114 &1181414304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1181414294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544bd24622a6d417e9a7dc19ea47fbd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneTransitionDelay: 0.5
+  useEasyTransition: 1
+  enableDebugLogs: 1
+  fallbackTransitionSettings: {fileID: 0}
 --- !u!1 &1190067323
 GameObject:
   m_ObjectHideFlags: 0
