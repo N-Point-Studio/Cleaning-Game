@@ -11,7 +11,7 @@ public class Clean : MonoBehaviour
 
     [Header("Progress (0 = kotor, 1 = bersih)")]
     [Range(0, 1f)]
-    [SerializeField] private float progress = 0f;   // tampil di inspector (read-only)
+    [SerializeField] private float progress = 0f;
 
     private float dirtAmountTotal = 0f;
     private float dirtAmount = 0f;
@@ -39,8 +39,6 @@ public class Clean : MonoBehaviour
         }
 
         dirtAmount = dirtAmountTotal;
-
-        // UpdateProgress();
         CleanManager.Instance.Register(this);
 
         Debug.Log($"{name} Dirt Total Selesai: {dirtAmountTotal}");
