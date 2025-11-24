@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Kendi
   m_EditorClassIdentifier: 
   artifactName: Kendi
-  code: ALAMAK
-  history: Sangkuriang pernah minum pake kendi ini, Aseli brok!
+  code: CH0329
+  history: Made from gold, this handle-less, spouted pouring vessel originated from
+    8th to early 9th century Central Javanese period in Java, Indonesia.
   artefacts:
   - fragment: {fileID: 7262281596309485387, guid: 4f066100c2fb64d599e158e295541b30,
       type: 3}

@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4ecdad67285e4111b58296d98da9caa, type: 3}
   m_Name: Scarab
   m_EditorClassIdentifier: 
-  artifactName: Scarab
-  code: ALAMAK
-  history: Scarabracadabra
+  artifactName: Winged Scarab
+  code: CH0267
+  history: 'This winged scarab consists of three pieces: an actual scarab beetle
+    and two separately made wings. The wings are not those of a beetle, but those
+    of a bird, as is apparent by their shape and the indication of individual feathers.
+    Each piece features several small holes that were used to fasten the winged scarab
+    to the wrappings of a mummy. Winged scarabs, meant to guarantee the rebirth of
+    the deceased, were very popular funerary amulets.'
   artefacts:
   - fragment: {fileID: 4368633189464531008, guid: 09d51be5f35034c388ffa3164f3e5b3c,
       type: 3}

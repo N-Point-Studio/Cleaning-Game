@@ -40,6 +40,7 @@ public class GameLoader : MonoBehaviour
             }
         }
 
+        UIManager.Instance.SetArtefactName(artefactData.artifactName);
         AssembleManager.Instance.ShowingAssembleProgress();
     }
 }

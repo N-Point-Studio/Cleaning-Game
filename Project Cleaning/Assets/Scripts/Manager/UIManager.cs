@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,14 +16,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject progressDirtsGO;
     [SerializeField] private GameObject progressDustsGO;
     [SerializeField] private GameObject progressAssembleGO;
-
-
-
     [SerializeField] private GameObject settingCanvas;
     [SerializeField] private Button ExitButton;
     [SerializeField] private Button ResumeButton;
     [SerializeField] private GameObject FinishUI;
     [SerializeField] private GameObject FinishBackground;
+    [SerializeField] private TextMeshProUGUI ArtefactNameText;
     private bool isSettingShown = false;
     private int minusFactor = 0;
 
@@ -111,5 +110,10 @@ public class UIManager : MonoBehaviour
     {
 
         return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / (3 + minusFactor);
+    }
+
+    public void SetArtefactName(string artefactName)
+    {
+        ArtefactNameText.text = artefactName;
     }
 }

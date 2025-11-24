@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4ecdad67285e4111b58296d98da9caa, type: 3}
-  m_Name: BlueJarDragon
+  m_Name: JarWithDragon
   m_EditorClassIdentifier: 
-  artifactName: Blue Jar Dragon
+  artifactName: Jar with Dragon
   code: CH0923
   history: 'Commissioned by the court, this spectacular storage jar, made in the
     kilns in Jingdezhen, is dated to the rule of the Xuande emperor by an inscription

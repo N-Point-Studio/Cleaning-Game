@@ -29,10 +29,13 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/GamePlayFixing.unity
     guid: 16cd3f1dba04844c6b9468cccc11cd39
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/New Start Game.unity
     guid: efa3397073daf4a56aa5fd9fbc198f36
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/GamePlayRND.unity
     guid: f7245405071024f2bb2f16d990e2ebd9
+  - enabled: 1
+    path: Assets/Scenes/GamePlayFix.unity
+    guid: b6d8fd7fb66a1407496ef48de21d264b
   m_configObjects: {}
