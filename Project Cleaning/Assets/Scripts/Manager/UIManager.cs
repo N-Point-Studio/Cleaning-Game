@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -262,6 +263,9 @@ public class UIManager : MonoBehaviour
     public void ExitButtonInteract()
     {
         Debug.Log("Exit level");
+        // SceneManager.LoadScene("New Start Game Sandy");
+        GamePlayManager.Instance.StartSceneTransition();
+        SceneManager.LoadScene(0);
     }
 
     public void ResumeButtonInteract()
