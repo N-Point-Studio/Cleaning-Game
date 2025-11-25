@@ -53,6 +53,16 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void Awake()
     {
+        // If this component lives alongside other managers, spawn a dedicated persistent GameObject to avoid dragging them across scenes.
+        if (Instance == null && HasOtherManagersOnGameObject())
+        {
+            var persistentGO = new GameObject("SceneTransitionManager");
+            var newSTM = persistentGO.AddComponent<SceneTransitionManager>();
+            newSTM.CopyConfigFrom(this);
+            Destroy(this);
+            return;
+        }
+
         // Singleton pattern with DontDestroyOnLoad
         if (Instance == null)
         {
@@ -1134,7 +1144,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Failed to find or trigger ContentSwitcher!");
+            Debug.LogWarning("Failed to find or trigger ContentSwitcher!");
         }
     }
 
@@ -1242,7 +1252,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (contentSwitchers.Length == 0)
         {
-            Debug.LogError("❌ No ContentSwitcher found in scene!");
+            Debug.LogWarning("⚠️ No ContentSwitcher found in scene - skipping content switch.");
             return false;
         }
 
@@ -1276,6 +1286,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             case ObjectType.ChinaCoin:
             case ObjectType.ChinaJar:
+            case ObjectType.ChinaHorse:
                 return ChapterType.China;
             case ObjectType.IndonesiaKendin:
                 return ChapterType.Indonesia;
@@ -1291,6 +1302,32 @@ public class SceneTransitionManager : MonoBehaviour
     public ChapterType GetCurrentChapterType() => currentChapterType;
     public bool ShouldTriggerContentSwitcher() => shouldTriggerContentSwitcher;
     public bool IsTransitionInProgress() => isTransitionInProgress;
+
+    /// <summary>
+    /// Utility: detect if this GO hosts other managers that should not be marked DontDestroyOnLoad.
+    /// </summary>
+    private bool HasOtherManagersOnGameObject()
+    {
+        var components = GetComponents<Component>();
+        int extra = 0;
+        foreach (var comp in components)
+        {
+            if (comp == null || comp is Transform || comp == this) continue;
+            extra++;
+        }
+        return extra > 0;
+    }
+
+    /// <summary>
+    /// Copy serialized config to a new instance when migrating to a dedicated GO.
+    /// </summary>
+    private void CopyConfigFrom(SceneTransitionManager other)
+    {
+        sceneTransitionDelay = other.sceneTransitionDelay;
+        useEasyTransition = other.useEasyTransition;
+        enableDebugLogs = other.enableDebugLogs;
+        fallbackTransitionSettings = other.fallbackTransitionSettings;
+    }
 
     /// <summary>
     /// Load saved progress and apply completion status to objects in scene

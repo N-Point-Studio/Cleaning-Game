@@ -8,6 +8,7 @@ TagManager:
   - Tool_Grip
   - Tools
   - Dirts
+  - InspectPosition
   layers:
   - Default
   - TransparentFX

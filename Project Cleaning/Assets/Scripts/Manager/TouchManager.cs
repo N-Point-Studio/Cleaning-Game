@@ -35,11 +35,9 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
-            return;
+            Destroy(Instance.gameObject);
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
         mainCamera = Camera.main;
         inputSystem = new InputSystem();

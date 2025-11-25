@@ -341,6 +341,7 @@ public class ClickableObject : MonoBehaviour
         {
             case ObjectType.ChinaCoin:
             case ObjectType.ChinaJar:
+            case ObjectType.ChinaHorse:
                 return ChapterType.China;
             case ObjectType.IndonesiaKendin:
                 return ChapterType.Indonesia;

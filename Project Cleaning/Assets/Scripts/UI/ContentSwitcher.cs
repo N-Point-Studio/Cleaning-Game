@@ -17,6 +17,7 @@ public enum ObjectType
 {
     ChinaCoin,
     ChinaJar,
+    ChinaHorse,
     IndonesiaKendin,
     MesirWingedScared
 }

@@ -1773,6 +1773,54 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 10}
   m_SizeDelta: {x: 758, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &494360916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 494360918}
+  - component: {fileID: 494360917}
+  m_Layer: 0
+  m_Name: SceneTransitionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &494360917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494360916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544bd24622a6d417e9a7dc19ea47fbd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneTransitionDelay: 0.5
+  useEasyTransition: 1
+  enableDebugLogs: 1
+  fallbackTransitionSettings: {fileID: 0}
+--- !u!4 &494360918
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 494360916}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.7838745, y: 0.27432567, z: -0.7420006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &502552410
 GameObject:
   m_ObjectHideFlags: 0
@@ -8927,7 +8975,6 @@ GameObject:
   - component: {fileID: 1181414301}
   - component: {fileID: 1181414302}
   - component: {fileID: 1181414303}
-  - component: {fileID: 1181414304}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -9008,6 +9055,7 @@ MonoBehaviour:
   progressAssemble: {fileID: 353650395}
   artefactNameText: {fileID: 0}
   settingCanvas: {fileID: 933797011}
+  FinishButton: {fileID: 0}
   ExitButton: {fileID: 590683623}
   ResumeButton: {fileID: 2086974278}
   FinishUI: {fileID: 242598037}
@@ -9077,23 +9125,42 @@ MonoBehaviour:
   ClearInspect: {fileID: 1472922643}
   ToolCamera: {fileID: 588808583}
   GlitterParticle: {fileID: 1062278166}
+  useStagedReturnTransition: 1
+  returnIntermediaryScene: TransitionScreen
+  returnIntermediaryDelay: 0.5
+  returnTransitionSettings: {fileID: 0}
   isGameFinished: 0
---- !u!114 &1181414304
-MonoBehaviour:
+--- !u!1 &1187087680
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1181414294}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 544bd24622a6d417e9a7dc19ea47fbd0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sceneTransitionDelay: 0.5
-  useEasyTransition: 1
-  enableDebugLogs: 1
-  fallbackTransitionSettings: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1187087681}
+  m_Layer: 0
+  m_Name: InspectPosition
+  m_TagString: InspectPosition
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1187087681
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187087680}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.7838745, y: 0.27432567, z: -0.7420006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1190067323
 GameObject:
   m_ObjectHideFlags: 0
@@ -16063,7 +16130,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fa512eb104aa4430b9903bb46dba950, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  artefactData: {fileID: 11400000, guid: a3924d72a67c0455eb511e7925877898, type: 2}
+  artefactData: {fileID: 0}
+  autoSelectByObjectType: 1
+  artefactMappings:
+  - objectType: 0
+    artefact: {fileID: 11400000, guid: be5bcc866d7c24e92a67ef37e57beff7, type: 2}
+  - objectType: 1
+    artefact: {fileID: 11400000, guid: 1c3b6e9d8184949cf8925a6e79acfa83, type: 2}
+  - objectType: 2
+    artefact: {fileID: 11400000, guid: e1fd02f44ca454e028dbb6f9a0ed00fe, type: 2}
+  - objectType: 3
+    artefact: {fileID: 11400000, guid: a3924d72a67c0455eb511e7925877898, type: 2}
+  fallbackArtefact: {fileID: 0}
 --- !u!4 &1787267813
 Transform:
   m_ObjectHideFlags: 0
@@ -23397,3 +23475,5 @@ SceneRoots:
   - {fileID: 3987647595323986968}
   - {fileID: 7097539345374362867}
   - {fileID: 2061512971}
+  - {fileID: 1187087681}
+  - {fileID: 494360918}

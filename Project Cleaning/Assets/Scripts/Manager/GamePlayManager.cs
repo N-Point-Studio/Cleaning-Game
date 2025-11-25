@@ -22,6 +22,8 @@ public class GamePlayManager : MonoBehaviour
     public bool isGameFinished = false;
 
     private Transform initialTransfromEnvironment;
+    private Vector3 environmentStartPos;
+    private Quaternion environmentStartRot;
     private Vector3 FinishedPosition = new Vector3(0.0f, -5.5f, -9f);
 
 
@@ -30,8 +32,14 @@ public class GamePlayManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(Instance.gameObject);
+        }
         Instance = this;
         initialTransfromEnvironment = Environment.transform;
+        environmentStartPos = Environment.transform.position;
+        environmentStartRot = Environment.transform.rotation;
         TouchManager.Instance.DisableAllTouch(false);
         ToolCamera.enabled = true;
     }
@@ -44,6 +52,11 @@ public class GamePlayManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (UIManager.Instance == null || AssembleManager.Instance == null)
+        {
+            return; // Scene unloading or managers not ready
+        }
+
         Debug.Log("Value: " + UIManager.Instance.GetAllProgressValue());
         FinishedGame();
     }
@@ -53,6 +66,11 @@ public class GamePlayManager : MonoBehaviour
         Debug.Log("Check Finish Game " + AssembleManager.Instance.assemblyTargets.Count);
         if (UIManager.Instance.GetAllProgressValue() >= 100)
         {
+            if (AssembleManager.Instance == null)
+            {
+                Debug.LogWarning("AssembleManager missing when checking finish state.");
+                return;
+            }
             if (AssembleManager.Instance.assemblyTargets.Count > 0)
             {
                 Debug.Log("ASSEMBLE A");
@@ -125,6 +143,38 @@ public class GamePlayManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Hard reset gameplay state when re-entering the scene.
+    /// </summary>
+    public void ResetSession()
+    {
+        isGameFinished = false;
+
+        // Reset environment and camera/tools
+        if (Environment != null)
+        {
+            Environment.transform.SetPositionAndRotation(environmentStartPos, environmentStartRot);
+        }
+
+        if (GlitterParticle != null)
+        {
+            GlitterParticle.gameObject.SetActive(false);
+        }
+
+        if (ToolCamera != null)
+        {
+            ToolCamera.enabled = true;
+        }
+
+        // Re-enable touch
+        if (TouchManager.Instance != null)
+        {
+            TouchManager.Instance.DisableAllTouch(false);
+        }
+
+        Debug.Log("[GamePlayManager] Session reset.");
+    }
+
+    /// <summary>
     /// Public entry point for finish button to re-run finish logic safely.
     /// </summary>
     public void TriggerFinishButton()
@@ -183,6 +233,10 @@ public class GamePlayManager : MonoBehaviour
         else if (sceneName.Contains("jar") || sceneName.Contains("china jar"))
         {
             return ObjectType.ChinaJar;
+        }
+        else if (sceneName.Contains("horse"))
+        {
+            return ObjectType.ChinaHorse;
         }
         else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
         {

@@ -28,6 +28,10 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(Instance.gameObject);
+        }
         Instance = this;
     }
 
@@ -264,7 +268,24 @@ public class UIManager : MonoBehaviour
 
     public float GetAllProgressValue()
     {
+        if (progressDirts == null || progressAssemble == null || progressDusts == null)
+        {
+            Debug.LogWarning("Progress bars not assigned on UIManager.");
+            return 0f;
+        }
+
         return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / 3;
+    }
+
+    /// <summary>
+    /// Reset progress bars to zero at the start of a new session.
+    /// </summary>
+    public void ResetProgressBars()
+    {
+        if (progressDirts != null) progressDirts.SetValue(0);
+        if (progressDusts != null) progressDusts.SetValue(0);
+        if (progressAssemble != null) progressAssemble.SetValue(0);
+        Debug.Log("[UIManager] Progress bars reset.");
     }
 
     /// <summary>
@@ -301,6 +322,10 @@ public class UIManager : MonoBehaviour
                 else if (sceneName.Contains("jar") || sceneName.Contains("china jar"))
                 {
                     fallbackObjectType = ObjectType.ChinaJar;
+                }
+                else if (sceneName.Contains("horse"))
+                {
+                    fallbackObjectType = ObjectType.ChinaHorse;
                 }
                 else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
                 {
