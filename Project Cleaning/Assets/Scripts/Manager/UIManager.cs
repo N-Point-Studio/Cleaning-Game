@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
@@ -18,7 +19,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject progressDirtsGO;
     [SerializeField] private GameObject progressDustsGO;
     [SerializeField] private GameObject progressAssembleGO;
-    [SerializeField] private Text artefactNameText;
+    [SerializeField] private TextMeshProUGUI artefactNameText;
     [SerializeField] private GameObject settingCanvas;
     [SerializeField] private Button FinishButton; // Optional direct button reference
     [SerializeField] private Button ExitButton;
