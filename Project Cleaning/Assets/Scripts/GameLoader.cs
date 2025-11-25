@@ -20,16 +20,27 @@ public class GameLoader : MonoBehaviour
         }
 
         AssembleManager.Instance.assemblyTargets.Clear();
-
         foreach (var fragData in artefactData.artefacts)
         {
-            GameObject spawned = Instantiate(fragData.fragment);
+            if (fragData.correctPosition == null)
+            {
+                Debug.LogWarning("Fragment " + fragData.fragment.name + " has no correct position assigned.");
+                GameObject spawned = Instantiate(fragData.fragment);
+            }
+            else
+            {
+                Debug.Log("Spawning Fragment: " + fragData.fragment.name);
+                GameObject spawned = Instantiate(fragData.fragment);
 
-            FragmentStateMachine fragmentSM = spawned.GetComponent<FragmentStateMachine>();
+                FragmentStateMachine fragmentSM = spawned.GetComponent<FragmentStateMachine>();
 
-            AssemblyTarget newTarget = new AssemblyTarget(fragmentSM, fragData.correctPosition);
+                AssemblyTarget newTarget = new AssemblyTarget(fragmentSM, fragData.correctPosition);
 
-            AssembleManager.Instance.assemblyTargets.Add(newTarget);
+                AssembleManager.Instance.assemblyTargets.Add(newTarget);
+            }
         }
+
+        UIManager.Instance.SetArtefactName(artefactData.artifactName);
+        AssembleManager.Instance.ShowingAssembleProgress();
     }
 }

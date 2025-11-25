@@ -20,6 +20,13 @@ public class FragmentUnassembleState : FragmentBaseState
             );
         }
 
+        // --- TAMBAHAN TUTORIAL ---
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.CompleteStep(5); // Index 5 = Disassemble
+        }
+        // -------------------------
+
         stateMachine.SwitchState(new FragmentReturningState(stateMachine));
     }
     public override void Tick(float dt) { }

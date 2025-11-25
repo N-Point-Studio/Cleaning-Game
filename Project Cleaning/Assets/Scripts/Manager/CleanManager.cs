@@ -78,5 +78,36 @@ public class CleanManager : MonoBehaviour
         var overallProgress = progressClean + progressCleanMud;
         return overallProgress;
     }
+    public float GetDustProgress()
+    {
+        int totalObjects = totalTexture + totalMud;
+        if (totalObjects == 0) return 1f;
+
+        float cleanTotal = 0;
+        foreach (var clean in allCleans)
+        {
+            cleanTotal += clean.GetDirtAmount();
+        }
+        progressClean = Mathf.Clamp01(cleanTotal / totalTexture);
+        Debug.Log($"progress clean harusnya: {progressClean}");
+        return progressClean;
+    }
+
+    public float GetMudProgress()
+    {
+        int totalObjects = totalTexture + totalMud;
+        if (totalObjects == 0) return 1f;
+        progressCleanMud = Mathf.Clamp01(1f - (float)allCleanMud.Count / totalMud);
+        return progressCleanMud;
+    }
+
+    public void ShowingMudProgress()
+    {
+        var totalMud = allCleanMud.Count;
+        if (totalMud == 0)
+        {
+            UIManager.Instance.ShowProgress(UIManager.ProgressType.Dirt, false);
+        }
+    }
 
 }

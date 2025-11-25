@@ -16,10 +16,17 @@ public class FragmentReturningState : FragmentBaseState
 
     public override void Enter()
     {
+
+        stateMachine.audioSource.PlayOneShot(stateMachine.putSound);
         Debug.Log(stateMachine.name + "is returning");
         stateMachine.Interaction.DisableAllInteraction();
         stateMachine.CurrentStatus = "Returning";
         stateMachine.transform.SetParent(null);
+
+        if (AssembleManager.Instance.CurrentFragmentInspected == stateMachine)
+        {
+            AssembleManager.Instance.SetCurrentInspectFragment(null);
+        }
 
         if (AssembleManager.Instance.CurrentClusterInspected != null)
         {

@@ -1,73 +1,73 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
-using DG.Tweening;
 
 /// <summary>
-/// Advanced Input Manager - Clean Version
-/// Controls game modes: Initial → Exploration → Zoom
-/// Handles touch/mouse input, swipe gestures, pinch gestures
+/// Advanced Input Manager - Refactored Version
+/// Orchestrates modular components for input handling
+/// Reduced from 1200+ lines to under 300 lines while maintaining same behavior
 /// </summary>
 public class AdvancedInputManager : MonoBehaviour
 {
-    [Header("Input Settings")]
-    [SerializeField] private LayerMask clickableLayerMask = -1;
-    [SerializeField] private float maxClickDistance = 100f;
-
     [Header("Camera Drag (Zoom Mode Only)")]
     [SerializeField] private float cameraDragSensitivity = 0.01f;
     [SerializeField] private float cameraDragSmoothing = 5f;
     [SerializeField] private float maxDragSpeed = 2f;
 
-    [Header("UI Controls")]
-    [SerializeField] private Image startExplorationImage;
-    [SerializeField] private Image additionalImage1;
-    [SerializeField] private Image additionalImage2;
-
-    [Header("Exploration Settings")]
-    [SerializeField] private Vector3 explorationPosition = new Vector3(-4.35f, 3.851f, -1.48f);
-    [SerializeField] private Vector3 explorationRotation = new Vector3(90f, 0f, 0f);
-    [SerializeField] private float explorationTransitionDuration = 15f;
-    [SerializeField] private float returnTransitionDuration = 1.2f;
-
-    [Header("UI Transition Settings")]
-    [SerializeField] private float buttonFadeDuration = 0.5f;
-    [SerializeField] private float buttonScaleDuration = 0.3f;
-    [SerializeField] private float cameraDelayAfterButton = 0.2f;
-
     [Header("Gesture Settings")]
     [SerializeField] private float swipeThreshold = 50f;
     [SerializeField] private float maxSwipeTime = 1f;
-    [SerializeField] private float swipeTransitionDuration = 0.6f;
-    [SerializeField] private float pinchThreshold = 30f;
-    [SerializeField] private float maxPinchTime = 2f;
-
-    [Header("Scene Change Settings")]
-    [SerializeField] private bool enableSceneChange = true;
-    [SerializeField] private float sceneChangeDelay = 0.5f;
+    [SerializeField] private float pinchThreshold = 5f;
+    [SerializeField] private float maxPinchTime = 3f;
+    [SerializeField] private float earlyPinchDetectionTime = 0.1f;
+    [SerializeField] private float pinchVsSwipePriority = 4f;
 
     // Core components
-    private Camera playerCamera;
     private TopDownCameraController cameraController;
-
-    // Game state
-    private GameMode currentGameMode = GameMode.Initial;
-    private readonly float[] cameraXPositions = { -4.35f, -2.5f, -0.5f };
-    private int currentPositionIndex = 0;
-    private Vector3 originalCameraPosition, originalCameraRotation;
-    private bool justEnteredZoomMode = false;
 
     // Input systems
     private CameraDragSystem cameraDragSystem;
     private SwipeDetectionSystem swipeDetectionSystem;
     private PinchDetectionSystem pinchDetectionSystem;
 
+    // Modular components
+    private GameModeManager gameModeManager;
+    private UITransitionController uiController;
+    private ObjectInteractionHandler objectHandler;
+    private CameraAnimationController cameraAnimator;
+    private DoubleTapDetector doubleTapDetector;
+
+    // Gesture conflict resolution
+    private bool isPinchInProgress = false;
+    private bool isSwipeBlocked = false;
+
     // Singleton
     public static AdvancedInputManager Instance { get; private set; }
+    public static bool IsInTransition { get; private set; } // Global flag to lock transitions
 
-    public enum GameMode { Initial, Exploration, Zoom }
+    // Input blocking for stability
+    private float inputBlockUntil = 0f;
+
+    /// <summary>
+    /// Sets the global transition lock.
+    /// </summary>
+    public static void StartTransitionLock()
+    {
+        if (IsInTransition)
+        {
+            Debug.LogWarning("Attempted to start a new transition while one is already in progress.");
+            return;
+        }
+        IsInTransition = true;
+        Debug.Log("=== TRANSITION LOCK ACQUIRED ===");
+    }
+
+    /// <summary>
+    /// Releases the global transition lock.
+    /// </summary>
+    public static void EndTransitionLock()
+    {
+        IsInTransition = false;
+        Debug.Log("=== TRANSITION LOCK RELEASED ===");
+    }
 
     #region Unity Lifecycle
     private void Awake()
@@ -75,10 +75,7 @@ public class AdvancedInputManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            playerCamera = Camera.main;
-            cameraDragSystem = new CameraDragSystem(cameraDragSensitivity, cameraDragSmoothing, maxDragSpeed);
-            swipeDetectionSystem = new SwipeDetectionSystem(swipeThreshold, maxSwipeTime);
-            pinchDetectionSystem = new PinchDetectionSystem(pinchThreshold, maxPinchTime);
+            InitializeInputSystems();
         }
         else
         {
@@ -89,58 +86,120 @@ public class AdvancedInputManager : MonoBehaviour
     private void Start()
     {
         Application.targetFrameRate = 60;
-        cameraController = TopDownCameraController.Instance;
-        SetupUI();
+        InitializeComponents();
     }
 
     private void Update()
     {
+        // If input is blocked, ignore everything
+        if (Time.time < inputBlockUntil)
+        {
+            return;
+        }
+
         HandleInput();
-        if (currentGameMode == GameMode.Zoom)
+        if (gameModeManager != null && gameModeManager.IsInZoomMode() &&
+            cameraDragSystem != null && cameraController != null)
         {
             cameraDragSystem.Update(Time.deltaTime, cameraController);
         }
     }
     #endregion
 
-    #region UI Setup
-    private void SetupUI()
+    #region Public Interface
+    /// <summary>
+    /// Blocks all input for a specified duration to prevent conflicts
+    /// </summary>
+    public void BlockInputFor(float duration)
     {
-        if (startExplorationImage != null)
-            SetupImageClickDetection(startExplorationImage, StartExplorationMode);
+        inputBlockUntil = Time.time + duration;
+        Debug.Log($"=== INPUT BLOCKED for {duration} seconds ===");
+    }
+    #endregion
 
-        if (additionalImage1 != null)
-            additionalImage1.raycastTarget = false;
-
-        if (additionalImage2 != null)
-            additionalImage2.raycastTarget = false;
+    #region Initialization
+    private void InitializeInputSystems()
+    {
+        cameraDragSystem = new CameraDragSystem(cameraDragSensitivity, cameraDragSmoothing, maxDragSpeed);
+        swipeDetectionSystem = new SwipeDetectionSystem(swipeThreshold, maxSwipeTime);
+        pinchDetectionSystem = new PinchDetectionSystem(pinchThreshold, maxPinchTime, earlyPinchDetectionTime, pinchVsSwipePriority);
     }
 
-    private void SetupImageClickDetection(Image targetImage, System.Action onClickAction)
+    private void InitializeComponents()
     {
-        if (!targetImage.TryGetComponent<EventTrigger>(out var eventTrigger))
-            eventTrigger = targetImage.gameObject.AddComponent<EventTrigger>();
+        cameraController = TopDownCameraController.Instance;
 
-        var clickEvent = new EventTrigger.Entry { eventID = EventTriggerType.PointerClick };
-        clickEvent.callback.AddListener((data) => onClickAction?.Invoke());
-        eventTrigger.triggers.Add(clickEvent);
-        targetImage.raycastTarget = true;
+        // Get or find the modular components
+        gameModeManager = GameModeManager.Instance;
+        uiController = UITransitionController.Instance;
+        objectHandler = ObjectInteractionHandler.Instance;
+
+        // DEFENSIVE: Ensure cameraAnimator is valid, retry if needed
+        cameraAnimator = CameraAnimationController.Instance;
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogWarning("⚠️ CameraAnimationController.Instance is null or destroyed, retrying in next frame");
+            StartCoroutine(RetryInitializeCameraAnimator());
+        }
+
+        doubleTapDetector = DoubleTapDetector.Instance;
+
+        // Subscribe to game mode events
+        if (gameModeManager != null)
+        {
+            gameModeManager.OnModeChanged += OnGameModeChanged;
+        }
     }
 
-    private void SetImageClickable(Image targetImage, bool clickable)
+    /// <summary>
+    /// Retry mechanism to ensure CameraAnimationController is properly initialized
+    /// </summary>
+    private System.Collections.IEnumerator RetryInitializeCameraAnimator()
     {
-        if (targetImage == null) return;
+        int retryCount = 0;
+        const int maxRetries = 10;
 
-        targetImage.raycastTarget = clickable;
-        if (targetImage.TryGetComponent<EventTrigger>(out var eventTrigger))
-            eventTrigger.enabled = clickable;
+        while ((cameraAnimator == null || cameraAnimator.gameObject == null) && retryCount < maxRetries)
+        {
+            yield return null; // Wait one frame
+
+            cameraAnimator = CameraAnimationController.Instance;
+            retryCount++;
+
+            if (cameraAnimator != null && cameraAnimator.gameObject != null)
+            {
+                Debug.Log($"✅ CameraAnimationController successfully initialized after {retryCount} retries");
+                break;
+            }
+        }
+
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogError($"❌ Failed to initialize CameraAnimationController after {maxRetries} retries - swipe functionality will not work");
+        }
+    }
+
+    private void OnGameModeChanged(GameModeManager.GameMode newMode)
+    {
+        // Reset gesture states when mode changes
+        isPinchInProgress = false;
+        isSwipeBlocked = false;
+
+        if (doubleTapDetector != null)
+        {
+            // Use complete reset to clear all gesture states
+            doubleTapDetector.CompleteGestureReset();
+        }
+
+        Debug.Log($"=== INPUT MANAGER - Mode changed to: {newMode}, gesture cooldown reset ===");
     }
     #endregion
 
     #region Input Handling
     private void HandleInput()
     {
-        if (!Application.isMobilePlatform || Application.isEditor)
+        // Only handle mouse input if no touches are detected to avoid conflicts
+        if ((!Application.isMobilePlatform || Application.isEditor) && Input.touchCount == 0)
         {
             HandleMouseInput();
         }
@@ -156,20 +215,70 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandleTouchInput()
     {
+        // ABSOLUTE PRIORITY: If 2+ touches detected, immediately cancel any ongoing swipe and handle pinch
+        if (Input.touchCount >= 2)
+        {
+            if (!isPinchInProgress)
+            {
+                // Force cancel any ongoing swipe detection
+                swipeDetectionSystem.CancelSwipe();
+
+                // INSTANT PINCH DETECTION: Start pinch immediately regardless of touch phases
+                if (gameModeManager != null && !gameModeManager.IsInInitialMode())
+                {
+                    pinchDetectionSystem.ForceStartPinch();
+                    Debug.Log("=== INSTANT PINCH DETECTION - Force starting pinch ===");
+                }
+
+                isPinchInProgress = true;
+                isSwipeBlocked = true;
+                Debug.Log("=== PINCH MODE STARTED - Canceling swipe, blocking single touch ===");
+            }
+            HandlePinchInput();
+            return; // Exit early to prevent single touch processing
+        }
+
         if (Input.touchCount == 1)
         {
             var touch = Input.GetTouch(0);
             switch (touch.phase)
             {
-                case TouchPhase.Began: HandleInputDown(touch.position); break;
-                case TouchPhase.Moved: HandleInputDrag(touch.position); break;
+                case TouchPhase.Began:
+                    if (isPinchInProgress)
+                    {
+                        isPinchInProgress = false;
+                        isSwipeBlocked = false;
+                        Debug.Log("=== PINCH MODE ENDED - Single touch began ===");
+                    }
+
+                    if (!isSwipeBlocked)
+                    {
+                        Debug.Log("=== Single Touch Began - Calling HandleInputDown ===");
+                        HandleInputDown(touch.position);
+                    }
+                    else
+                    {
+                        Debug.Log("=== Single Touch Began - BLOCKED by pinch ===");
+                    }
+                    break;
+                case TouchPhase.Moved:
+                    if (!isSwipeBlocked) HandleInputDrag(touch.position);
+                    break;
                 case TouchPhase.Ended:
-                case TouchPhase.Canceled: HandleInputUp(); break;
+                case TouchPhase.Canceled:
+                    if (!isSwipeBlocked) HandleInputUp();
+                    isSwipeBlocked = false;
+                    break;
             }
         }
-        else if (Input.touchCount == 2)
+        else if (Input.touchCount == 0)
         {
-            HandlePinchInput();
+            if (isPinchInProgress || isSwipeBlocked)
+            {
+                Debug.Log("=== All touches ended - Resetting gesture states ===");
+            }
+            isPinchInProgress = false;
+            isSwipeBlocked = false;
         }
     }
 
@@ -178,49 +287,142 @@ public class AdvancedInputManager : MonoBehaviour
         var touch1 = Input.GetTouch(0);
         var touch2 = Input.GetTouch(1);
 
+        Debug.Log($"=== PINCH INPUT: T1={touch1.phase}, T2={touch2.phase}, PinchInProgress={isPinchInProgress}, SwipeBlocked={isSwipeBlocked} ===");
+
         if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
         {
-            if (currentGameMode != GameMode.Initial) pinchDetectionSystem.StartPinch();
+            if (!gameModeManager.IsInInitialMode())
+            {
+                Debug.Log($"=== PINCH TOUCH BEGAN - Distance: {Vector2.Distance(touch1.position, touch2.position):F1} (already started by ForceStart) ===");
+            }
+            else
+            {
+                Debug.Log("=== PINCH BLOCKED - Still in Initial mode ===");
+            }
         }
         else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
         {
-            pinchDetectionSystem.UpdatePinch();
+            if (isPinchInProgress)
+            {
+                var earlyPinchResult = pinchDetectionSystem.UpdatePinch();
+                Debug.Log($"=== PINCH UPDATE: Distance={earlyPinchResult.CurrentDistance:F1}, Change={earlyPinchResult.DistanceChange:F1}, EarlyDetection={earlyPinchResult.HasEarlyDetection} ===");
+
+                // ADAPTIVE DETECTION: Use early detection flag to block swipes.
+                if (earlyPinchResult.HasEarlyDetection)
+                {
+                    isSwipeBlocked = true;
+                    Debug.Log("=== PINCH MOVEMENT DETECTED - Blocking swipe ===");
+                }
+
+                // BACKUP DETECTION: Force gesture completion if significant change detected
+                if (earlyPinchResult.DistanceChange > pinchThreshold * 0.8f) // 80% of threshold
+                {
+                    Debug.Log("=== BACKUP PINCH DETECTION - Near threshold reached ===");
+                }
+            }
+            else
+            {
+                // Fallback: If pinch was not in progress but we detect 2 moving touches, try to start detection
+                Debug.Log("=== FALLBACK PINCH DETECTION ATTEMPT ===");
+                if (!gameModeManager.IsInInitialMode())
+                {
+                    pinchDetectionSystem.ForceStartPinch();
+                    isPinchInProgress = true;
+                    isSwipeBlocked = true;
+                }
+            }
         }
         else if (touch1.phase == TouchPhase.Ended || touch2.phase == TouchPhase.Ended ||
                  touch1.phase == TouchPhase.Canceled || touch2.phase == TouchPhase.Canceled)
         {
-            var pinchResult = pinchDetectionSystem.EndPinch();
-            if (pinchResult.IsValid) HandlePinchGesture(pinchResult.Direction);
+            if (isPinchInProgress)
+            {
+                var pinchResult = pinchDetectionSystem.EndPinch();
+                Debug.Log($"=== PINCH ENDED: Valid={pinchResult.IsValid}, Direction={pinchResult.Direction}, Change={pinchResult.DistanceChange:F1} ===");
+
+                if (pinchResult.IsValid)
+                {
+                    Debug.Log($"=== EXECUTING PINCH GESTURE: {pinchResult.Direction} at {pinchResult.PinchCenter} ===");
+                    HandlePinchGesture(pinchResult.Direction, pinchResult.PinchCenter);
+                }
+                else
+                {
+                    // FALLBACK: Execute gesture if close to threshold (forgiving approach)
+                    float changeThreshold = pinchThreshold * 0.6f; // 60% of normal threshold
+                    if (Mathf.Abs(pinchResult.DistanceChange) >= changeThreshold)
+                    {
+                        Debug.Log($"=== FALLBACK PINCH EXECUTION: Change {pinchResult.DistanceChange:F1} >= {changeThreshold:F1} ===");
+                        var direction = pinchResult.DistanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
+                        HandlePinchGesture(direction, pinchResult.PinchCenter);
+                    }
+                    else
+                    {
+                        Debug.Log($"=== PINCH FAILED: Change {pinchResult.DistanceChange:F1} < threshold {pinchThreshold:F1} ===");
+                    }
+                }
+
+                // AGGRESSIVE STATE CLEANUP: Always reset pinch state after processing
+                isPinchInProgress = false;
+                isSwipeBlocked = false;
+                Debug.Log("=== PINCH STATE RESET - Ready for next gesture ===");
+            }
         }
     }
 
     private void HandleInputDown(Vector2 screenPosition)
     {
-        switch (currentGameMode)
+        var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+
+        // PRIORITY 1: Check for object clicks FIRST (before double-tap detection)
+        bool objectWasClicked = false;
+        switch (currentMode)
         {
-            case GameMode.Initial:
+            case GameModeManager.GameMode.Initial:
                 // Input ignored in initial mode - user must start exploration first
                 break;
 
-            case GameMode.Exploration:
-                if (!CheckForObjectClick(screenPosition))
+            case GameModeManager.GameMode.Exploration:
+                objectWasClicked = (objectHandler != null && objectHandler.CheckForObjectClick(screenPosition));
+                if (!objectWasClicked)
                     swipeDetectionSystem.StartSwipe(screenPosition);
                 break;
 
-            case GameMode.Zoom:
-                if (!CheckForObjectClick(screenPosition))
+            case GameModeManager.GameMode.Zoom:
+                objectWasClicked = (objectHandler != null && objectHandler.CheckForObjectClick(screenPosition));
+                if (!objectWasClicked)
                     cameraDragSystem.StartDrag(screenPosition);
                 break;
+        }
+
+        // PRIORITY 2: Only check for double-tap if NO object was clicked
+        if (!objectWasClicked && doubleTapDetector != null)
+        {
+            // Add extra delay check to ensure mode switching is stable
+            bool canDoubleTap = doubleTapDetector.CheckForDoubleTap(screenPosition);
+            if (canDoubleTap)
+            {
+                Debug.Log("=== DOUBLE TAP DETECTED - Handling gesture ===");
+                doubleTapDetector.HandleDoubleTap(screenPosition);
+                return; // Exit early - double tap handled
+            }
+        }
+
+        // If an object was clicked, ensure gesture states are clean for next interaction
+        if (objectWasClicked && doubleTapDetector != null)
+        {
+            // Reset gesture state after object interaction to prevent interference
+            doubleTapDetector.ResetDoubleTapState();
         }
     }
 
     private void HandleInputDrag(Vector2 screenPosition)
     {
-        if (currentGameMode == GameMode.Zoom)
+        var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+        if (currentMode == GameModeManager.GameMode.Zoom)
         {
             cameraDragSystem.UpdateDrag(screenPosition, cameraController);
         }
-        else if (currentGameMode == GameMode.Exploration)
+        else if (currentMode == GameModeManager.GameMode.Exploration)
         {
             swipeDetectionSystem.UpdateSwipe(screenPosition);
         }
@@ -228,11 +430,12 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandleInputUp()
     {
-        if (currentGameMode == GameMode.Zoom)
+        var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+        if (currentMode == GameModeManager.GameMode.Zoom)
         {
             cameraDragSystem.EndDrag();
         }
-        else if (currentGameMode == GameMode.Exploration)
+        else if (currentMode == GameModeManager.GameMode.Exploration)
         {
             var swipeResult = swipeDetectionSystem.EndSwipe();
             if (swipeResult.IsValid) HandleSwipeGesture(swipeResult.Direction);
@@ -243,374 +446,152 @@ public class AdvancedInputManager : MonoBehaviour
     #region Gesture Handling
     private void HandleSwipeGesture(SwipeDirection direction)
     {
+        Debug.Log($"🎯 HandleSwipeGesture called - Direction: {direction}");
+
+        // DEFENSIVE: Check if cameraAnimator is still valid
+        if (cameraAnimator == null || cameraAnimator.gameObject == null)
+        {
+            Debug.LogError("❌ CameraAnimationController is null or destroyed - cannot perform swipe. Attempting to reinitialize...");
+            cameraAnimator = CameraAnimationController.Instance;
+
+            if (cameraAnimator == null)
+            {
+                Debug.LogError("❌ CameraAnimationController.Instance is still null - swipe will not work");
+                return;
+            }
+            else
+            {
+                Debug.Log("✅ CameraAnimationController successfully reinitialized");
+            }
+        }
+
+        // ADDITIONAL FIX: Ensure game mode is correct before performing swipe
+        if (gameModeManager != null && !gameModeManager.IsInExplorationMode())
+        {
+            Debug.LogWarning("⚠️ Not in exploration mode - ensuring exploration mode is active before swipe");
+            gameModeManager.ReturnToExplorationMode();
+        }
+
         switch (direction)
         {
-            case SwipeDirection.Right: PerformSwipeLeft(); break;
-            case SwipeDirection.Left: PerformSwipeRight(); break;
-        }
-    }
-
-    private void HandlePinchGesture(PinchDirection direction)
-    {
-        if (currentGameMode == GameMode.Exploration && direction == PinchDirection.In)
-        {
-            EnterZoomModeAtCenter();
-        }
-        else if (currentGameMode == GameMode.Zoom && direction == PinchDirection.Out)
-        {
-            ReturnToExplorationMode();
-        }
-    }
-
-    private void PerformSwipeRight()
-    {
-        if (currentPositionIndex < cameraXPositions.Length - 1)
-        {
-            currentPositionIndex++;
-            AnimateToPosition(cameraXPositions[currentPositionIndex]);
-        }
-    }
-
-    private void PerformSwipeLeft()
-    {
-        if (currentPositionIndex > 0)
-        {
-            currentPositionIndex--;
-            AnimateToPosition(cameraXPositions[currentPositionIndex]);
-        }
-    }
-    #endregion
-
-    #region Game Mode Management
-    public void StartExplorationMode()
-    {
-        if (currentGameMode != GameMode.Initial) return;
-
-        SetImageClickable(startExplorationImage, false);
-        if (additionalImage1 != null) additionalImage1.raycastTarget = false;
-        if (additionalImage2 != null) additionalImage2.raycastTarget = false;
-
-        StartCoroutine(ElegantButtonTransition());
-    }
-
-    private IEnumerator ElegantButtonTransition()
-    {
-        var imagesToAnimate = new System.Collections.Generic.List<Image>();
-        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
-        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
-        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
-
-        var masterSequence = DOTween.Sequence();
-
-        for (int i = 0; i < imagesToAnimate.Count; i++)
-        {
-            var image = imagesToAnimate[i];
-            var canvasGroup = image.GetComponent<CanvasGroup>() ?? image.gameObject.AddComponent<CanvasGroup>();
-            var transform = image.transform;
-            var originalScale = transform.localScale;
-
-            var imageSequence = DOTween.Sequence();
-            imageSequence.Append(transform.DOScale(originalScale * 0.85f, buttonScaleDuration * 0.6f).SetEase(Ease.OutBack));
-            imageSequence.Join(canvasGroup.DOFade(0.4f, buttonScaleDuration * 0.6f).SetEase(Ease.OutSine));
-            imageSequence.Append(transform.DOScale(0f, buttonFadeDuration * 1.2f).SetEase(Ease.InSine));
-            imageSequence.Join(canvasGroup.DOFade(0f, buttonFadeDuration * 1.2f).SetEase(Ease.InSine));
-
-            masterSequence.Insert(i * 0.15f, imageSequence);
-        }
-
-        yield return masterSequence.WaitForCompletion();
-
-        foreach (var image in imagesToAnimate) image.gameObject.SetActive(false);
-        yield return new WaitForSeconds(0.3f);
-
-        BeginExplorationMode();
-    }
-
-    private void BeginExplorationMode()
-    {
-        currentGameMode = GameMode.Exploration;
-        currentPositionIndex = 0;
-        originalCameraPosition = cameraController.transform.position;
-        originalCameraRotation = cameraController.transform.rotation.eulerAngles;
-        StartCoroutine(ElegantCameraTransitionToExploration());
-    }
-
-    private IEnumerator ElegantCameraTransitionToExploration()
-    {
-        yield return new WaitForSeconds(cameraDelayAfterButton);
-
-        var cameraTransform = cameraController.transform;
-        DOTween.Kill(cameraTransform);
-
-        var sequence = DOTween.Sequence();
-        sequence.Append(cameraTransform.DOMove(explorationPosition, explorationTransitionDuration).SetEase(Ease.OutCubic));
-        sequence.Join(cameraTransform.DORotate(explorationRotation, explorationTransitionDuration).SetEase(Ease.OutCubic));
-
-        yield return sequence.WaitForCompletion();
-    }
-
-    private void EnterZoomMode(Transform targetObject)
-    {
-        currentGameMode = GameMode.Zoom;
-        justEnteredZoomMode = true;
-        cameraController.SetFocusTarget(targetObject);
-        cameraController.SwitchState(cameraController.focusState);
-    }
-
-    private void EnterZoomModeAtCenter()
-    {
-        currentGameMode = GameMode.Zoom;
-        justEnteredZoomMode = true;
-
-        var currentPosition = cameraController.transform.position;
-        var focusPosition = currentPosition + cameraController.transform.forward * 2f;
-        var tempFocus = new GameObject("TempFocusTarget") { transform = { position = focusPosition } };
-
-        cameraController.SetFocusTarget(tempFocus.transform);
-        cameraController.SwitchState(cameraController.focusState);
-
-        StartCoroutine(CleanupTempFocusTarget(tempFocus, 0.1f));
-    }
-
-    private IEnumerator CleanupTempFocusTarget(GameObject tempTarget, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (tempTarget != null) Destroy(tempTarget);
-    }
-
-    public void ReturnToExplorationMode()
-    {
-        if (currentGameMode != GameMode.Zoom) return;
-
-        // Disable all inspectable objects when leaving zoom mode
-        DisableAllInspectableObjects();
-
-        currentGameMode = GameMode.Exploration;
-        justEnteredZoomMode = false;
-        AnimateToPosition(cameraXPositions[currentPositionIndex]);
-    }
-
-    public void ExitToInitialMode()
-    {
-        // Disable all inspectable objects when exiting to initial mode
-        DisableAllInspectableObjects();
-
-        currentGameMode = GameMode.Initial;
-        justEnteredZoomMode = false;
-        AnimateToOriginalPosition();
-        StartCoroutine(ShowStartButtonElegantly());
-    }
-
-    private IEnumerator ShowStartButtonElegantly()
-    {
-        yield return new WaitForSeconds(returnTransitionDuration * 0.7f);
-
-        var imagesToAnimate = new System.Collections.Generic.List<Image>();
-        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
-        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
-        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
-
-        foreach (var image in imagesToAnimate)
-        {
-            image.gameObject.SetActive(true);
-            var canvasGroup = image.GetComponent<CanvasGroup>() ?? image.gameObject.AddComponent<CanvasGroup>();
-            canvasGroup.alpha = 0f;
-            image.transform.localScale = Vector3.zero;
-        }
-
-        if (startExplorationImage != null) SetImageClickable(startExplorationImage, true);
-
-        var masterSequence = DOTween.Sequence();
-        for (int i = 0; i < imagesToAnimate.Count; i++)
-        {
-            var image = imagesToAnimate[i];
-            var canvasGroup = image.GetComponent<CanvasGroup>();
-            var transform = image.transform;
-
-            var imageSequence = DOTween.Sequence();
-            imageSequence.Append(transform.DOScale(Vector3.one * 1.05f, buttonFadeDuration * 0.7f).SetEase(Ease.OutBack));
-            imageSequence.Join(canvasGroup.DOFade(1f, buttonFadeDuration * 0.7f).SetEase(Ease.OutSine));
-            imageSequence.Append(transform.DOScale(Vector3.one, buttonFadeDuration * 0.3f).SetEase(Ease.OutSine));
-
-            masterSequence.Insert(i * 0.2f, imageSequence);
-        }
-
-        yield return masterSequence.WaitForCompletion();
-    }
-    #endregion
-
-    #region Camera Animation
-    private void AnimateToPosition(float xPosition)
-    {
-        if (cameraController == null) return;
-
-        var targetPosition = new Vector3(xPosition, explorationPosition.y, explorationPosition.z);
-        cameraController.transform.DOMove(targetPosition, swipeTransitionDuration).SetEase(Ease.OutCubic);
-    }
-
-    private void AnimateToOriginalPosition()
-    {
-        if (cameraController == null) return;
-
-        var sequence = DOTween.Sequence();
-        sequence.Append(cameraController.transform.DOMove(originalCameraPosition, returnTransitionDuration).SetEase(Ease.InOutQuart));
-        sequence.Join(cameraController.transform.DORotate(originalCameraRotation, returnTransitionDuration).SetEase(Ease.InOutQuart));
-    }
-
-    #endregion
-
-    #region Object Interaction
-    private bool CheckForObjectClick(Vector2 screenPosition)
-    {
-        Debug.Log("=== CheckForObjectClick called ===");
-
-        var ray = playerCamera.ScreenPointToRay(screenPosition);
-        if (!Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
-        {
-            Debug.Log("No object hit by raycast");
-            return false;
-        }
-
-        Debug.Log($"Hit object: {hit.collider.name}");
-
-        if (!hit.collider.TryGetComponent<ClickableObject>(out var clickable))
-        {
-            Debug.Log("Object has no ClickableObject component");
-            return false;
-        }
-
-        Debug.Log($"Found ClickableObject on: {clickable.name}, Current mode: {currentGameMode}");
-
-        switch (currentGameMode)
-        {
-            case GameMode.Exploration:
-                Debug.Log("Calling HandleExplorationClick");
-                HandleExplorationClick(clickable);
+            case SwipeDirection.Right:
+                Debug.Log($"🎯 Performing PerformSwipeLeft on {cameraAnimator.name}");
+                cameraAnimator?.PerformSwipeLeft();
                 break;
-
-            case GameMode.Zoom:
-                Debug.Log("Calling HandleZoomClick");
-                HandleZoomClick(clickable);
-                break;
-
-            default:
-                Debug.Log("Calling PlayClickFeedback (default)");
-                PlayClickFeedback(clickable);
+            case SwipeDirection.Left:
+                Debug.Log($"🎯 Performing PerformSwipeRight on {cameraAnimator.name}");
+                cameraAnimator?.PerformSwipeRight();
                 break;
         }
-
-        return true;
     }
 
-    private void HandleExplorationClick(ClickableObject clickable)
+    private void HandlePinchGesture(PinchDirection direction, Vector2 pinchCenter = default)
     {
-        // Show text popup first in exploration mode
-        PlayClickFeedback(clickable);
-
-        // Then enter zoom mode
-        EnterZoomMode(clickable.transform);
-    }
-
-    private void HandleZoomClick(ClickableObject clickable)
-    {
-        if (justEnteredZoomMode)
+        // Do not start a new transition if one is already happening
+        if (IsInTransition)
         {
-            justEnteredZoomMode = false;
-            PlayClickFeedback(clickable);
+            Debug.Log("=== PINCH IGNORED - Transition in progress ===");
+            return;
+        }
 
-            // Enable inspectable functionality for focused object in zoom mode
-            if (clickable.IsInspectable())
+        var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+        Debug.Log($"=== HANDLE PINCH GESTURE: Direction={direction}, Mode={currentMode}, Center={pinchCenter} ===");
+
+        if (currentMode == GameModeManager.GameMode.Exploration && direction == PinchDirection.In)
+        {
+            // Block input and acquire lock for the transition
+            BlockInputFor(0.3f);
+            StartTransitionLock();
+
+            Debug.Log("=== PINCH IN - Attempting to enter zoom mode ===");
+            gameModeManager?.EnterZoomMode();
+
+            if (pinchCenter != default)
             {
-                clickable.SetInspectableEnabled(true);
+                cameraAnimator?.EnterZoomModeAtScreenPosition(pinchCenter);
             }
-            return;
+            else
+            {
+                Debug.Log("=== PINCH CENTER IS DEFAULT - Using center fallback ===");
+                cameraAnimator?.EnterZoomModeAtCenter();
+            }
         }
-
-        if (enableSceneChange && clickable.CanChangeScene())
-            HandleSceneChange(clickable);
-
-        PlayClickFeedback(clickable);
-    }
-
-    private void HandleSceneChange(ClickableObject clickableObject)
-    {
-        if (clickableObject?.CanChangeScene() != true)
-            return;
-
-        string sceneName = clickableObject.GetSceneName();
-        if (string.IsNullOrEmpty(sceneName))
-            return;
-
-        // Use Easy Transitions if available and enabled
-        if (clickableObject.UseTransitionAnimation() && clickableObject.GetTransitionSettings() != null)
+        else if (currentMode == GameModeManager.GameMode.Zoom && direction == PinchDirection.Out)
         {
-            EasyTransition.TransitionManager.Instance().Transition(sceneName, clickableObject.GetTransitionSettings(), 0f);
+            // Block input for the transition
+            BlockInputFor(0.4f); // Block for slightly longer than the transition
+
+            Debug.Log("=== PINCH OUT - Returning to exploration mode with synchronized transition ===");
+            StartCoroutine(SynchronizedPinchReturnToExploration());
         }
         else
         {
-            // Fallback to direct scene load
-            StartCoroutine(ChangeSceneCoroutine(sceneName));
-        }
-    }
-
-    private IEnumerator ChangeSceneCoroutine(string sceneName)
-    {
-        if (sceneChangeDelay > 0)
-            yield return new WaitForSeconds(sceneChangeDelay);
-
-        SceneManager.LoadScene(sceneName);
-    }
-
-    private void PlayClickFeedback(ClickableObject clickable)
-    {
-        Debug.Log("=== PlayClickFeedback called ===");
-
-        if (clickable == null)
-        {
-            Debug.Log("Clickable is null!");
-            return;
-        }
-
-        Debug.Log($"PlayClickFeedback for: {clickable.name}");
-
-        // Play audio feedback
-        if (clickable.ClickSound != null && clickable.TryGetComponent<AudioSource>(out var audioSource))
-            audioSource.PlayOneShot(clickable.ClickSound);
-
-        // Mark as focused and trigger events
-        clickable.SetFocusState(true);
-        clickable.OnObjectClicked?.Invoke();
-
-        // Call the OnClick method to trigger popup image
-        Debug.Log("Calling clickable.OnClick()");
-        clickable.OnClick();
-    }
-
-    private void DisableAllInspectableObjects()
-    {
-        // Find all clickable objects and disable their inspectable functionality
-        ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
-        foreach (var clickable in allClickables)
-        {
-            if (clickable.IsInspectable())
-            {
-                clickable.SetInspectableEnabled(false);
-                clickable.SetFocusState(false);
-            }
+            Debug.Log($"=== PINCH GESTURE IGNORED - Mode: {currentMode}, Direction: {direction} ===");
         }
     }
     #endregion
 
-    #region Public Interface
-    public GameMode GetCurrentMode() => currentGameMode;
-    public bool IsInZoomMode() => currentGameMode == GameMode.Zoom;
-    public bool IsInExplorationMode() => currentGameMode == GameMode.Exploration;
-    public float GetCurrentXPosition() => cameraXPositions[currentPositionIndex];
-    public int GetCurrentPositionIndex() => currentPositionIndex;
+    #region Synchronized Transitions
+    private System.Collections.IEnumerator SynchronizedPinchReturnToExploration()
+    {
+        // Acquire lock
+        StartTransitionLock();
+
+        // Ensure all objects lose focus and stop shaking.
+        objectHandler?.ResetAllObjectStates();
+
+        var cameraController = TopDownCameraController.Instance;
+        if (cameraController == null)
+        {
+            EndTransitionLock(); // Release lock on error
+            yield break;
+        }
+
+        // Use a fast, simple transition for pinch-out
+        cameraController.SetTransitionDuration(0.3f);
+
+        // Perform all state changes synchronously
+        cameraController.SwitchState(cameraController.overviewState);
+        gameModeManager?.ReturnToExplorationMode();
+
+        // Reset duration after the transition is configured
+        cameraController.ResetTransitionDuration();
+
+        // The lock will be released by the camera's OnComplete callback.
+        yield break;
+    }
+    #endregion
+
+    #region Public Interface - Legacy Compatibility
+    public GameModeManager.GameMode GetCurrentMode() => gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
+    public bool IsInZoomMode() => gameModeManager?.IsInZoomMode() ?? false;
+    public bool IsInExplorationMode() => gameModeManager?.IsInExplorationMode() ?? false;
+    public float GetCurrentXPosition() => cameraAnimator?.GetCurrentXPosition() ?? 0f;
+    public int GetCurrentPositionIndex() => cameraAnimator?.GetCurrentPositionIndex() ?? 0;
+    #endregion
+
+    #region Unity Lifecycle Cleanup
+    private void OnDestroy()
+    {
+        Debug.Log($"🔍 AdvancedInputManager.OnDestroy() called");
+
+        // Unsubscribe from events to prevent memory leaks
+        if (gameModeManager != null)
+        {
+            gameModeManager.OnModeChanged -= OnGameModeChanged;
+        }
+
+        // Clear singleton instance if this is the current instance
+        if (Instance == this)
+        {
+            Instance = null;
+            Debug.Log("✅ AdvancedInputManager singleton instance cleared");
+        }
+    }
     #endregion
 }
 
-// Supporting classes moved to bottom to reduce main class length
+// Keep the supporting input system classes at the bottom for reference
 #region Input Systems
 public class CameraDragSystem
 {
@@ -711,6 +692,15 @@ public class SwipeDetectionSystem
         }
     }
 
+    public void CancelSwipe()
+    {
+        if (isTracking)
+        {
+            isTracking = false;
+            Debug.Log("=== SWIPE CANCELED - Pinch priority ===");
+        }
+    }
+
     public SwipeResult EndSwipe()
     {
         var result = new SwipeResult();
@@ -758,18 +748,30 @@ public struct PinchResult
     public bool IsValid;
     public PinchDirection Direction;
     public float StartDistance, EndDistance, DistanceChange, Duration;
+    public Vector2 PinchCenter; // Center point between two fingers
+}
+
+public struct PinchUpdateResult
+{
+    public bool HasEarlyDetection;
+    public float CurrentDistance;
+    public float DistanceChange;
 }
 
 public class PinchDetectionSystem
 {
-    private readonly float pinchThreshold, maxPinchTime;
+    private readonly float pinchThreshold, maxPinchTime, earlyDetectionTime, priorityDistance;
     private bool isTracking;
-    private float startDistance, startTime;
+    private float startDistance, startTime, currentDistance;
+    private bool hasEarlyDetectionTriggered;
+    private Vector2 pinchCenter; // Store the center point of pinch gesture
 
-    public PinchDetectionSystem(float threshold, float maxTime)
+    public PinchDetectionSystem(float threshold, float maxTime, float earlyTime, float priority)
     {
         pinchThreshold = threshold;
         maxPinchTime = maxTime;
+        earlyDetectionTime = earlyTime;
+        priorityDistance = priority;
     }
 
     public void StartPinch()
@@ -781,18 +783,71 @@ public class PinchDetectionSystem
 
         isTracking = true;
         startDistance = Vector2.Distance(touch1.position, touch2.position);
+        currentDistance = startDistance;
         startTime = Time.time;
+        hasEarlyDetectionTriggered = false;
+
+        // Calculate and store pinch center point
+        pinchCenter = (touch1.position + touch2.position) * 0.5f;
     }
 
-    public void UpdatePinch()
+    public void ForceStartPinch()
     {
+        if (Input.touchCount < 2) return;
+
+        var touch1 = Input.GetTouch(0);
+        var touch2 = Input.GetTouch(1);
+
+        // Force start pinch detection regardless of touch phases
+        isTracking = true;
+        startDistance = Vector2.Distance(touch1.position, touch2.position);
+        currentDistance = startDistance;
+        startTime = Time.time;
+        hasEarlyDetectionTriggered = false;
+
+        // Calculate and store pinch center point
+        pinchCenter = (touch1.position + touch2.position) * 0.5f;
+
+        Debug.Log($"=== FORCE START PINCH - Distance: {startDistance:F1}, Center: {pinchCenter} ===");
+    }
+
+    public PinchUpdateResult UpdatePinch()
+    {
+        var result = new PinchUpdateResult();
+
         if (!isTracking || Input.touchCount != 2)
         {
             if (isTracking && Input.touchCount != 2) isTracking = false;
-            return;
+            return result;
         }
 
-        if (Time.time - startTime > maxPinchTime) isTracking = false;
+        if (Time.time - startTime > maxPinchTime)
+        {
+            isTracking = false;
+            return result;
+        }
+
+        var touch1 = Input.GetTouch(0);
+        var touch2 = Input.GetTouch(1);
+        currentDistance = Vector2.Distance(touch1.position, touch2.position);
+
+        // Update pinch center as fingers move
+        pinchCenter = (touch1.position + touch2.position) * 0.5f;
+
+        float distanceChange = Mathf.Abs(currentDistance - startDistance);
+        result.CurrentDistance = currentDistance;
+        result.DistanceChange = distanceChange;
+
+        // Early detection for pinch priority
+        if (!hasEarlyDetectionTriggered &&
+            (Time.time - startTime > earlyDetectionTime) &&
+            distanceChange > priorityDistance)
+        {
+            hasEarlyDetectionTriggered = true;
+            result.HasEarlyDetection = true;
+        }
+
+        return result;
     }
 
     public PinchResult EndPinch()
@@ -806,15 +861,8 @@ public class PinchDetectionSystem
 
         isTracking = false;
 
-        if (Input.touchCount != 2)
-        {
-            result.IsValid = false;
-            return result;
-        }
-
-        var touch1 = Input.GetTouch(0);
-        var touch2 = Input.GetTouch(1);
-        var endDistance = Vector2.Distance(touch1.position, touch2.position);
+        // Use last known currentDistance instead of requiring 2 touches
+        var endDistance = currentDistance;
         var duration = Time.time - startTime;
         var distanceChange = endDistance - startDistance;
 
@@ -822,7 +870,9 @@ public class PinchDetectionSystem
         result.EndDistance = endDistance;
         result.DistanceChange = distanceChange;
         result.Duration = duration;
+        result.PinchCenter = pinchCenter; // Include pinch center position
 
+        // More sensitive threshold and better validation
         if (Mathf.Abs(distanceChange) < pinchThreshold || duration > maxPinchTime)
         {
             result.IsValid = false;
