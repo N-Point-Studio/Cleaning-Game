@@ -969,7 +969,7 @@ public class SceneTransitionManager : MonoBehaviour
             // This runs synchronously BEFORE the first frame is rendered.
             SetupInstantFocus();
         }
-        else if (isMenuScene)
+        else if (isMenuScene && (shouldTriggerContentSwitcher || isReturningFromGameplay))
         {
             StartCoroutine(ForceHardcodedCameraView());
         }
@@ -1365,7 +1365,7 @@ public class SceneTransitionManager : MonoBehaviour
         // Find all ClickableObjects in scene
         ClickableObject[] allClickableObjects = FindObjectsOfType<ClickableObject>();
 
-        // Apply completion status to matching objects
+        // ✅ FIXED: Apply completion status to matching objects (PREVENT RESET ISSUE)
         foreach (var completedObj in saveData.completedObjects)
         {
             foreach (var clickableObj in allClickableObjects)
@@ -1374,13 +1374,18 @@ public class SceneTransitionManager : MonoBehaviour
                 if (clickableObj.name == completedObj.objectName &&
                     clickableObj.GetObjectType() == completedObj.objectType)
                 {
-                    // Apply completion changes
-                    clickableObj.ApplyContentSwitcherChanges();
+                    // ✅ FIX: DO NOT call ApplyContentSwitcherChanges automatically!
+                    // This was causing visual changes that bypass ContentSwitcher state management
+                    // Instead, let ContentSwitcher handle its own state through event system
 
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"Applied saved completion to: {clickableObj.name}");
+                        Debug.Log($"Found completed object: {clickableObj.name} - letting ContentSwitcher handle state");
                     }
+
+                    // ✅ COMMENTED OUT: This line was causing the reset issue
+                    // clickableObj.ApplyContentSwitcherChanges();
+
                     break;
                 }
             }

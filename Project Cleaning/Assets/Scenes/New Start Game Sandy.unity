@@ -1918,7 +1918,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &208207827
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2203,6 +2203,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!4 &294590046 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3e8c8300cc3b34c3cbfd14d538ba3f4f,
@@ -3103,6 +3104,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1001 &440623734
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6759,6 +6761,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1 &800854027
 GameObject:
   m_ObjectHideFlags: 0
@@ -7805,7 +7808,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   overviewFOV: 60
   focusHeight: 2
-  focusFOV: 50
+  focusFOV: 60
   navigationHeight: 20
   navigationFOV: 50
   transitionDuration: 0.5
@@ -11189,6 +11192,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1 &1687430428
 GameObject:
   m_ObjectHideFlags: 0
@@ -11613,6 +11617,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1 &1711187413
 GameObject:
   m_ObjectHideFlags: 0
@@ -12149,6 +12154,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1 &1881310937
 GameObject:
   m_ObjectHideFlags: 0
@@ -12677,6 +12683,7 @@ MonoBehaviour:
   fadeTransitionDuration: 0.2
   delayBetweenTexts: 0.2
   characterAnimationSpeed: 0.02
+  currentState: 0
 --- !u!1001 &2017330296
 PrefabInstance:
   m_ObjectHideFlags: 0

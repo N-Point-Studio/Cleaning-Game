@@ -34,6 +34,14 @@ public class ObjectInteractionHandler : MonoBehaviour
         {
             Instance = this;
             playerCamera = Camera.main;
+
+            // Pastikan SceneTransitionManager sudah ada sejak awal supaya data klik tersimpan (hindari fallback ke Coin).
+            if (SceneTransitionManager.Instance == null)
+            {
+                var stmGO = new GameObject("SceneTransitionManager");
+                stmGO.AddComponent<SceneTransitionManager>();
+                Debug.Log("[ObjectInteractionHandler] Bootstrap SceneTransitionManager at startup");
+            }
         }
         else
         {
@@ -275,12 +283,8 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (string.IsNullOrEmpty(finalSceneName))
             return;
 
-        // Store object info for the return trip, but only if the SceneTransitionManager is available.
-        // This is now separate from the outgoing transition logic.
-        if (SceneTransitionManager.Instance != null)
-        {
-            StoreClickedObjectInfo(clickableObject);
-        }
+        // Always store clicked object info so gameplay knows which artefact to load.
+        StoreClickedObjectInfo(clickableObject);
 
         // --- New Self-Contained Transition Logic ---
 
@@ -312,6 +316,14 @@ public class ObjectInteractionHandler : MonoBehaviour
     {
         if (clickedObject == null) return;
 
+        // Ensure SceneTransitionManager exists so data is available in gameplay scene
+        if (SceneTransitionManager.Instance == null)
+        {
+            Debug.LogWarning("SceneTransitionManager not found, creating one to store clicked object info...");
+            var stmGO = new GameObject("SceneTransitionManager");
+            stmGO.AddComponent<SceneTransitionManager>();
+        }
+
         // Get object info
         string objectName = clickedObject.name;
         Vector3 objectPosition = clickedObject.transform.position;
@@ -333,7 +345,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SceneTransitionManager not found! Clicked object info not stored.");
+            Debug.LogError("SceneTransitionManager creation failed - clicked object info not stored!");
         }
     }
 

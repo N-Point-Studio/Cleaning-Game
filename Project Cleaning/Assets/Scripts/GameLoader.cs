@@ -26,6 +26,16 @@ public class GameLoader : MonoBehaviour
 
     private System.Collections.IEnumerator InitializeSession()
     {
+        // Debug incoming context so we can spot why a default Coin might be used.
+        if (SceneTransitionManager.Instance != null)
+        {
+            Debug.Log($"[GameLoader] STM present. Incoming ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}, Chapter: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
+        }
+        else
+        {
+            Debug.LogWarning("[GameLoader] SceneTransitionManager missing on load - auto-select may fallback to default artefact.");
+        }
+
         // Auto-pick artefact based on the ObjectType coming from menu (via SceneTransitionManager)
         if (autoSelectByObjectType && SceneTransitionManager.Instance != null)
         {

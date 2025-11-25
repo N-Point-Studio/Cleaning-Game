@@ -16130,7 +16130,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fa512eb104aa4430b9903bb46dba950, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  artefactData: {fileID: 0}
+  artefactData: {fileID: 11400000, guid: 1c3b6e9d8184949cf8925a6e79acfa83, type: 2}
   autoSelectByObjectType: 1
   artefactMappings:
   - objectType: 0
@@ -16138,8 +16138,10 @@ MonoBehaviour:
   - objectType: 1
     artefact: {fileID: 11400000, guid: 1c3b6e9d8184949cf8925a6e79acfa83, type: 2}
   - objectType: 2
-    artefact: {fileID: 11400000, guid: e1fd02f44ca454e028dbb6f9a0ed00fe, type: 2}
+    artefact: {fileID: 11400000, guid: 0e8f89b3d78714e47b3ec27879c20e78, type: 2}
   - objectType: 3
+    artefact: {fileID: 11400000, guid: e1fd02f44ca454e028dbb6f9a0ed00fe, type: 2}
+  - objectType: 4
     artefact: {fileID: 11400000, guid: a3924d72a67c0455eb511e7925877898, type: 2}
   fallbackArtefact: {fileID: 0}
 --- !u!4 &1787267813
