@@ -9079,6 +9079,9 @@ MonoBehaviour:
   progressDirts: {fileID: 213281018}
   progressDusts: {fileID: 1774078599}
   progressAssemble: {fileID: 353650395}
+  progressDirtsGO: {fileID: 992195913}
+  progressDustsGO: {fileID: 31513781}
+  progressAssembleGO: {fileID: 241564836}
   artefactNameText: {fileID: 0}
   settingCanvas: {fileID: 933797011}
   FinishButton: {fileID: 0}
@@ -16141,7 +16144,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fa512eb104aa4430b9903bb46dba950, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  artefactData: {fileID: 11400000, guid: a3924d72a67c0455eb511e7925877898, type: 2}
+  artefactData: {fileID: 11400000, guid: 0e8f89b3d78714e47b3ec27879c20e78, type: 2}
 --- !u!4 &1787267813
 Transform:
   m_ObjectHideFlags: 0
