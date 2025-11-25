@@ -14,6 +14,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private ProgressBar progressDirts;
     [SerializeField] private ProgressBar progressDusts;
     [SerializeField] private ProgressBar progressAssemble;
+    [SerializeField] private GameObject progressDirtsGO;
+    [SerializeField] private GameObject progressDustsGO;
+    [SerializeField] private GameObject progressAssembleGO;
     [SerializeField] private Text artefactNameText;
     [SerializeField] private GameObject settingCanvas;
     [SerializeField] private Button FinishButton; // Optional direct button reference
@@ -25,6 +28,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private bool useImageAsButton = true; // Toggle untuk menggunakan Image sebagai button
     private bool isSettingShown = false;
     private bool isSceneUnloading = false;
+    private int minusFactor = 0;
 
     private void Awake()
     {
@@ -192,10 +196,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(10);
+            progressDusts.SetValue(dustProgress);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(10);
+            progressDirts.SetValue(mudProgress);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
@@ -274,7 +278,7 @@ public class UIManager : MonoBehaviour
             return 0f;
         }
 
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / 3;
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / (3 + minusFactor);
     }
 
     /// <summary>
@@ -367,7 +371,8 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Failed to create SceneTransitionManager even after retry!");        }
+            Debug.LogError("Failed to create SceneTransitionManager even after retry!");
+        }
     }
 
     /// <summary>
@@ -425,21 +430,21 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Show or hide individual progress bars.
     /// </summary>
-    public void ShowProgress(ProgressType type, bool show)
+    public void ShowProgress(ProgressType type, bool isShown)
     {
         switch (type)
         {
             case ProgressType.Dirt:
-                if (progressDirts != null) progressDirts.gameObject.SetActive(show);
+                progressDirtsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
             case ProgressType.Dust:
-                if (progressDusts != null) progressDusts.gameObject.SetActive(show);
+                progressDustsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
             case ProgressType.Assemble:
-                if (progressAssemble != null) progressAssemble.gameObject.SetActive(show);
-                break;
-            default:
-                Debug.LogWarning($"ShowProgress called with unhandled type: {type}");
+                progressAssembleGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
         }
     }

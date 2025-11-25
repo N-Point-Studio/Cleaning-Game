@@ -64,7 +64,7 @@ public class ToolCleaningSurface : MonoBehaviour
 
     void OnDisable()
     {
-
+        SettingManager.OnSfxVolumeChanged -= SetSFXVolume;
     }
 
     void Update()
