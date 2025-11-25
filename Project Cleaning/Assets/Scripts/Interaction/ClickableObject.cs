@@ -53,6 +53,12 @@ public class ClickableObject : MonoBehaviour
     [Tooltip("GameObjects that will be affected when ContentSwitcher completes")]
     [SerializeField] private GameObject[] objectsToChange; // Objects to modify after ContentSwitcher
     [SerializeField] private bool autoFindRelatedObjects = true;
+    [Header("Unlock Requirements")]
+    [SerializeField] private bool lockUntilPrerequisiteComplete = false;
+    [SerializeField] private ObjectType prerequisiteObjectType = ObjectType.ChinaCoin;
+    [SerializeField] private GameObject lockedVisual; // Optional alternate visual when locked
+    [SerializeField] private GameObject unlockedVisual; // Normal visual when unlocked
+    private bool subscribedToSaveEvents = false;
 
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
@@ -165,6 +171,14 @@ public class ClickableObject : MonoBehaviour
             }
 
             Debug.Log($"===================");
+        }
+
+        // If locked and prerequisite not met, block interaction
+        if (lockUntilPrerequisiteComplete && !PrerequisiteCompleted())
+        {
+            Debug.LogWarning($"[{name}] Locked until {prerequisiteObjectType} completed.");
+            ShowLockedVisual();
+            return;
         }
 
         // CRITICAL FIX: Immediately save focus state the moment an object is clicked.
@@ -710,6 +724,96 @@ public class ClickableObject : MonoBehaviour
     {
         ApplyContentSwitcherChanges();
         Debug.Log($"Applied ContentSwitcher changes for {name}");
+    }
+
+    #endregion
+
+    #region Lock / Unlock prerequisite
+
+    private bool PrerequisiteCompleted()
+    {
+        if (!lockUntilPrerequisiteComplete)
+        {
+            return true;
+        }
+
+        if (SaveSystem.Instance == null)
+        {
+            // If no SaveSystem (e.g., gameplay scene), default to locked to prevent premature unlocks
+            return false;
+        }
+
+        // Check completion for required object type
+        var saveData = SaveSystem.Instance.GetSaveData();
+        foreach (var completed in saveData.completedObjects)
+        {
+            if (completed.objectType == prerequisiteObjectType)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ShowLockedVisual()
+    {
+        if (lockedVisual != null) lockedVisual.SetActive(true);
+        if (unlockedVisual != null) unlockedVisual.SetActive(false);
+    }
+
+    private void ShowUnlockedVisual()
+    {
+        if (lockedVisual != null) lockedVisual.SetActive(false);
+        if (unlockedVisual != null) unlockedVisual.SetActive(true);
+    }
+
+    private void UpdateLockVisual()
+    {
+        if (PrerequisiteCompleted())
+        {
+            ShowUnlockedVisual();
+        }
+        else
+        {
+            ShowLockedVisual();
+        }
+    }
+
+    private void OnEnable()
+    {
+        UpdateLockVisual();
+
+        if (SaveSystem.Instance != null && !subscribedToSaveEvents)
+        {
+            SaveSystem.Instance.OnDataLoaded += HandleSaveDataChanged;
+            SaveSystem.Instance.OnDataSaved += HandleSaveDataChanged;
+            subscribedToSaveEvents = true;
+        }
+
+        // In case SaveSystem initializes a frame later, run a delayed refresh
+        StartCoroutine(RefreshLockVisualNextFrame());
+    }
+
+    private void OnDisable()
+    {
+        if (SaveSystem.Instance != null && subscribedToSaveEvents)
+        {
+            SaveSystem.Instance.OnDataLoaded -= HandleSaveDataChanged;
+            SaveSystem.Instance.OnDataSaved -= HandleSaveDataChanged;
+            subscribedToSaveEvents = false;
+        }
+    }
+
+    private void HandleSaveDataChanged(SaveData _)
+    {
+        UpdateLockVisual();
+    }
+
+    private System.Collections.IEnumerator RefreshLockVisualNextFrame()
+    {
+        yield return null;
+        UpdateLockVisual();
     }
 
     #endregion

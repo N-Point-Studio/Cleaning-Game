@@ -30,6 +30,8 @@ public class SceneTransitionManager : MonoBehaviour
     private bool shouldTriggerContentSwitcher = false;
     private bool isTransitionInProgress = false;
     private bool isReturningFromGameplay = false; // mark when coming back from gameplay
+    private enum TransitionDirection { Unknown, ToGameplay, ToMenu }
+    private TransitionDirection currentTransitionDirection = TransitionDirection.Unknown;
 
     // NEW: Track which specific object was clicked
     private string clickedObjectName = "";
@@ -195,6 +197,11 @@ public class SceneTransitionManager : MonoBehaviour
             Debug.LogWarning("Staged scene transition already in progress!");
             return;
         }
+
+        // Mark direction based on destination (gameplay vs menu)
+        currentTransitionDirection = finalDestinationScene.ToLower().Contains("gameplay")
+            ? TransitionDirection.ToGameplay
+            : TransitionDirection.ToMenu;
 
         stagedFinalDestinationScene = finalDestinationScene;
         stagedDelay = delay;
@@ -1302,6 +1309,18 @@ public class SceneTransitionManager : MonoBehaviour
     public ChapterType GetCurrentChapterType() => currentChapterType;
     public bool ShouldTriggerContentSwitcher() => shouldTriggerContentSwitcher;
     public bool IsTransitionInProgress() => isTransitionInProgress;
+    public bool IsReturningFromGameplayFlag() => isReturningFromGameplay;
+    public string GetTransitionDirection() => currentTransitionDirection.ToString();
+
+    public void SetTransitionDirectionToGameplay()
+    {
+        currentTransitionDirection = TransitionDirection.ToGameplay;
+    }
+
+    public void SetTransitionDirectionToMenu()
+    {
+        currentTransitionDirection = TransitionDirection.ToMenu;
+    }
 
     /// <summary>
     /// Direct transition to a target scene without triggering ContentSwitcher (for exit/back flows).
@@ -1463,6 +1482,7 @@ public class SceneTransitionManager : MonoBehaviour
         currentChapterType = ChapterType.China;
         shouldTriggerContentSwitcher = false;
         isTransitionInProgress = false;
+        currentTransitionDirection = TransitionDirection.Unknown;
 
         if (enableDebugLogs)
         {
