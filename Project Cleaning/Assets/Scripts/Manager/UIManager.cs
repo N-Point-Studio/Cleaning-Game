@@ -200,10 +200,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(dustProgress);
+            progressDusts.SetValue(10);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(mudProgress);
+            progressDirts.SetValue(10);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
@@ -277,6 +277,10 @@ public class UIManager : MonoBehaviour
             GameModeManager.Instance.ReturnToExplorationMode();
         }
 
+        // Pastikan input UI/touch kembali aktif untuk menangkap klik
+        TouchManager.Instance?.DisableAllTouch(false);
+        EventSystem.current?.SetSelectedGameObject(null);
+
         // Kembali ke main menu tanpa men-trigger ContentSwitcher (tidak menyimpan completion).
         if (SceneTransitionManager.Instance != null)
         {
@@ -291,6 +295,8 @@ public class UIManager : MonoBehaviour
             {
                 SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
             }
+            // Gunakan jalur paksa instan agar tidak ada delay/lock
+            SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
         }
         else
         {

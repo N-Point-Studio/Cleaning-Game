@@ -174,11 +174,20 @@ public class ClickableObject : MonoBehaviour
             SimpleCameraFocusRestore.Instance.SaveCurrentFocus();
         }
 
+        bool alreadyCompleted = IsCompleted();
+
         // Trigger the Unity Event first
         OnObjectClicked?.Invoke();
 
         // Show popup text (allow even during camera transitions)
-        ShowPopupText();
+        if (!alreadyCompleted)
+        {
+            ShowPopupText();
+        }
+        else
+        {
+            HidePopupText();
+        }
 
         // Set focus state and start shake animation when clicked (if in exploration mode and enabled)
         if (enableShakeAnimation && shakeOnlyWhenFocused)
@@ -382,7 +391,23 @@ public class ClickableObject : MonoBehaviour
 
         try
         {
-            return SaveSystem.Instance.IsObjectCompleted(gameObject.name, objectType);
+            // Primary check: exact name + type
+            if (SaveSystem.Instance.IsObjectCompleted(gameObject.name, objectType))
+            {
+                return true;
+            }
+
+            // Fallback: match by object type only (handles different GameObject names vs saved objectName)
+            var saveData = SaveSystem.Instance.GetSaveData();
+            foreach (var completed in saveData.completedObjects)
+            {
+                if (completed.objectType == objectType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
         catch (System.Exception)
         {
@@ -694,6 +719,13 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     public void ShowPopupText()
     {
+        // Jangan tampilkan popup jika sudah completed (hanya bekerja saat SaveSystem tersedia, mis. di menu)
+        if (SaveSystem.Instance != null && IsCompleted())
+        {
+            HidePopupText();
+            return;
+        }
+
         // Auto-find components if not set
         if (textMeshPro == null)
         {

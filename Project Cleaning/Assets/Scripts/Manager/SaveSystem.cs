@@ -218,6 +218,17 @@ public class SaveSystem : MonoBehaviour
     }
 
     /// <summary>
+    /// Reset progress then reload the current scene (for quick testing via inspector context menu).
+    /// </summary>
+    [ContextMenu("Reset All Progress & Reload Scene")]
+    public void ResetAllProgressAndReload()
+    {
+        ResetAllProgress();
+        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(scene.name);
+    }
+
+    /// <summary>
     /// Delete save file completely
     /// </summary>
     [ContextMenu("Delete Save File")]
