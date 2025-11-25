@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
@@ -43,6 +44,8 @@ public class UIManager : MonoBehaviour
     {
         ExitButton.onClick.AddListener(ExitButtonInteract);
         ResumeButton.onClick.AddListener(ResumeButtonInteract);
+
+        EnsureUIInputReady();
 
         // Setup finish button listener
         SetupFinishButton();
@@ -215,6 +218,10 @@ public class UIManager : MonoBehaviour
     {
         settingCanvas.SetActive(isShown);
         TouchManager.Instance.TouchUsed(isShown);
+        if (isShown)
+        {
+            EnsureUIInputReady(); // pastikan EventSystem & raycaster aktif saat overlay dibuka
+        }
     }
 
     public void ShowFinishUI(bool isShown)
@@ -262,6 +269,57 @@ public class UIManager : MonoBehaviour
     public void ExitButtonInteract()
     {
         Debug.Log("Exit level");
+
+        // Pastikan mode kamera kembali ke eksplorasi sebelum pindah scene
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.ReturnToExplorationMode();
+        }
+
+        // Kembali ke main menu tanpa men-trigger ContentSwitcher (tidak menyimpan completion).
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.ResetTransitionData(); // pastikan flag trigger dimatikan
+            // Coba transition normal terlebih dahulu
+            if (SceneTransitionManager.Instance.IsTransitionInProgress())
+            {
+                Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
+                SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
+            }
+            else
+            {
+                SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
+            SceneManager.LoadScene("New Start Game Sandy");
+        }
+    }
+
+    /// <summary>
+    /// Pastikan EventSystem dan GraphicRaycaster aktif sehingga tombol dapat diklik dengan mudah.
+    /// </summary>
+    private void EnsureUIInputReady()
+    {
+        // Ensure EventSystem exists
+        if (EventSystem.current == null)
+        {
+            var es = new GameObject("EventSystem").AddComponent<EventSystem>();
+            es.gameObject.AddComponent<StandaloneInputModule>();
+            Debug.Log("[UIManager] Created missing EventSystem for UI input");
+        }
+
+        // Enable all GraphicRaycaster on parent canvases
+        var raycasters = GetComponentsInParent<GraphicRaycaster>(true);
+        foreach (var rc in raycasters)
+        {
+            if (rc != null && !rc.enabled)
+            {
+                rc.enabled = true;
+            }
+        }
     }
 
     public void ResumeButtonInteract()

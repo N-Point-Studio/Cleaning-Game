@@ -1304,6 +1304,63 @@ public class SceneTransitionManager : MonoBehaviour
     public bool IsTransitionInProgress() => isTransitionInProgress;
 
     /// <summary>
+    /// Direct transition to a target scene without triggering ContentSwitcher (for exit/back flows).
+    /// </summary>
+    public void TransitionToSceneDirect(string sceneName)
+    {
+        if (isTransitionInProgress)
+        {
+            Debug.LogWarning("Scene transition already in progress!");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("❌ Scene name is empty! Cannot transition.");
+            return;
+        }
+
+        targetSceneName = sceneName;
+
+        // Disable content switcher flow for this transition
+        shouldTriggerContentSwitcher = false;
+        clickedObjectName = string.Empty;
+        clickedObjectPosition = Vector3.zero;
+        isReturningFromGameplay = false; // ensure menu loads in exploration view
+
+        // Preserve camera state if available
+        SaveCameraStateForRestore();
+
+        // Go
+        StartCoroutine(PerformSceneTransition());
+    }
+
+    /// <summary>
+    /// Hard fallback: force load a scene immediately, bypassing transition guards (use for Exit button if other flows are blocked).
+    /// </summary>
+    public void ForceTransitionImmediate(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("❌ Scene name is empty! Cannot force transition.");
+            return;
+        }
+
+        // Cancel any running transitions and clear flags
+        StopAllCoroutines();
+        isTransitionInProgress = false;
+        shouldTriggerContentSwitcher = false;
+        isStagedTransition = false;
+        clickedObjectName = string.Empty;
+        clickedObjectPosition = Vector3.zero;
+        stagedFinalDestinationScene = null;
+        stagedFinalTransitionSettings = null;
+
+        Debug.LogWarning($"[SceneTransitionManager] Force loading scene immediately: {sceneName}");
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
     /// Utility: detect if this GO hosts other managers that should not be marked DontDestroyOnLoad.
     /// </summary>
     private bool HasOtherManagersOnGameObject()

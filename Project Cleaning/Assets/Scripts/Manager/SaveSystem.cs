@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using DG.Tweening;
 
 /// <summary>
 /// Manages saving and loading game progress using JSON
@@ -288,11 +289,38 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
+    private void OnApplicationQuit()
+    {
+        CleanupDOTween();
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
         {
             SaveData();
+            CleanupDOTween();
+        }
+    }
+
+    /// <summary>
+    /// Clean up DOTween instance to avoid leftover [DOTween] GameObject warnings on scene close.
+    /// </summary>
+    private void CleanupDOTween()
+    {
+        try
+        {
+            DOTween.KillAll();
+            DOTween.Clear(true);
+            var dotweenGO = GameObject.Find("[DOTween]");
+            if (dotweenGO != null)
+            {
+                Destroy(dotweenGO);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"DOTween cleanup failed: {ex.Message}");
         }
     }
 

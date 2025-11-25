@@ -36,6 +36,11 @@ public class GamePlayManager : MonoBehaviour
     private bool hasResolvedObjectContext = false;
     private bool resolvedFromSceneDetection = false;
 
+    [Header("Debug")]
+    [SerializeField] private bool enableDebugLogs = false;
+    [SerializeField] private float debugLogInterval = 1f;
+    private float nextDebugLogTime = 0f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -66,13 +71,16 @@ public class GamePlayManager : MonoBehaviour
             return; // Scene unloading or managers not ready
         }
 
-        Debug.Log("Value: " + UIManager.Instance.GetAllProgressValue());
+        if (enableDebugLogs && Time.time >= nextDebugLogTime)
+        {
+            Debug.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
+            nextDebugLogTime = Time.time + debugLogInterval;
+        }
         FinishedGame();
     }
 
     private void FinishedGame()
     {
-        Debug.Log("Check Finish Game " + AssembleManager.Instance.assemblyTargets.Count);
         if (UIManager.Instance.GetAllProgressValue() >= 100)
         {
             if (AssembleManager.Instance == null)

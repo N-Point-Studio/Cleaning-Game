@@ -7460,7 +7460,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dirtMaskBase: {fileID: 2800000, guid: 712b1e07b8195466285664e7fa47fdfb, type: 3}
+  _dirtMaskBase: {fileID: 2800000, guid: 56313b26a796141a690787ca8882521b, type: 3}
   _material: {fileID: 2100000, guid: d8720c1f670184971a5448ac7049bae6, type: 2}
   progress: 0
 --- !u!114 &6187783477504852103
