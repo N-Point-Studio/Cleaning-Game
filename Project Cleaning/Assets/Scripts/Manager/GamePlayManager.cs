@@ -208,7 +208,7 @@ public class GamePlayManager : MonoBehaviour
         StartSceneTransition();
     }
 
-    private void StartSceneTransition()
+    public void StartSceneTransition()
     {
         // Pastikan SceneTransitionManager ada
         if (SceneTransitionManager.Instance == null)
