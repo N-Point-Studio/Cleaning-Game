@@ -53,6 +53,12 @@ public class ClickableObject : MonoBehaviour
     [Tooltip("GameObjects that will be affected when ContentSwitcher completes")]
     [SerializeField] private GameObject[] objectsToChange; // Objects to modify after ContentSwitcher
     [SerializeField] private bool autoFindRelatedObjects = true;
+    [Header("Unlock Requirements")]
+    [SerializeField] private bool lockUntilPrerequisiteComplete = false;
+    [SerializeField] private ObjectType prerequisiteObjectType = ObjectType.ChinaCoin;
+    [SerializeField] private GameObject lockedVisual; // Optional alternate visual when locked
+    [SerializeField] private GameObject unlockedVisual; // Normal visual when unlocked
+    private bool subscribedToSaveEvents = false;
 
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
@@ -167,6 +173,14 @@ public class ClickableObject : MonoBehaviour
             Debug.Log($"===================");
         }
 
+        // If locked and prerequisite not met, block interaction
+        if (lockUntilPrerequisiteComplete && !PrerequisiteCompleted())
+        {
+            Debug.LogWarning($"[{name}] Locked until {prerequisiteObjectType} completed.");
+            ShowLockedVisual();
+            return;
+        }
+
         // CRITICAL FIX: Immediately save focus state the moment an object is clicked.
         // This prevents the focus data from being lost before a scene transition.
         if (SimpleCameraFocusRestore.Instance != null)
@@ -174,11 +188,20 @@ public class ClickableObject : MonoBehaviour
             SimpleCameraFocusRestore.Instance.SaveCurrentFocus();
         }
 
+        bool alreadyCompleted = IsCompleted();
+
         // Trigger the Unity Event first
         OnObjectClicked?.Invoke();
 
         // Show popup text (allow even during camera transitions)
-        ShowPopupText();
+        if (!alreadyCompleted)
+        {
+            ShowPopupText();
+        }
+        else
+        {
+            HidePopupText();
+        }
 
         // Set focus state and start shake animation when clicked (if in exploration mode and enabled)
         if (enableShakeAnimation && shakeOnlyWhenFocused)
@@ -341,6 +364,7 @@ public class ClickableObject : MonoBehaviour
         {
             case ObjectType.ChinaCoin:
             case ObjectType.ChinaJar:
+            case ObjectType.ChinaHorse:
                 return ChapterType.China;
             case ObjectType.IndonesiaKendin:
                 return ChapterType.Indonesia;
@@ -381,7 +405,23 @@ public class ClickableObject : MonoBehaviour
 
         try
         {
-            return SaveSystem.Instance.IsObjectCompleted(gameObject.name, objectType);
+            // Primary check: exact name + type
+            if (SaveSystem.Instance.IsObjectCompleted(gameObject.name, objectType))
+            {
+                return true;
+            }
+
+            // Fallback: match by object type only (handles different GameObject names vs saved objectName)
+            var saveData = SaveSystem.Instance.GetSaveData();
+            foreach (var completed in saveData.completedObjects)
+            {
+                if (completed.objectType == objectType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
         catch (System.Exception)
         {
@@ -688,11 +728,108 @@ public class ClickableObject : MonoBehaviour
 
     #endregion
 
+    #region Lock / Unlock prerequisite
+
+    private bool PrerequisiteCompleted()
+    {
+        if (!lockUntilPrerequisiteComplete)
+        {
+            return true;
+        }
+
+        if (SaveSystem.Instance == null)
+        {
+            // If no SaveSystem (e.g., gameplay scene), default to locked to prevent premature unlocks
+            return false;
+        }
+
+        // Check completion for required object type
+        var saveData = SaveSystem.Instance.GetSaveData();
+        foreach (var completed in saveData.completedObjects)
+        {
+            if (completed.objectType == prerequisiteObjectType)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ShowLockedVisual()
+    {
+        if (lockedVisual != null) lockedVisual.SetActive(true);
+        if (unlockedVisual != null) unlockedVisual.SetActive(false);
+    }
+
+    private void ShowUnlockedVisual()
+    {
+        if (lockedVisual != null) lockedVisual.SetActive(false);
+        if (unlockedVisual != null) unlockedVisual.SetActive(true);
+    }
+
+    private void UpdateLockVisual()
+    {
+        if (PrerequisiteCompleted())
+        {
+            ShowUnlockedVisual();
+        }
+        else
+        {
+            ShowLockedVisual();
+        }
+    }
+
+    private void OnEnable()
+    {
+        UpdateLockVisual();
+
+        if (SaveSystem.Instance != null && !subscribedToSaveEvents)
+        {
+            SaveSystem.Instance.OnDataLoaded += HandleSaveDataChanged;
+            SaveSystem.Instance.OnDataSaved += HandleSaveDataChanged;
+            subscribedToSaveEvents = true;
+        }
+
+        // In case SaveSystem initializes a frame later, run a delayed refresh
+        StartCoroutine(RefreshLockVisualNextFrame());
+    }
+
+    private void OnDisable()
+    {
+        if (SaveSystem.Instance != null && subscribedToSaveEvents)
+        {
+            SaveSystem.Instance.OnDataLoaded -= HandleSaveDataChanged;
+            SaveSystem.Instance.OnDataSaved -= HandleSaveDataChanged;
+            subscribedToSaveEvents = false;
+        }
+    }
+
+    private void HandleSaveDataChanged(SaveData _)
+    {
+        UpdateLockVisual();
+    }
+
+    private System.Collections.IEnumerator RefreshLockVisualNextFrame()
+    {
+        yield return null;
+        UpdateLockVisual();
+    }
+
+    #endregion
+
     /// <summary>
     /// Show popup text with character-by-character animation (Fixed version)
     /// </summary>
     public void ShowPopupText()
     {
+        // Jangan tampilkan popup jika sudah completed (hanya bekerja saat SaveSystem tersedia, mis. di menu)
+        if (SaveSystem.Instance != null && IsCompleted())
+        {
+            HidePopupText();
+            return;
+        }
+
         // Auto-find components if not set
         if (textMeshPro == null)
         {

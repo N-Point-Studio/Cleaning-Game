@@ -34,6 +34,14 @@ public class ObjectInteractionHandler : MonoBehaviour
         {
             Instance = this;
             playerCamera = Camera.main;
+
+            // Pastikan SceneTransitionManager sudah ada sejak awal supaya data klik tersimpan (hindari fallback ke Coin).
+            if (SceneTransitionManager.Instance == null)
+            {
+                var stmGO = new GameObject("SceneTransitionManager");
+                stmGO.AddComponent<SceneTransitionManager>();
+                Debug.Log("[ObjectInteractionHandler] Bootstrap SceneTransitionManager at startup");
+            }
         }
         else
         {
@@ -82,8 +90,6 @@ public class ObjectInteractionHandler : MonoBehaviour
     #region Object Interaction
     public bool CheckForObjectClick(Vector2 screenPosition)
     {
-        Debug.Log("=== CheckForObjectClick called ===");
-
         // NULL CHECK: Ensure camera is valid before using it
         if (playerCamera == null)
         {
@@ -100,42 +106,32 @@ public class ObjectInteractionHandler : MonoBehaviour
         // STABILITY CHECK: Wait a bit after mode changes to ensure state is stable
         if (Time.time - lastModeChangeTime < clickValidationDelay)
         {
-            Debug.Log($"=== CLICK BLOCKED - Mode change too recent ({Time.time - lastModeChangeTime:F2}s ago) ===");
             return false;
         }
 
         var ray = playerCamera.ScreenPointToRay(screenPosition);
         if (!Physics.Raycast(ray, out RaycastHit hit, maxClickDistance, clickableLayerMask))
         {
-            Debug.Log("No object hit by raycast");
             return false;
         }
 
-        Debug.Log($"Hit object: {hit.collider.name}");
-
         if (!hit.collider.TryGetComponent<ClickableObject>(out var clickable))
         {
-            Debug.Log("Object has no ClickableObject component");
             return false;
         }
 
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
-        Debug.Log($"Found ClickableObject on: {clickable.name}, Current mode: {currentMode}, Time since last mode change: {Time.time - lastModeChangeTime:F2}s");
-
         switch (currentMode)
         {
             case GameModeManager.GameMode.Exploration:
-                Debug.Log("=== EXPLORATION CLICK - Entering zoom mode ===");
                 HandleExplorationClick(clickable);
                 break;
 
             case GameModeManager.GameMode.Zoom:
-                Debug.Log("=== ZOOM CLICK - Handling zoom interaction ===");
                 HandleZoomClick(clickable);
                 break;
 
             default:
-                Debug.Log("=== DEFAULT CLICK - Playing feedback only ===");
                 PlayClickFeedback(clickable);
                 break;
         }
@@ -148,19 +144,14 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Do not start a new transition if one is already happening
         if (AdvancedInputManager.IsInTransition)
         {
-            Debug.Log("=== CLICK IGNORED - Transition in progress ===");
             return;
         }
         AdvancedInputManager.StartTransitionLock(); // Acquire the lock
-
-        Debug.Log($"=== HANDLE EXPLORATION CLICK START: {clickable.name} ===");
-        Debug.Log($"=== CURRENT MODE BEFORE CHANGE: {GameModeManager.Instance?.GetCurrentMode()} ===");
 
         // Show text popup first in exploration mode
         PlayClickFeedback(clickable);
 
         // STEP 1: Change mode state first
-        Debug.Log("=== STEP 1: Changing to Zoom mode ===");
 
         if (GameModeManager.Instance == null)
         {
@@ -172,16 +163,6 @@ public class ObjectInteractionHandler : MonoBehaviour
         GameModeManager.Instance.EnterZoomMode();
 
         // Immediate check after mode change
-        Debug.Log($"=== MODE AFTER CHANGE ATTEMPT: {GameModeManager.Instance.GetCurrentMode()} ===");
-
-        // EMERGENCY: If mode change failed, try force method immediately
-        if (GameModeManager.Instance.GetCurrentMode() != GameModeManager.GameMode.Zoom)
-        {
-            Debug.LogError($"=== MODE CHANGE FAILED! Trying force method ===");
-            GameModeManager.Instance.ForceEnterZoomMode();
-            Debug.Log($"=== MODE AFTER FORCE: {GameModeManager.Instance.GetCurrentMode()} ===");
-        }
-
         // STEP 2: Wait a frame to ensure mode change is processed, then set camera focus
         StartCoroutine(SetCameraFocusDelayed(clickable.transform));
     }
@@ -197,7 +178,6 @@ public class ObjectInteractionHandler : MonoBehaviour
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
         if (currentMode != GameModeManager.GameMode.Zoom)
         {
-            Debug.LogWarning($"=== ERROR: Expected Zoom mode but got {currentMode}, using force method ===");
             // Force mode change if needed
             GameModeManager.Instance?.ForceEnterZoomMode();
 
@@ -206,14 +186,12 @@ public class ObjectInteractionHandler : MonoBehaviour
 
             // Verify again
             currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
-            Debug.Log($"=== FORCE RESULT: Now in {currentMode} mode ===");
         }
 
         // Set focus target for camera
         var cameraController = CameraAnimationController.Instance;
         if (cameraController != null)
         {
-            Debug.Log("=== Setting camera controller zoom target ===");
             cameraController.EnterZoomMode(target);
         }
         else
@@ -222,49 +200,18 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
     }
 
-        private void HandleZoomClick(ClickableObject clickable)
-
+    private void HandleZoomClick(ClickableObject clickable)
+    {
+        if (enableSceneChange && clickable.CanChangeScene())
         {
-
-            // The 'justEnteredZoomMode' logic has been removed to ensure the first click in zoom mode triggers the scene change.
-
-    
-
-            // DEBUG: Check scene change conditions
-
-            Debug.Log($"=== ZOOM CLICK DEBUG ===");
-
-            Debug.Log($"enableSceneChange: {enableSceneChange}");
-
-            Debug.Log($"clickable.CanChangeScene(): {clickable.CanChangeScene()}");
-
-            Debug.Log($"clickable.GetSceneName(): {clickable.GetSceneName()}");
-
-    
-
-            if (enableSceneChange && clickable.CanChangeScene())
-
-            {
-
-                Debug.Log("✅ Scene change conditions met, initiating scene change...");
-
-                PlayClickFeedback(clickable); // Play feedback before changing scene.
-
-                HandleSceneChange(clickable);
-
-            }
-
-            else
-
-            {
-
-                Debug.LogWarning("❌ Scene change conditions not met. Playing feedback only.");
-
-                PlayClickFeedback(clickable);
-
-            }
-
+            PlayClickFeedback(clickable); // Play feedback before changing scene.
+            HandleSceneChange(clickable);
         }
+        else
+        {
+            PlayClickFeedback(clickable);
+        }
+    }
 
     private void HandleSceneChange(ClickableObject clickableObject)
     {
@@ -275,12 +222,8 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (string.IsNullOrEmpty(finalSceneName))
             return;
 
-        // Store object info for the return trip, but only if the SceneTransitionManager is available.
-        // This is now separate from the outgoing transition logic.
-        if (SceneTransitionManager.Instance != null)
-        {
-            StoreClickedObjectInfo(clickableObject);
-        }
+        // Always store clicked object info so gameplay knows which artefact to load.
+        StoreClickedObjectInfo(clickableObject);
 
         // --- New Self-Contained Transition Logic ---
 
@@ -312,6 +255,14 @@ public class ObjectInteractionHandler : MonoBehaviour
     {
         if (clickedObject == null) return;
 
+        // Ensure SceneTransitionManager exists so data is available in gameplay scene
+        if (SceneTransitionManager.Instance == null)
+        {
+            Debug.LogWarning("SceneTransitionManager not found, creating one to store clicked object info...");
+            var stmGO = new GameObject("SceneTransitionManager");
+            stmGO.AddComponent<SceneTransitionManager>();
+        }
+
         // Get object info
         string objectName = clickedObject.name;
         Vector3 objectPosition = clickedObject.transform.position;
@@ -333,7 +284,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("SceneTransitionManager not found! Clicked object info not stored.");
+            Debug.LogError("SceneTransitionManager creation failed - clicked object info not stored!");
         }
     }
 
@@ -592,6 +543,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         {
             case ObjectType.ChinaCoin:
             case ObjectType.ChinaJar:
+            case ObjectType.ChinaHorse:
                 return ChapterType.China;
             case ObjectType.IndonesiaKendin:
                 return ChapterType.Indonesia;

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
@@ -14,7 +16,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private ProgressBar progressDirts;
     [SerializeField] private ProgressBar progressDusts;
     [SerializeField] private ProgressBar progressAssemble;
-    [SerializeField] private Text artefactNameText;
+    [SerializeField] private GameObject progressDirtsGO;
+    [SerializeField] private GameObject progressDustsGO;
+    [SerializeField] private GameObject progressAssembleGO;
+    [SerializeField] private TextMeshProUGUI artefactNameText;
     [SerializeField] private GameObject settingCanvas;
     [SerializeField] private Button FinishButton; // Optional direct button reference
     [SerializeField] private Button ExitButton;
@@ -25,9 +30,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private bool useImageAsButton = true; // Toggle untuk menggunakan Image sebagai button
     private bool isSettingShown = false;
     private bool isSceneUnloading = false;
+    private int minusFactor = 0;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(Instance.gameObject);
+        }
         Instance = this;
     }
 
@@ -35,6 +45,8 @@ public class UIManager : MonoBehaviour
     {
         ExitButton.onClick.AddListener(ExitButtonInteract);
         ResumeButton.onClick.AddListener(ResumeButtonInteract);
+
+        EnsureUIInputReady();
 
         // Setup finish button listener
         SetupFinishButton();
@@ -207,6 +219,10 @@ public class UIManager : MonoBehaviour
     {
         settingCanvas.SetActive(isShown);
         TouchManager.Instance.TouchUsed(isShown);
+        if (isShown)
+        {
+            EnsureUIInputReady(); // pastikan EventSystem & raycaster aktif saat overlay dibuka
+        }
     }
 
     public void ShowFinishUI(bool isShown)
@@ -254,6 +270,63 @@ public class UIManager : MonoBehaviour
     public void ExitButtonInteract()
     {
         Debug.Log("Exit level");
+
+        // Pastikan mode kamera kembali ke eksplorasi sebelum pindah scene
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.ReturnToExplorationMode();
+        }
+
+        // Pastikan input UI/touch kembali aktif untuk menangkap klik
+        TouchManager.Instance?.DisableAllTouch(false);
+        EventSystem.current?.SetSelectedGameObject(null);
+
+        // Kembali ke main menu tanpa men-trigger ContentSwitcher (tidak menyimpan completion).
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.ResetTransitionData(); // pastikan flag trigger dimatikan
+            // Coba transition normal terlebih dahulu
+            if (SceneTransitionManager.Instance.IsTransitionInProgress())
+            {
+                Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
+                SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
+            }
+            else
+            {
+                SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
+            }
+            // Gunakan jalur paksa instan agar tidak ada delay/lock
+            SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
+        }
+        else
+        {
+            Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
+            SceneManager.LoadScene("New Start Game Sandy");
+        }
+    }
+
+    /// <summary>
+    /// Pastikan EventSystem dan GraphicRaycaster aktif sehingga tombol dapat diklik dengan mudah.
+    /// </summary>
+    private void EnsureUIInputReady()
+    {
+        // Ensure EventSystem exists
+        if (EventSystem.current == null)
+        {
+            var es = new GameObject("EventSystem").AddComponent<EventSystem>();
+            es.gameObject.AddComponent<StandaloneInputModule>();
+            Debug.Log("[UIManager] Created missing EventSystem for UI input");
+        }
+
+        // Enable all GraphicRaycaster on parent canvases
+        var raycasters = GetComponentsInParent<GraphicRaycaster>(true);
+        foreach (var rc in raycasters)
+        {
+            if (rc != null && !rc.enabled)
+            {
+                rc.enabled = true;
+            }
+        }
     }
 
     public void ResumeButtonInteract()
@@ -264,7 +337,24 @@ public class UIManager : MonoBehaviour
 
     public float GetAllProgressValue()
     {
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / 3;
+        if (progressDirts == null || progressAssemble == null || progressDusts == null)
+        {
+            Debug.LogWarning("Progress bars not assigned on UIManager.");
+            return 0f;
+        }
+
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / (3 + minusFactor);
+    }
+
+    /// <summary>
+    /// Reset progress bars to zero at the start of a new session.
+    /// </summary>
+    public void ResetProgressBars()
+    {
+        if (progressDirts != null) progressDirts.SetValue(0);
+        if (progressDusts != null) progressDusts.SetValue(0);
+        if (progressAssemble != null) progressAssemble.SetValue(0);
+        Debug.Log("[UIManager] Progress bars reset.");
     }
 
     /// <summary>
@@ -301,6 +391,10 @@ public class UIManager : MonoBehaviour
                 else if (sceneName.Contains("jar") || sceneName.Contains("china jar"))
                 {
                     fallbackObjectType = ObjectType.ChinaJar;
+                }
+                else if (sceneName.Contains("horse"))
+                {
+                    fallbackObjectType = ObjectType.ChinaHorse;
                 }
                 else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
                 {
@@ -342,7 +436,8 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Failed to create SceneTransitionManager even after retry!");        }
+            Debug.LogError("Failed to create SceneTransitionManager even after retry!");
+        }
     }
 
     /// <summary>
@@ -400,21 +495,21 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Show or hide individual progress bars.
     /// </summary>
-    public void ShowProgress(ProgressType type, bool show)
+    public void ShowProgress(ProgressType type, bool isShown)
     {
         switch (type)
         {
             case ProgressType.Dirt:
-                if (progressDirts != null) progressDirts.gameObject.SetActive(show);
+                progressDirtsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
             case ProgressType.Dust:
-                if (progressDusts != null) progressDusts.gameObject.SetActive(show);
+                progressDustsGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
             case ProgressType.Assemble:
-                if (progressAssemble != null) progressAssemble.gameObject.SetActive(show);
-                break;
-            default:
-                Debug.LogWarning($"ShowProgress called with unhandled type: {type}");
+                progressAssembleGO.SetActive(isShown);
+                minusFactor += isShown ? 1 : -1;
                 break;
         }
     }

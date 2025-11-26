@@ -68,6 +68,11 @@ public class FragmentIdleState : FragmentBaseState
 
     private void MoveTowardInspect()
     {
+        if (AssembleManager.Instance == null || AssembleManager.Instance.InspectPosition == null)
+        {
+            return;
+        }
+
         if (stateMachine.Interaction.isDragging && !dragJustStarted)
         {
             dragJustStarted = true;

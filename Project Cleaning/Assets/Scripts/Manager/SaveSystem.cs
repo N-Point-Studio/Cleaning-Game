@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using DG.Tweening;
 
 /// <summary>
 /// Manages saving and loading game progress using JSON
@@ -217,6 +218,17 @@ public class SaveSystem : MonoBehaviour
     }
 
     /// <summary>
+    /// Reset progress then reload the current scene (for quick testing via inspector context menu).
+    /// </summary>
+    [ContextMenu("Reset All Progress & Reload Scene")]
+    public void ResetAllProgressAndReload()
+    {
+        ResetAllProgress();
+        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        UnityEngine.SceneManagement.SceneManager.LoadScene(scene.name);
+    }
+
+    /// <summary>
     /// Delete save file completely
     /// </summary>
     [ContextMenu("Delete Save File")]
@@ -288,11 +300,38 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
+    private void OnApplicationQuit()
+    {
+        CleanupDOTween();
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
         {
             SaveData();
+            CleanupDOTween();
+        }
+    }
+
+    /// <summary>
+    /// Clean up DOTween instance to avoid leftover [DOTween] GameObject warnings on scene close.
+    /// </summary>
+    private void CleanupDOTween()
+    {
+        try
+        {
+            DOTween.KillAll();
+            DOTween.Clear(true);
+            var dotweenGO = GameObject.Find("[DOTween]");
+            if (dotweenGO != null)
+            {
+                Destroy(dotweenGO);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"DOTween cleanup failed: {ex.Message}");
         }
     }
 

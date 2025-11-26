@@ -30,6 +30,8 @@ public class SceneTransitionManager : MonoBehaviour
     private bool shouldTriggerContentSwitcher = false;
     private bool isTransitionInProgress = false;
     private bool isReturningFromGameplay = false; // mark when coming back from gameplay
+    private enum TransitionDirection { Unknown, ToGameplay, ToMenu }
+    private TransitionDirection currentTransitionDirection = TransitionDirection.Unknown;
 
     // NEW: Track which specific object was clicked
     private string clickedObjectName = "";
@@ -53,6 +55,16 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void Awake()
     {
+        // If this component lives alongside other managers, spawn a dedicated persistent GameObject to avoid dragging them across scenes.
+        if (Instance == null && HasOtherManagersOnGameObject())
+        {
+            var persistentGO = new GameObject("SceneTransitionManager");
+            var newSTM = persistentGO.AddComponent<SceneTransitionManager>();
+            newSTM.CopyConfigFrom(this);
+            Destroy(this);
+            return;
+        }
+
         // Singleton pattern with DontDestroyOnLoad
         if (Instance == null)
         {
@@ -185,6 +197,11 @@ public class SceneTransitionManager : MonoBehaviour
             Debug.LogWarning("Staged scene transition already in progress!");
             return;
         }
+
+        // Mark direction based on destination (gameplay vs menu)
+        currentTransitionDirection = finalDestinationScene.ToLower().Contains("gameplay")
+            ? TransitionDirection.ToGameplay
+            : TransitionDirection.ToMenu;
 
         stagedFinalDestinationScene = finalDestinationScene;
         stagedDelay = delay;
@@ -959,7 +976,7 @@ public class SceneTransitionManager : MonoBehaviour
             // This runs synchronously BEFORE the first frame is rendered.
             SetupInstantFocus();
         }
-        else if (isMenuScene)
+        else if (isMenuScene && (shouldTriggerContentSwitcher || isReturningFromGameplay))
         {
             StartCoroutine(ForceHardcodedCameraView());
         }
@@ -1134,7 +1151,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Failed to find or trigger ContentSwitcher!");
+            Debug.LogWarning("Failed to find or trigger ContentSwitcher!");
         }
     }
 
@@ -1242,7 +1259,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (contentSwitchers.Length == 0)
         {
-            Debug.LogError("❌ No ContentSwitcher found in scene!");
+            Debug.LogWarning("⚠️ No ContentSwitcher found in scene - skipping content switch.");
             return false;
         }
 
@@ -1276,6 +1293,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             case ObjectType.ChinaCoin:
             case ObjectType.ChinaJar:
+            case ObjectType.ChinaHorse:
                 return ChapterType.China;
             case ObjectType.IndonesiaKendin:
                 return ChapterType.Indonesia;
@@ -1291,6 +1309,101 @@ public class SceneTransitionManager : MonoBehaviour
     public ChapterType GetCurrentChapterType() => currentChapterType;
     public bool ShouldTriggerContentSwitcher() => shouldTriggerContentSwitcher;
     public bool IsTransitionInProgress() => isTransitionInProgress;
+    public bool IsReturningFromGameplayFlag() => isReturningFromGameplay;
+    public string GetTransitionDirection() => currentTransitionDirection.ToString();
+
+    public void SetTransitionDirectionToGameplay()
+    {
+        currentTransitionDirection = TransitionDirection.ToGameplay;
+    }
+
+    public void SetTransitionDirectionToMenu()
+    {
+        currentTransitionDirection = TransitionDirection.ToMenu;
+    }
+
+    /// <summary>
+    /// Direct transition to a target scene without triggering ContentSwitcher (for exit/back flows).
+    /// </summary>
+    public void TransitionToSceneDirect(string sceneName)
+    {
+        if (isTransitionInProgress)
+        {
+            Debug.LogWarning("Scene transition already in progress!");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("❌ Scene name is empty! Cannot transition.");
+            return;
+        }
+
+        targetSceneName = sceneName;
+
+        // Disable content switcher flow for this transition
+        shouldTriggerContentSwitcher = false;
+        clickedObjectName = string.Empty;
+        clickedObjectPosition = Vector3.zero;
+        isReturningFromGameplay = false; // ensure menu loads in exploration view
+
+        // Preserve camera state if available
+        SaveCameraStateForRestore();
+
+        // Go
+        StartCoroutine(PerformSceneTransition());
+    }
+
+    /// <summary>
+    /// Hard fallback: force load a scene immediately, bypassing transition guards (use for Exit button if other flows are blocked).
+    /// </summary>
+    public void ForceTransitionImmediate(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("❌ Scene name is empty! Cannot force transition.");
+            return;
+        }
+
+        // Cancel any running transitions and clear flags
+        StopAllCoroutines();
+        isTransitionInProgress = false;
+        shouldTriggerContentSwitcher = false;
+        isStagedTransition = false;
+        clickedObjectName = string.Empty;
+        clickedObjectPosition = Vector3.zero;
+        stagedFinalDestinationScene = null;
+        stagedFinalTransitionSettings = null;
+
+        Debug.LogWarning($"[SceneTransitionManager] Force loading scene immediately: {sceneName}");
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// Utility: detect if this GO hosts other managers that should not be marked DontDestroyOnLoad.
+    /// </summary>
+    private bool HasOtherManagersOnGameObject()
+    {
+        var components = GetComponents<Component>();
+        int extra = 0;
+        foreach (var comp in components)
+        {
+            if (comp == null || comp is Transform || comp == this) continue;
+            extra++;
+        }
+        return extra > 0;
+    }
+
+    /// <summary>
+    /// Copy serialized config to a new instance when migrating to a dedicated GO.
+    /// </summary>
+    private void CopyConfigFrom(SceneTransitionManager other)
+    {
+        sceneTransitionDelay = other.sceneTransitionDelay;
+        useEasyTransition = other.useEasyTransition;
+        enableDebugLogs = other.enableDebugLogs;
+        fallbackTransitionSettings = other.fallbackTransitionSettings;
+    }
 
     /// <summary>
     /// Load saved progress and apply completion status to objects in scene
@@ -1328,7 +1441,7 @@ public class SceneTransitionManager : MonoBehaviour
         // Find all ClickableObjects in scene
         ClickableObject[] allClickableObjects = FindObjectsOfType<ClickableObject>();
 
-        // Apply completion status to matching objects
+        // ✅ FIXED: Apply completion status to matching objects (PREVENT RESET ISSUE)
         foreach (var completedObj in saveData.completedObjects)
         {
             foreach (var clickableObj in allClickableObjects)
@@ -1337,13 +1450,18 @@ public class SceneTransitionManager : MonoBehaviour
                 if (clickableObj.name == completedObj.objectName &&
                     clickableObj.GetObjectType() == completedObj.objectType)
                 {
-                    // Apply completion changes
-                    clickableObj.ApplyContentSwitcherChanges();
+                    // ✅ FIX: DO NOT call ApplyContentSwitcherChanges automatically!
+                    // This was causing visual changes that bypass ContentSwitcher state management
+                    // Instead, let ContentSwitcher handle its own state through event system
 
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"Applied saved completion to: {clickableObj.name}");
+                        Debug.Log($"Found completed object: {clickableObj.name} - letting ContentSwitcher handle state");
                     }
+
+                    // ✅ COMMENTED OUT: This line was causing the reset issue
+                    // clickableObj.ApplyContentSwitcherChanges();
+
                     break;
                 }
             }
@@ -1364,6 +1482,7 @@ public class SceneTransitionManager : MonoBehaviour
         currentChapterType = ChapterType.China;
         shouldTriggerContentSwitcher = false;
         isTransitionInProgress = false;
+        currentTransitionDirection = TransitionDirection.Unknown;
 
         if (enableDebugLogs)
         {
