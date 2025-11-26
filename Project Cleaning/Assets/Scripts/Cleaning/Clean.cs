@@ -105,13 +105,18 @@ public class Clean : MonoBehaviour
         int pixelX = (int)(uv.x * _templateDirtMask.width);
         int pixelY = (int)(uv.y * _templateDirtMask.height);
 
+        Debug.Log("Cleaning at pixel: " + pixelX + ", " + pixelY);
+
         Vector2Int paintPixelPosition = new Vector2Int(pixelX, pixelY);
+        Debug.Log("Position pixel: " + paintPixelPosition);
+
 
         int paintPixelDistance = Mathf.Abs(paintPixelPosition.x - lastPaintPixelPosition.x) + Mathf.Abs(paintPixelPosition.y - lastPaintPixelPosition.y);
         int maxPaintDistance = 7;
 
         if (paintPixelDistance < maxPaintDistance)
         {
+            Debug.Log("TisActivelyCleaning paint: " + paintPixelDistance);
             return false;
         }
 

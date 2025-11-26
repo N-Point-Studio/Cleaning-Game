@@ -100,6 +100,7 @@ public class ToolCleaningSurface : MonoBehaviour
                 if (surface.CleaningSurface != null)
                 {
                     isActivelyCleaning = TryClean(surface.CleaningSurface, surface.TextureSurface);
+                    Debug.Log("isActivelyCleaning: " + isActivelyCleaning);
                 }
                 break;
         }
@@ -107,8 +108,8 @@ public class ToolCleaningSurface : MonoBehaviour
 
     private bool TryClean(Clean clean, Vector2 textureCoord)
     {
-        return clean.CleanAt(textureCoord, brush, brushSize, surface.RaycastTipRotation);
-        // return clean.CleaningAtPoint(textureCoord, brush);
+        // return clean.CleanAt(textureCoord, brush, brushSize, surface.RaycastTipRotation);
+        return clean.CleaningAtPoint(textureCoord, brush);
     }
 
     private bool TryDestroyMesh(CleanMesh obj)
