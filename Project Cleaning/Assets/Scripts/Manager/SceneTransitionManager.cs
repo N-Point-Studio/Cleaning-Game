@@ -16,7 +16,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     [Header("Scene Configuration")]
     [SerializeField] private float sceneTransitionDelay = 0.5f;
-    [SerializeField] private bool useEasyTransition = true;
+    [SerializeField] private bool useEasyTransition = false; // ✅ DISABLED: Use TransitionScreen instead
     [Header("Debug Settings")]
     [SerializeField] private bool enableDebugLogs = true; // Re-enable to debug remaining issue
     [Header("Fallback Transition")]
@@ -322,6 +322,15 @@ public class SceneTransitionManager : MonoBehaviour
         }
         else
         {
+            // ✅ NEW SYSTEM: Using TransitionScreenController instead of EasyTransition
+            if (enableDebugLogs)
+            {
+                Debug.Log("=== USING NEW TRANSITION SYSTEM ===");
+                Debug.Log($"Loading scene: {targetSceneName}");
+                Debug.Log($"TransitionScreen will automatically detect direction via TransitionScreenController");
+                Debug.Log("====================================");
+            }
+
             CleanupCurrentSceneForTransition();
             SceneManager.LoadScene(targetSceneName);
         }
@@ -366,6 +375,20 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs) Debug.LogWarning("EasyTransition.TransitionManager not found. Using standard scene loading.");
                 return false;
+            }
+
+            // CRITICAL FIX: ALWAYS reset runningTransition flag BEFORE attempting transition
+            // This fixes the issue where 2nd and 3rd gameplay transitions fail
+            var runningTransitionField = transitionManager.GetType().GetField("runningTransition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (runningTransitionField != null)
+            {
+                bool wasRunning = (bool)runningTransitionField.GetValue(transitionManager);
+                if (wasRunning)
+                {
+                    if (enableDebugLogs) Debug.LogWarning("⚠️ Found stuck runningTransition=true flag! Resetting...");
+                }
+                runningTransitionField.SetValue(transitionManager, false);
+                if (enableDebugLogs) Debug.Log("✅ Reset runningTransition flag to false");
             }
 
             if (enableDebugLogs)
@@ -442,17 +465,6 @@ public class SceneTransitionManager : MonoBehaviour
                     {
                         transitionTime = (float)transitionTimeField.GetValue(transitionToUse);
                         if (enableDebugLogs) Debug.Log($"Using TransitionSettings transitionTime: {transitionTime}s");
-                    }
-
-                    // CRITICAL FIX: Reset runningTransition state before calling transition
-                    var runningTransitionField = transitionManager.GetType().GetField("runningTransition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (runningTransitionField != null)
-                    {
-                        if ((bool)runningTransitionField.GetValue(transitionManager))
-                        {
-                            if (enableDebugLogs) Debug.Log("Resetting 'runningTransition' flag on TransitionManager.");
-                            runningTransitionField.SetValue(transitionManager, false);
-                        }
                     }
 
                     // Call EasyTransition with proper duration from settings
@@ -961,6 +973,19 @@ public class SceneTransitionManager : MonoBehaviour
 
         isTransitionInProgress = false;
 
+        // ADDITIONAL SAFEGUARD: Reset EasyTransition's runningTransition flag when scene loads
+        // This ensures transitions work properly on 2nd, 3rd gameplay entries
+        var transitionManager = FindObjectOfType<EasyTransition.TransitionManager>();
+        if (transitionManager != null)
+        {
+            var runningTransitionField = transitionManager.GetType().GetField("runningTransition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (runningTransitionField != null)
+            {
+                runningTransitionField.SetValue(transitionManager, false);
+                if (enableDebugLogs) Debug.Log("✅ OnSceneLoaded: Reset EasyTransition runningTransition flag");
+            }
+        }
+
         if (isStagedTransition && scene.name == intermediarySceneName)
         {
             StartCoroutine(ContinueStagedTransition());
@@ -998,6 +1023,13 @@ public class SceneTransitionManager : MonoBehaviour
         {
             StartCoroutine(ReenableTouchAfterUIReady());
             StartCoroutine(LoadAndApplySavedProgressAfterDelay());
+
+            // ✅ CRITICAL FIX: Force refresh unlock visuals after returning from gameplay
+            // This ensures Kendi and other objects show correct lock/unlock state
+            if (isReturningFromGameplay || shouldTriggerContentSwitcher)
+            {
+                StartCoroutine(RefreshUnlockVisualsAfterDelay());
+            }
         }
     }
 
@@ -1983,6 +2015,51 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         Debug.Log("✅ UI System force refresh completed");
+    }
+
+    /// <summary>
+    /// Force refresh unlock visuals for all ClickableObjects in scene
+    /// This fixes the issue where Kendi stays locked after Coin completion
+    /// </summary>
+    private IEnumerator RefreshUnlockVisualsAfterDelay()
+    {
+        // Wait for scene to be fully loaded and SaveSystem to be ready
+        yield return new WaitForSeconds(0.7f);
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("=== REFRESHING UNLOCK VISUALS ===");
+        }
+
+        // Find all ClickableObjects in scene
+        ClickableObject[] allClickableObjects = FindObjectsOfType<ClickableObject>();
+
+        if (enableDebugLogs)
+        {
+            Debug.Log($"Found {allClickableObjects.Length} ClickableObjects to refresh");
+        }
+
+        // Force each object to update its lock/unlock visual
+        foreach (var clickable in allClickableObjects)
+        {
+            if (clickable != null)
+            {
+                // Force re-enable to trigger UpdateLockVisual in OnEnable
+                clickable.gameObject.SetActive(false);
+                yield return null; // Wait one frame
+                clickable.gameObject.SetActive(true);
+
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"Refreshed: {clickable.name}");
+                }
+            }
+        }
+
+        if (enableDebugLogs)
+        {
+            Debug.Log("=== UNLOCK VISUALS REFRESH COMPLETE ===");
+        }
     }
 
     /// <summary>

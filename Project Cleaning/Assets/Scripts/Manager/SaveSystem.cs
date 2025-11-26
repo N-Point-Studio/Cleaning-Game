@@ -43,10 +43,13 @@ public class SaveSystem : MonoBehaviour
         // Setup save file path
         saveFilePath = Path.Combine(Application.persistentDataPath, saveFileName);
 
-        if (enableDebugLogs)
-        {
-            Debug.Log($"SaveSystem initialized. Save path: {saveFilePath}");
-        }
+        Debug.Log("========================================");
+        Debug.Log("=== SAVE SYSTEM INITIALIZATION ===");
+        Debug.Log($"Save File Name: {saveFileName}");
+        Debug.Log($"Persistent Data Path: {Application.persistentDataPath}");
+        Debug.Log($"Full Save Path: {saveFilePath}");
+        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+        Debug.Log("========================================");
 
         // Load existing data or create new
         LoadData();
@@ -61,14 +64,31 @@ public class SaveSystem : MonoBehaviour
     {
         try
         {
+            Debug.Log("========================================");
+            Debug.Log("=== LOADING SAVE DATA ===");
+            Debug.Log($"Checking file: {saveFilePath}");
+            Debug.Log($"File exists: {File.Exists(saveFilePath)}");
+
             if (File.Exists(saveFilePath))
             {
                 string jsonContent = File.ReadAllText(saveFilePath);
+
+                Debug.Log($"File size: {jsonContent.Length} characters");
+                Debug.Log($"JSON Content:\n{jsonContent}");
+
                 currentSaveData = JsonUtility.FromJson<SaveData>(jsonContent);
 
-                if (enableDebugLogs)
+                Debug.Log($"✅ Data loaded successfully!");
+                Debug.Log($"   Completed objects: {currentSaveData.GetCompletedCount()}");
+                Debug.Log($"   Last save time: {currentSaveData.lastSaveTime}");
+
+                if (currentSaveData.completedObjects.Count > 0)
                 {
-                    Debug.Log($"Data loaded successfully. Completed objects: {currentSaveData.GetCompletedCount()}");
+                    Debug.Log("   Completed objects list:");
+                    foreach (var obj in currentSaveData.completedObjects)
+                    {
+                        Debug.Log($"      - {obj.GetInfo()}");
+                    }
                 }
             }
             else
@@ -76,18 +96,19 @@ public class SaveSystem : MonoBehaviour
                 // Create new save data if no file exists
                 currentSaveData = new SaveData();
 
-                if (enableDebugLogs)
-                {
-                    Debug.Log("No save file found. Created new save data.");
-                }
+                Debug.LogWarning("⚠️ No save file found. Created new empty save data.");
+                Debug.LogWarning("   This is normal on first run.");
             }
+
+            Debug.Log("========================================");
 
             // Notify listeners
             OnDataLoaded?.Invoke(currentSaveData);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error loading save data: {e.Message}");
+            Debug.LogError($"❌ Error loading save data: {e.Message}");
+            Debug.LogError($"   Stack trace: {e.StackTrace}");
             currentSaveData = new SaveData();
         }
     }
@@ -99,25 +120,54 @@ public class SaveSystem : MonoBehaviour
     {
         try
         {
+            Debug.Log("========================================");
+            Debug.Log("=== SAVING DATA TO DISK ===");
+
             if (currentSaveData == null)
             {
+                Debug.LogWarning("⚠️ currentSaveData was null! Creating new SaveData.");
                 currentSaveData = new SaveData();
             }
 
+            // Update last save time
+            currentSaveData.lastSaveTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
             string jsonContent = JsonUtility.ToJson(currentSaveData, true);
+
+            Debug.Log($"Saving to: {saveFilePath}");
+            Debug.Log($"JSON size: {jsonContent.Length} characters");
+            Debug.Log($"Completed objects: {currentSaveData.GetCompletedCount()}");
+
+            if (currentSaveData.completedObjects.Count > 0)
+            {
+                Debug.Log("Objects being saved:");
+                foreach (var obj in currentSaveData.completedObjects)
+                {
+                    Debug.Log($"   - {obj.GetInfo()}");
+                }
+            }
+
+            Debug.Log($"JSON Content:\n{jsonContent}");
+
+            // Write to file
             File.WriteAllText(saveFilePath, jsonContent);
 
-            if (enableDebugLogs)
-            {
-                Debug.Log($"Data saved successfully. Completed objects: {currentSaveData.GetCompletedCount()}");
-            }
+            // Verify file was written
+            bool fileExists = File.Exists(saveFilePath);
+            long fileSize = fileExists ? new FileInfo(saveFilePath).Length : 0;
+
+            Debug.Log($"✅ File written successfully!");
+            Debug.Log($"   File exists: {fileExists}");
+            Debug.Log($"   File size: {fileSize} bytes");
+            Debug.Log("========================================");
 
             // Notify listeners
             OnDataSaved?.Invoke(currentSaveData);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error saving data: {e.Message}");
+            Debug.LogError($"❌ Error saving data: {e.Message}");
+            Debug.LogError($"   Stack trace: {e.StackTrace}");
         }
     }
 
@@ -258,8 +308,18 @@ public class SaveSystem : MonoBehaviour
     public void PrintSaveDataInfo()
     {
         var saveData = GetSaveData();
+        Debug.Log("========================================");
         Debug.Log("=== SAVE DATA INFO ===");
         Debug.Log($"Save File Path: {saveFilePath}");
+        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+
+        if (File.Exists(saveFilePath))
+        {
+            long fileSize = new FileInfo(saveFilePath).Length;
+            Debug.Log($"File Size: {fileSize} bytes");
+            Debug.Log($"File Last Modified: {File.GetLastWriteTime(saveFilePath)}");
+        }
+
         Debug.Log($"Save Version: {saveData.saveVersion}");
         Debug.Log($"Last Save Time: {saveData.lastSaveTime}");
         Debug.Log($"Total Completed Objects: {saveData.GetCompletedCount()}");
@@ -275,9 +335,35 @@ public class SaveSystem : MonoBehaviour
         }
         else
         {
-            Debug.Log("No completed objects found.");
+            Debug.Log("⚠️ No completed objects found.");
         }
-        Debug.Log("====================");
+        Debug.Log("========================================");
+    }
+
+    /// <summary>
+    /// Print save file location for manual verification
+    /// </summary>
+    [ContextMenu("Show Save File Location")]
+    public void ShowSaveFileLocation()
+    {
+        Debug.Log("========================================");
+        Debug.Log("=== SAVE FILE LOCATION ===");
+        Debug.Log($"Full Path: {saveFilePath}");
+        Debug.Log($"Directory: {Path.GetDirectoryName(saveFilePath)}");
+        Debug.Log($"File Name: {Path.GetFileName(saveFilePath)}");
+        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+
+        if (File.Exists(saveFilePath))
+        {
+            Debug.Log("✅ File found! You can manually check this file.");
+            Debug.Log($"   Last modified: {File.GetLastWriteTime(saveFilePath)}");
+            Debug.Log($"   Size: {new FileInfo(saveFilePath).Length} bytes");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ File not found! Save may not have been written yet.");
+        }
+        Debug.Log("========================================");
     }
 
     #endregion
@@ -302,15 +388,29 @@ public class SaveSystem : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        Debug.Log("========================================");
+        Debug.Log("=== APPLICATION QUITTING ===");
+        Debug.Log("Saving data before quit...");
+
+        // CRITICAL: Save data before app closes
+        SaveData();
+
+        Debug.Log("Data saved. Cleaning up...");
         CleanupDOTween();
+        Debug.Log("========================================");
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
         {
+            Debug.Log("=== SaveSystem DESTROYING ===");
+            Debug.Log("Saving data before destroy...");
+
             SaveData();
             CleanupDOTween();
+
+            Debug.Log("SaveSystem destroyed.");
         }
     }
 

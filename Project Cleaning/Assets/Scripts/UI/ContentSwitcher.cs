@@ -97,6 +97,7 @@ public class ContentSwitcher : MonoBehaviour
         {
             Debug.Log($"[ContentSwitcher] {chapterType} {objectType} is already completed - setting permanent state immediately");
             currentState = ContentSwitcherState.PermanentCompleted;
+            ApplyPermanentCompletionVisualState();
 
             // ✅ SKIP SetupInitialState() if already completed - it will be ignored anyway
             // SetupInitialState() - SKIP THIS!
@@ -255,9 +256,56 @@ public class ContentSwitcher : MonoBehaviour
 
         // ✅ CRITICAL: Set permanent state (cannot be changed)
         currentState = ContentSwitcherState.PermanentCompleted;
+        ApplyPermanentCompletionVisualState();
 
         isAnimating = false;
         Debug.Log($"[ContentSwitcher] Permanent completion animation completed for {chapterType} chapter - STATE: {currentState}");
+    }
+
+    /// <summary>
+    /// Ensure completed state visuals persist (hide before image, show after image)
+    /// </summary>
+    private void ApplyPermanentCompletionVisualState()
+    {
+        bool hasAfterImage = afterImage != null;
+
+        // Hide any "before" visuals that share the same ObjectType under this ContentSwitcher
+        if (hasAfterImage)
+        {
+            var clickables = GetComponentsInChildren<ClickableObject>(true);
+            foreach (var clickable in clickables)
+            {
+                if (clickable.gameObject == afterImage) continue;
+                if (clickable.GetObjectType() != objectType) continue;
+
+                clickable.gameObject.SetActive(false);
+            }
+        }
+
+        if (initialText != null) initialText.SetActive(false);
+        HideIfSameObjectType(nextArtifactImage1);
+        HideIfSameObjectType(nextArtifactImage2);
+
+        if (hasAfterImage) afterImage.SetActive(true);
+    }
+
+    private void HideIfSameObjectType(GameObject target)
+    {
+        if (target == null) return;
+
+        var clickable = target.GetComponent<ClickableObject>();
+        if (clickable == null)
+        {
+            // Non-clickable preview can be hidden safely
+            target.SetActive(false);
+            return;
+        }
+
+        // Only hide if it belongs to the same object type (before/after pair for this item)
+        if (clickable.GetObjectType() == objectType)
+        {
+            target.SetActive(false);
+        }
     }
 
     /// <summary>

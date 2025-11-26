@@ -59,6 +59,7 @@ public class ClickableObject : MonoBehaviour
     [SerializeField] private GameObject lockedVisual; // Optional alternate visual when locked
     [SerializeField] private GameObject unlockedVisual; // Normal visual when unlocked
     private bool subscribedToSaveEvents = false;
+    private Coroutine waitForSaveSystemRoutine;
 
     // Public accessors for AdvancedInputManager
     public AudioClip ClickSound => clickSound;
@@ -782,14 +783,21 @@ public class ClickableObject : MonoBehaviour
 
     private void OnEnable()
     {
-        UpdateLockVisual();
-
-        if (SaveSystem.Instance != null && !subscribedToSaveEvents)
+        // When SaveSystem isn't ready yet (happens on cold launch), wait for it before evaluating locks
+        if (lockUntilPrerequisiteComplete && SaveSystem.Instance == null)
         {
-            SaveSystem.Instance.OnDataLoaded += HandleSaveDataChanged;
-            SaveSystem.Instance.OnDataSaved += HandleSaveDataChanged;
-            subscribedToSaveEvents = true;
+            if (lockedVisual != null) lockedVisual.SetActive(true); // show locked overlay without disabling this object
+
+            if (waitForSaveSystemRoutine == null)
+            {
+                waitForSaveSystemRoutine = StartCoroutine(WaitForSaveSystemThenRefreshLock());
+            }
+            return;
         }
+
+        UpdateLockVisual();
+        SubscribeToSaveSystemEvents();
+
 
         // In case SaveSystem initializes a frame later, run a delayed refresh
         StartCoroutine(RefreshLockVisualNextFrame());
@@ -797,6 +805,12 @@ public class ClickableObject : MonoBehaviour
 
     private void OnDisable()
     {
+        if (waitForSaveSystemRoutine != null)
+        {
+            StopCoroutine(waitForSaveSystemRoutine);
+            waitForSaveSystemRoutine = null;
+        }
+
         if (SaveSystem.Instance != null && subscribedToSaveEvents)
         {
             SaveSystem.Instance.OnDataLoaded -= HandleSaveDataChanged;
@@ -808,6 +822,31 @@ public class ClickableObject : MonoBehaviour
     private void HandleSaveDataChanged(SaveData _)
     {
         UpdateLockVisual();
+    }
+
+    private void SubscribeToSaveSystemEvents()
+    {
+        if (SaveSystem.Instance != null && !subscribedToSaveEvents)
+        {
+            SaveSystem.Instance.OnDataLoaded += HandleSaveDataChanged;
+            SaveSystem.Instance.OnDataSaved += HandleSaveDataChanged;
+            subscribedToSaveEvents = true;
+        }
+    }
+
+    private System.Collections.IEnumerator WaitForSaveSystemThenRefreshLock()
+    {
+        // Wait until SaveSystem singleton is available
+        while (SaveSystem.Instance == null)
+        {
+            yield return null;
+        }
+
+        waitForSaveSystemRoutine = null;
+
+        SubscribeToSaveSystemEvents();
+        UpdateLockVisual();
+        StartCoroutine(RefreshLockVisualNextFrame());
     }
 
     private System.Collections.IEnumerator RefreshLockVisualNextFrame()

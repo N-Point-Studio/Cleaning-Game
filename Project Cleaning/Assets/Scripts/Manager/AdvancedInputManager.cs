@@ -87,6 +87,9 @@ public class AdvancedInputManager : MonoBehaviour
     {
         Application.targetFrameRate = 60;
         InitializeComponents();
+
+        // Safety: make sure we never start a scene with a stale transition lock
+        EndTransitionLock();
     }
 
     private void Update()

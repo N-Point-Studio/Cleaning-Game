@@ -76,6 +76,9 @@ public class ObjectInteractionHandler : MonoBehaviour
     {
         // Refresh camera reference when scene loads
         RefreshCameraReference();
+
+        // Fail-safe: make sure transition lock is cleared when a scene finishes loading
+        AdvancedInputManager.EndTransitionLock();
     }
 
     private void OnDestroy()

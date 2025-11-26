@@ -90,7 +90,7 @@ public class GamePlayManager : MonoBehaviour
             }
             if (AssembleManager.Instance.assemblyTargets.Count > 0)
             {
-                Debug.Log("ASSEMBLE A");
+                Debug.Log("ASSEMBLE A - Cluster Mode");
                 TouchManager.Instance.DisableAllTouch(true);
                 UIManager.Instance.ShowFinishUI(true);
                 UIManager.Instance.ShowFinishBackground(true);
@@ -105,6 +105,15 @@ public class GamePlayManager : MonoBehaviour
                 );
 
                 ClusterStateMachine cluster = AssembleManager.Instance.CurrentClusterInspected;
+
+                // ✅ NULL CHECK: Ensure cluster is not null before accessing
+                if (cluster == null)
+                {
+                    Debug.LogError("❌ CurrentClusterInspected is NULL! Cannot finish cluster state.");
+                    isGameFinished = true; // Still mark as finished to allow transition
+                    return;
+                }
+
                 Debug.Log("Cluster Finished: " + cluster.name);
                 cluster.SwitchState(new ClusterFinishState(cluster));
 
@@ -118,7 +127,7 @@ public class GamePlayManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("ASSEMBLE B");
+                Debug.Log("ASSEMBLE B - Fragment Mode");
                 TouchManager.Instance.DisableAllTouch(true);
                 UIManager.Instance.ShowFinishUI(true);
                 UIManager.Instance.ShowFinishBackground(true);
@@ -132,23 +141,29 @@ public class GamePlayManager : MonoBehaviour
                     Time.deltaTime * 2f
                 );
 
-                FragmentStateMachine cluster = AssembleManager.Instance.CurrentFragmentInspected;
-                Debug.Log("Cluster Finished: " + cluster.name);
-                cluster.SwitchState(new FragmentFinishState(cluster));
-                // cluster.transform.position = Vector3.Lerp(cluster.transform.position, ClearInspect.position, Time.deltaTime * 2);
+                FragmentStateMachine fragment = AssembleManager.Instance.CurrentFragmentInspected;
 
-                // cluster.transform.rotation = Quaternion.Slerp(
-                //     cluster.transform.rotation,
-                //     Quaternion.Euler(-90f, -90f, -90f),
-                //     Time.deltaTime * 2f
-                // );
+                // ✅ NULL CHECK: Ensure fragment is not null before accessing
+                if (fragment == null)
+                {
+                    Debug.LogError("❌ CurrentFragmentInspected is NULL! Cannot finish fragment state.");
+                    Debug.LogWarning("⚠️ This might happen if:");
+                    Debug.LogWarning("   1. Scene setup is incorrect (no fragment assigned)");
+                    Debug.LogWarning("   2. AssembleManager not properly initialized");
+                    Debug.LogWarning("   3. Fragment was destroyed before finish");
+                    isGameFinished = true; // Still mark as finished to allow transition
+                    return;
+                }
 
-                cluster.transform.SetPositionAndRotation(
-                    Vector3.Lerp(cluster.transform.position, ClearInspect.position, Time.deltaTime * 2),
-                    Quaternion.Slerp(cluster.transform.rotation, Quaternion.Euler(-90f, -90f, -90f), Time.deltaTime * 2f)
+                Debug.Log("Fragment Finished: " + fragment.name);
+                fragment.SwitchState(new FragmentFinishState(fragment));
+
+                fragment.transform.SetPositionAndRotation(
+                    Vector3.Lerp(fragment.transform.position, ClearInspect.position, Time.deltaTime * 2),
+                    Quaternion.Slerp(fragment.transform.rotation, Quaternion.Euler(-90f, -90f, -90f), Time.deltaTime * 2f)
                 );
 
-                cluster.transform.SetParent(ClearInspect);
+                fragment.transform.SetParent(ClearInspect);
                 isGameFinished = true;
             }
         }
@@ -202,7 +217,17 @@ public class GamePlayManager : MonoBehaviour
         FinishedGame();
 
         // ✅ FIX: SAVE OBJECT COMPLETION KETIKA GAMEPLAY SELESAI
+        // CRITICAL: Save MUST complete before scene transition
         SaveObjectCompletion();
+
+        // ✅ VERIFICATION: Print save status to confirm save succeeded
+        if (SaveSystem.Instance != null)
+        {
+            Debug.Log("========================================");
+            Debug.Log("=== VERIFYING SAVE COMPLETION ===");
+            SaveSystem.Instance.PrintSaveDataInfo();
+            Debug.Log("========================================");
+        }
 
         // Lanjutkan transition ke menu
         StartSceneTransition();
@@ -262,37 +287,30 @@ public class GamePlayManager : MonoBehaviour
         {
             return ObjectType.ChinaHorse;
         }
-        else if (sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
+        else if (sceneName.Contains("kendi") || sceneName.Contains("kendin") || sceneName.Contains("indonesia"))
         {
             return ObjectType.IndonesiaKendin;
         }
-        else if (sceneName.Contains("winged") || sceneName.Contains("mesir"))
+        else if (sceneName.Contains("scarab") || sceneName.Contains("winged") || sceneName.Contains("mesir") || sceneName.Contains("egypt"))
         {
             return ObjectType.MesirWingedScared;
         }
 
-        // Default fallback
         return ObjectType.ChinaCoin;
     }
 
-    /// <summary>
-    /// Resolve object/chapter context for this gameplay session so we save and transition with the correct target.
-    /// </summary>
     private void ResolveObjectContext()
     {
-        // Re-resolve if we previously used scene fallback and now have STM data available
         if (hasResolvedObjectContext && (!resolvedFromSceneDetection || SceneTransitionManager.Instance == null))
         {
             return;
         }
 
-        // Start with scene-name detection so direct scene play still works.
         ObjectType detectedFromScene = DetectObjectTypeFromScene();
         ObjectType resolvedType = detectedFromScene;
         ChapterType resolvedChapter = GetChapterFromObjectType(detectedFromScene);
         bool usedSceneFallback = true;
 
-        // If SceneTransitionManager already has context (normal menu → gameplay flow), prefer that.
         if (SceneTransitionManager.Instance != null)
         {
             ObjectType stmType = SceneTransitionManager.Instance.GetCurrentObjectType();
@@ -302,7 +320,6 @@ public class GamePlayManager : MonoBehaviour
             resolvedChapter = stmChapter;
             usedSceneFallback = false;
 
-            // If STM is still at default but scene detection found a more specific type, use the detected one.
             if (stmType == ObjectType.ChinaCoin && detectedFromScene != ObjectType.ChinaCoin)
             {
                 resolvedType = detectedFromScene;
@@ -315,16 +332,10 @@ public class GamePlayManager : MonoBehaviour
         sessionChapterType = resolvedChapter;
         hasResolvedObjectContext = true;
         resolvedFromSceneDetection = usedSceneFallback;
-
-        Debug.Log($"[GamePlayManager] Resolved session object: {sessionObjectType} ({sessionChapterType})");
     }
 
-    /// <summary>
-    /// Save object completion to SaveSystem when gameplay finishes
-    /// </summary>
     private void SaveObjectCompletion()
     {
-        // Pastikan kita pakai konteks objectType yang benar (bukan deteksi nama scene)
         ResolveObjectContext();
 
         if (SaveSystem.Instance == null)
@@ -333,11 +344,9 @@ public class GamePlayManager : MonoBehaviour
             return;
         }
 
-        // Get current object type and chapter from resolved session context
         ObjectType completedObjectType = sessionObjectType;
         ChapterType chapterType = sessionChapterType;
 
-        // Get position from environment or cluster
         Vector3 completionPosition = Vector3.zero;
         if (Environment != null)
         {
@@ -348,15 +357,12 @@ public class GamePlayManager : MonoBehaviour
             completionPosition = ClearInspect.position;
         }
 
-        // Save the completion
         SaveSystem.Instance.MarkObjectCompleted(
             objectName: completedObjectType.ToString(),
             objectType: completedObjectType,
             chapterType: chapterType,
             position: completionPosition
         );
-
-        Debug.Log($"✅ SAVED COMPLETION: {completedObjectType} in {chapterType} chapter at position {completionPosition}");
     }
 
     /// <summary>
