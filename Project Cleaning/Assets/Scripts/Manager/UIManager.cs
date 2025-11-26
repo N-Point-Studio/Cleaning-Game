@@ -43,8 +43,23 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        ExitButton.onClick.AddListener(ExitButtonInteract);
-        ResumeButton.onClick.AddListener(ResumeButtonInteract);
+        if (ExitButton != null)
+        {
+            ExitButton.onClick.AddListener(ExitButtonInteract);
+        }
+        else
+        {
+            Debug.LogWarning("[UIManager] ExitButton is not assigned in inspector.");
+        }
+
+        if (ResumeButton != null)
+        {
+            ResumeButton.onClick.AddListener(ResumeButtonInteract);
+        }
+        else
+        {
+            Debug.LogWarning("[UIManager] ResumeButton is not assigned in inspector.");
+        }
 
         EnsureUIInputReady();
 
@@ -200,10 +215,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(dustProgress);
+            progressDusts.SetValue(10);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(mudProgress);
+            progressDirts.SetValue(10);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
@@ -219,6 +234,7 @@ public class UIManager : MonoBehaviour
     {
         settingCanvas.SetActive(isShown);
         TouchManager.Instance.TouchUsed(isShown);
+        isSettingShown = isShown;
         if (isShown)
         {
             EnsureUIInputReady(); // pastikan EventSystem & raycaster aktif saat overlay dibuka
@@ -271,38 +287,30 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Exit level");
 
-        // Pastikan mode kamera kembali ke eksplorasi sebelum pindah scene
-        if (GameModeManager.Instance != null)
-        {
-            GameModeManager.Instance.ReturnToExplorationMode();
-        }
-
         // Pastikan input UI/touch kembali aktif untuk menangkap klik
         TouchManager.Instance?.DisableAllTouch(false);
         EventSystem.current?.SetSelectedGameObject(null);
 
-        // Kembali ke main menu tanpa men-trigger ContentSwitcher (tidak menyimpan completion).
+        // Tutup overlay settings agar tidak ikut terbawa ke scene berikutnya
+        ShowSetting(false);
+
+        // Jalur utama: gunakan TransitionScreen (staged) menuju menu
         if (SceneTransitionManager.Instance != null)
         {
-            SceneTransitionManager.Instance.ResetTransitionData(); // pastikan flag trigger dimatikan
-            // Coba transition normal terlebih dahulu
-            if (SceneTransitionManager.Instance.IsTransitionInProgress())
-            {
-                Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
-                SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
-            }
-            else
-            {
-                SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
-            }
-            // Gunakan jalur paksa instan agar tidak ada delay/lock
-            SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
+            SceneTransitionManager.Instance.ResetTransitionData();
+            SceneTransitionManager.Instance.MarkReturningFromGameplay();
+            SceneTransitionManager.Instance.StartStagedTransition(
+                "TransitionScreen",
+                "New Start Game Sandy",
+                0f,
+                null
+            );
+            return;
         }
-        else
-        {
-            Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
-            SceneManager.LoadScene("New Start Game Sandy");
-        }
+
+        // Fallback jika STM tidak ada
+        Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
+        SceneManager.LoadScene("New Start Game Sandy");
     }
 
     /// <summary>

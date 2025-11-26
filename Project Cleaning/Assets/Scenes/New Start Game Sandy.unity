@@ -3911,7 +3911,6 @@ GameObject:
   - component: {fileID: 490589504}
   - component: {fileID: 490589508}
   - component: {fileID: 490589507}
-  - component: {fileID: 490589506}
   - component: {fileID: 490589505}
   m_Layer: 9
   m_Name: PackageImage
@@ -3960,49 +3959,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 482.38638, y: 570.0541, z: 108.84914}
   m_Center: {x: -2.9092953, y: -34.124466, z: -53.927715}
---- !u!114 &490589506
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 490589503}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a44a3e33b26c34b3ba47697f60a22c8f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clickSound: {fileID: 0}
-  targetSceneName: GamePlayRND
-  canChangeScene: 1
-  useTransitionAnimation: 1
-  transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
-  useStagedTransition: 0
-  intermediarySceneName: SceneTransition
-  intermediaryDelay: 3
-  popupTextGameObject: {fileID: 1209202976}
-  textMeshPro: {fileID: 1209202977}
-  characterAnimationSpeed: 0.1
-  scaleAnimationDuration: 0.6
-  autoHideAfterSeconds: 1
-  autoHideDelay: 3
-  onlyShowInExplorationMode: 1
-  enableShakeAnimation: 1
-  shakeIntensity: 0.1
-  shakeDuration: 2
-  shakeOnlyWhenFocused: 1
-  objectType: 3
-  detectObjectOnClick: 1
-  contentSwitcherObject: {fileID: 0}
-  objectsToChange: []
-  autoFindRelatedObjects: 1
-  lockUntilPrerequisiteComplete: 0
-  prerequisiteObjectType: 0
-  lockedVisual: {fileID: 0}
-  unlockedVisual: {fileID: 0}
-  OnObjectClicked:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &490589507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4681,7 +4637,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clickSound: {fileID: 0}
-  targetSceneName: GamePlayRND
+  targetSceneName: GamePlayFix
   canChangeScene: 1
   useTransitionAnimation: 1
   transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
@@ -6719,7 +6675,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 798690801}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
@@ -7334,7 +7290,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &931871735
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7938,7 +7894,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &986865288
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10142,7 +10098,6 @@ GameObject:
   - component: {fileID: 1324465591}
   - component: {fileID: 1324465595}
   - component: {fileID: 1324465594}
-  - component: {fileID: 1324465593}
   - component: {fileID: 1324465592}
   m_Layer: 9
   m_Name: PackageImage
@@ -10191,49 +10146,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 482.38638, y: 570.0541, z: 108.84914}
   m_Center: {x: -2.9092953, y: -34.124466, z: -53.927715}
---- !u!114 &1324465593
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1324465590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a44a3e33b26c34b3ba47697f60a22c8f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clickSound: {fileID: 0}
-  targetSceneName: GamePlayRND
-  canChangeScene: 1
-  useTransitionAnimation: 1
-  transitionSettings: {fileID: 11400000, guid: 013263c83b6a84c4d95beaa8bd163ac8, type: 2}
-  useStagedTransition: 0
-  intermediarySceneName: SceneTransition
-  intermediaryDelay: 3
-  popupTextGameObject: {fileID: 206321102}
-  textMeshPro: {fileID: 206321103}
-  characterAnimationSpeed: 0.1
-  scaleAnimationDuration: 0.6
-  autoHideAfterSeconds: 1
-  autoHideDelay: 3
-  onlyShowInExplorationMode: 1
-  enableShakeAnimation: 1
-  shakeIntensity: 0.1
-  shakeDuration: 2
-  shakeOnlyWhenFocused: 1
-  objectType: 2
-  detectObjectOnClick: 1
-  contentSwitcherObject: {fileID: 0}
-  objectsToChange: []
-  autoFindRelatedObjects: 1
-  lockUntilPrerequisiteComplete: 0
-  prerequisiteObjectType: 0
-  lockedVisual: {fileID: 0}
-  unlockedVisual: {fileID: 0}
-  OnObjectClicked:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &1324465594
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11793,7 +11705,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1698476226}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3441586e42a7147838c385bead6029bb, type: 3}
   m_Name: 
@@ -11807,7 +11719,7 @@ MonoBehaviour:
   text1: {fileID: 455290169}
   text2: {fileID: 1982628983}
   text3: {fileID: 748316559}
-  afterImage: {fileID: 587137633}
+  afterImage: {fileID: 0}
   nextArtifactImage1: {fileID: 0}
   nextArtifactImage2: {fileID: 0}
   fadeTransitionDuration: 0.2
