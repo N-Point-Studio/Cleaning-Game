@@ -71,10 +71,10 @@ public class ToolCleaningSurface : MonoBehaviour
     {
         if (surface == null) return;
 
-        CheckForMovement();
+        // CheckForMovement();
         RaycastCleaningSurface();
-        HandleEffects();
-        HandleHaptics();
+        // HandleEffects();
+        // HandleHaptics();
     }
 
     private void CheckForMovement()
