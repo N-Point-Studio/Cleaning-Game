@@ -71,10 +71,10 @@ public class ToolCleaningSurface : MonoBehaviour
     {
         if (surface == null) return;
 
-        // CheckForMovement();
+        CheckForMovement();
         RaycastCleaningSurface();
-        // HandleEffects();
-        // HandleHaptics();
+        HandleEffects();
+        HandleHaptics();
     }
 
     private void CheckForMovement()
@@ -108,6 +108,7 @@ public class ToolCleaningSurface : MonoBehaviour
     private bool TryClean(Clean clean, Vector2 textureCoord)
     {
         return clean.CleanAt(textureCoord, brush, brushSize, surface.RaycastTipRotation);
+        // return clean.CleaningAtPoint(textureCoord, brush);
     }
 
     private bool TryDestroyMesh(CleanMesh obj)
