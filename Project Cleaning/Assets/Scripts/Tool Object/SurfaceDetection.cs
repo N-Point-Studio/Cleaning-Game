@@ -97,6 +97,7 @@ public class SurfaceDetection : MonoBehaviour
         RaycastTipRotation = Vector3.SignedAngle(Vector3.up, projectedUp, hit.normal);
 
         TextureSurface = hit.textureCoord;
+        Debug.Log("uv coord: " + TextureSurface);
         Debug.Log("hitting: " + hit.transform.name + "is surface detected: " + IsSurfaceDetected);
 
         // --- TAMBAHAN TUTORIAL ---
