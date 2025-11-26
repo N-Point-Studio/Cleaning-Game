@@ -21,7 +21,7 @@ public class ProgressBar : MonoBehaviour
     public void SetValue(float value01)
     {
         //Debug.Log("progress value A : " + value01);
-        if (value01 >= 0.99)
+        if (value01 >= 0.97)
         {
             value01 = 1;
         }

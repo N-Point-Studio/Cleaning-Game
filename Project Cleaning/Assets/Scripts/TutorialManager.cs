@@ -23,6 +23,8 @@ public class TutorialManager : MonoBehaviour
     // 5 = Disassemble
     public List<TutorialStep> steps;
 
+    private const string TutorialCompletedKey = "TUTORIAL_COMPLETED";
+
     [Header("Settings")]
     [Tooltip("Waktu tunggu sebelum instruksi muncul (detik)")]
     public float delayTime = 5f;
@@ -38,7 +40,15 @@ public class TutorialManager : MonoBehaviour
 
     private void Start()
     {   // SAFETY CHECK: Pastikan steps tidak kosong
-        if (steps == null || steps.Count == 0) {
+        if (PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1)
+        {
+            Debug.Log("[Tutorial] Sudah selesai sebelumnya. Tutorial tidak akan ditampilkan.");
+            gameObject.SetActive(false); // Nonaktifkan tutorial manager
+            return;
+        }
+
+        if (steps == null || steps.Count == 0)
+        {
             Debug.LogError("[TutorialManager] Error: List 'Steps' kosong! Isi di Inspector.");
             return;
         }
@@ -64,9 +74,9 @@ public class TutorialManager : MonoBehaviour
         {
             case 0: // Inspect
                 // Safety check agar tidak error jika AssembleManager belum siap
-                if (AssembleManager.Instance != null) 
+                if (AssembleManager.Instance != null)
                 {
-                    if (AssembleManager.Instance.CurrentClusterInspected != null || 
+                    if (AssembleManager.Instance.CurrentClusterInspected != null ||
                         AssembleManager.Instance.CurrentFragmentInspected != null)
                     {
                         CompleteStep(0);
@@ -89,7 +99,7 @@ public class TutorialManager : MonoBehaviour
                 if (TouchManager.Instance != null && TouchManager.Instance.isZooming)
                     CompleteStep(3);
                 break;
-            
+
             case 4: // --- 5. CARA ASSEMBLE ---
                 // Logika dipanggil dari FragmentAttachedState.cs
                 break;
@@ -112,32 +122,33 @@ public class TutorialManager : MonoBehaviour
 
     public void CompleteStep(int index)
     {
-        // Validasi index
         if (index >= steps.Count) return;
 
-        // Hanya selesaikan jika index sesuai dan belum kelar
         if (index == currentStepIndex && !steps[index].isCompleted)
         {
             steps[index].isCompleted = true;
             Debug.Log($"Tutorial: Langkah {steps[index].stepName} Selesai!");
-            
-            // Matikan UI langkah ini
+
             if (steps[index].uiGuideline != null)
                 steps[index].uiGuideline.SetActive(false);
 
-            // 1. Hentikan timer yang sedang berjalan untuk langkah ini
             if (currentTimer != null) StopCoroutine(currentTimer);
 
-            // 2. Pindah index
             currentStepIndex++;
 
-            // 3. Mulai timer langkah berikutnya (jika ada)
-            if (currentStepIndex < steps.Count)
+            // === CEK APABILA STEP TERAKHIR SUDAH SELESAI ===
+            if (currentStepIndex >= steps.Count)
             {
-                StartStepTimer(currentStepIndex);
+                Debug.Log("[Tutorial] Semua langkah selesai! Menandai sebagai completed.");
+                PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+                PlayerPrefs.Save();
+                return;
             }
+
+            StartStepTimer(currentStepIndex);
         }
     }
+
 
     private IEnumerator WaitAndShowStep(int stepIndex)
     {
@@ -148,7 +159,7 @@ public class TutorialManager : MonoBehaviour
         if (currentStepIndex == stepIndex && !steps[stepIndex].isCompleted)
         {
             Debug.Log($"[Tutorial] Waktu habis! Menampilkan UI: {steps[stepIndex].stepName}");
-            
+
             if (steps[stepIndex].uiGuideline != null)
                 steps[stepIndex].uiGuideline.SetActive(true);
         }

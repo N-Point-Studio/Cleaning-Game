@@ -15,6 +15,8 @@ public class Clean : MonoBehaviour
 
     private float dirtAmountTotal = 0f;
     private float dirtAmount = 0f;
+    private Vector2Int lastPaintPixelPosition;
+
 
     private void Start()
     {
@@ -83,6 +85,56 @@ public class Clean : MonoBehaviour
                 dirtAmount -= removed;
 
                 _templateDirtMask.SetPixel(px, py, new Color(0, newGreen, 0));
+                didCleanAnything = true;
+            }
+        }
+
+        if (didCleanAnything)
+        {
+            _templateDirtMask.Apply();
+            UpdateProgress();
+        }
+
+        return didCleanAnything;
+    }
+
+    public bool CleaningAtPoint(Vector2 uv, Texture2D brush)
+    {
+        bool didCleanAnything = false;
+
+        int pixelX = (int)(uv.x * _templateDirtMask.width);
+        int pixelY = (int)(uv.y * _templateDirtMask.height);
+
+        Vector2Int paintPixelPosition = new Vector2Int(pixelX, pixelY);
+
+        int paintPixelDistance = Mathf.Abs(paintPixelPosition.x - lastPaintPixelPosition.x) + Mathf.Abs(paintPixelPosition.y - lastPaintPixelPosition.y);
+        int maxPaintDistance = 7;
+
+        if (paintPixelDistance < maxPaintDistance)
+        {
+            return false;
+        }
+
+        lastPaintPixelPosition = paintPixelPosition;
+
+        int pixelOffsetX = pixelX - brush.width / 2;
+        int pixelOffsetY = pixelY - brush.height / 2;
+
+        for (int x = 0; x < brush.width; x++)
+        {
+            for (int y = 0; y < brush.height; y++)
+            {
+                Color pixelDirt = brush.GetPixel(x, y);
+                Color pixelDirtMask = _templateDirtMask.GetPixel(pixelOffsetX + x, pixelOffsetY + y);
+
+                float removedAmount = pixelDirtMask.g - (pixelDirtMask.g * pixelDirt.g);
+                dirtAmount -= removedAmount;
+
+                _templateDirtMask.SetPixel(
+                    pixelOffsetX + x,
+                    pixelOffsetY + y,
+                    new Color(0, pixelDirtMask.g * pixelDirt.g, 0)
+                );
                 didCleanAnything = true;
             }
         }

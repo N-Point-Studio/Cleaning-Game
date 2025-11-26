@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4ecdad67285e4111b58296d98da9caa, type: 3}
   m_Name: Coin
   m_EditorClassIdentifier: 
-  artifactName: "Coin inscribed \u201CChong Ning Tong Bao\u201Dab"
+  artifactName: "Coin inscribed \u201CChong Ning Tong Bao\u201D"
   code: CH0758
   history: "The characters on this coin exhibit Emperor Huizong\u2019s distinctive
     calligraphic style, known as \u201Cslender gold\u201D because it resembled finely
