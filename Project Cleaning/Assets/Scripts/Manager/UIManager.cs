@@ -24,6 +24,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button FinishButton; // Optional direct button reference
     [SerializeField] private Button ExitButton;
     [SerializeField] private Button ResumeButton;
+
+    [SerializeField] private Button AlertYes;
+    [SerializeField] private Button AlertNo;
+    [SerializeField] private GameObject AlertBox;
+
     [SerializeField] private GameObject FinishUI;
     [SerializeField] private GameObject FinishBackground;
     [SerializeField] private Image FinishButtonImage; // The finish button image (drag & drop)
@@ -43,23 +48,12 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        if (ExitButton != null)
-        {
-            ExitButton.onClick.AddListener(ExitButtonInteract);
-        }
-        else
-        {
-            Debug.LogWarning("[UIManager] ExitButton is not assigned in inspector.");
-        }
 
-        if (ResumeButton != null)
-        {
-            ResumeButton.onClick.AddListener(ResumeButtonInteract);
-        }
-        else
-        {
-            Debug.LogWarning("[UIManager] ResumeButton is not assigned in inspector.");
-        }
+        ExitButton.onClick.AddListener(ExitButtonInteract);
+        ResumeButton.onClick.AddListener(ResumeButtonInteract);
+        AlertYes.onClick.AddListener(AlertYesInteract);
+        AlertNo.onClick.AddListener(AlertNoInteract);
+
 
         EnsureUIInputReady();
 
@@ -281,6 +275,18 @@ public class UIManager : MonoBehaviour
             Debug.LogWarning($"ShowFinishBackground failed: {ex.Message}");
             isSceneUnloading = true;
         }
+    }
+
+    public void AlertYesInteract()
+    {
+        Debug.Log("Alert Yes clicked");
+        ShowSetting(false);
+    }
+
+    public void AlertNoInteract()
+    {
+        Debug.Log("Alert No clicked");
+        ShowSetting(true);
     }
 
     public void ExitButtonInteract()
