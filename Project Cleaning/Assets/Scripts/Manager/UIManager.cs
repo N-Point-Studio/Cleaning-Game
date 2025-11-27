@@ -287,13 +287,6 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Exit level");
 
-        // Pastikan mode kamera kembali ke eksplorasi sebelum pindah scene
-        if (GameModeManager.Instance != null)
-        {
-            GameModeManager.Instance.ReturnToExplorationMode();
-            Debug.Log("Exit level A");
-        }
-
         // Pastikan input UI/touch kembali aktif untuk menangkap klik
         TouchManager.Instance?.DisableAllTouch(false);
         EventSystem.current?.SetSelectedGameObject(null);
@@ -302,41 +295,28 @@ public class UIManager : MonoBehaviour
         ShowSetting(false);
 
         // Jalur utama: gunakan TransitionScreen (staged) menuju menu
-        if (SceneTransitionManager.Instance != null)
+        if (SceneTransitionManager.Instance == null)
         {
-            SceneTransitionManager.Instance.ResetTransitionData(); // pastikan flag trigger dimatikan
-            Debug.Log("Exit level B");
-
-            // Coba transition normal terlebih dahulu
-            if (SceneTransitionManager.Instance.IsTransitionInProgress())
-            {
-                Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
-                Debug.Log("Exit level C");
-
-                SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
-            }
-            else
-            {
-                Debug.Log("Exit level D");
-
-                SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
-            }
-            // Gunakan jalur paksa instan agar tidak ada delay/lock
-            Debug.Log("Exit level E");
-
-            SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
-        }
-        else
-        {
-            Debug.Log("Exit level F");
-
-            Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
-            SceneManager.LoadScene("New Start Game Sandy");
+            Debug.LogWarning("SceneTransitionManager not found - creating one for exit flow");
+            new GameObject("SceneTransitionManager").AddComponent<SceneTransitionManager>();
         }
 
-        // Fallback jika STM tidak ada
-        Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
-        SceneManager.LoadScene("New Start Game Sandy");
+        var stm = SceneTransitionManager.Instance;
+        if (stm.IsTransitionInProgress())
+        {
+            Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
+            stm.ForceTransitionImmediate("New Start Game Sandy");
+            return;
+        }
+
+        stm.ResetTransitionData();
+        stm.MarkReturningFromGameplay();
+        stm.StartStagedTransition(
+            "TransitionScreen",
+            "New Start Game Sandy",
+            0f,
+            null
+        );
     }
 
     /// <summary>

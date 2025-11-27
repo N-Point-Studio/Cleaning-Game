@@ -9777,7 +9777,7 @@ MonoBehaviour:
   artefactNameText: {fileID: 948767583}
   settingCanvas: {fileID: 933797011}
   FinishButton: {fileID: 1649591638}
-  ExitButton: {fileID: 0}
+  ExitButton: {fileID: 590683623}
   ResumeButton: {fileID: 2086974278}
   FinishUI: {fileID: 242598037}
   FinishBackground: {fileID: 1542636678}
@@ -9865,8 +9865,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fca2133640869468fbaf4de149210e1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  exitButton: {fileID: 590683623}
-  menuSceneName: New Start Game Sandy
 --- !u!1 &1190067323
 GameObject:
   m_ObjectHideFlags: 0
