@@ -24,7 +24,6 @@ public class InteractedObject : MonoBehaviour
 
     private void Clicked()
     {
-        Debug.Log("Clicked on Snack");
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
