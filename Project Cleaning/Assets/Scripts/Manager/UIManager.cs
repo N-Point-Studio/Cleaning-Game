@@ -275,6 +275,7 @@ public class UIManager : MonoBehaviour
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.ReturnToExplorationMode();
+            Debug.Log("Exit level A");
         }
 
         // Pastikan input UI/touch kembali aktif untuk menangkap klik
@@ -285,21 +286,31 @@ public class UIManager : MonoBehaviour
         if (SceneTransitionManager.Instance != null)
         {
             SceneTransitionManager.Instance.ResetTransitionData(); // pastikan flag trigger dimatikan
+            Debug.Log("Exit level B");
+
             // Coba transition normal terlebih dahulu
             if (SceneTransitionManager.Instance.IsTransitionInProgress())
             {
                 Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
+                Debug.Log("Exit level C");
+
                 SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
             }
             else
             {
+                Debug.Log("Exit level D");
+
                 SceneTransitionManager.Instance.TransitionToSceneDirect("New Start Game Sandy");
             }
             // Gunakan jalur paksa instan agar tidak ada delay/lock
+            Debug.Log("Exit level E");
+
             SceneTransitionManager.Instance.ForceTransitionImmediate("New Start Game Sandy");
         }
         else
         {
+            Debug.Log("Exit level F");
+
             Debug.LogWarning("SceneTransitionManager not found - loading menu directly");
             SceneManager.LoadScene("New Start Game Sandy");
         }
@@ -331,7 +342,7 @@ public class UIManager : MonoBehaviour
 
     public void ResumeButtonInteract()
     {
-        Debug.Log("Exit level");
+        // Debug.Log("Exit level");
         ShowSetting(false);
     }
 
