@@ -100,6 +100,16 @@ public class AdvancedInputManager : MonoBehaviour
             return;
         }
 
+        // Auto-reacquire references if they were destroyed/recreated during scene loads
+        if (cameraController == null)
+        {
+            cameraController = TopDownCameraController.Instance;
+        }
+        if (gameModeManager == null)
+        {
+            gameModeManager = GameModeManager.Instance;
+        }
+
         HandleInput();
         if (gameModeManager != null && gameModeManager.IsInZoomMode() &&
             cameraDragSystem != null && cameraController != null)
@@ -136,6 +146,8 @@ public class AdvancedInputManager : MonoBehaviour
         swipeDetectionSystem?.CancelSwipe();
         doubleTapDetector?.CompleteGestureReset();
         pinchDetectionSystem?.Reset();
+        isPinchInProgress = false;
+        isSwipeBlocked = false;
         Debug.Log("=== GESTURE SYSTEMS RESET ===");
     }
     #endregion
@@ -496,6 +508,9 @@ public class AdvancedInputManager : MonoBehaviour
             Debug.LogWarning("⚠️ Not in exploration mode - ensuring exploration mode is active before swipe");
             gameModeManager.ReturnToExplorationMode();
         }
+
+        // Play swipe SFX (paper change) on valid swipe
+        MenuSfxManager.Instance?.PlaySwipe();
 
         switch (direction)
         {

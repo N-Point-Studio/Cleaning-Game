@@ -69,6 +69,15 @@ public class MenuSfxManager : MonoBehaviour
         // Wait a frame so dynamically-built UI is present
         yield return null;
         if (debugLogs) Debug.Log("[MenuSfxManager] DelayedHook executing");
+
+        // Clean stale references from previous scenes and rehook everything fresh
+        hookedObjects.Clear();
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
+
         HookAllUiInteractables();
     }
 
