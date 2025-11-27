@@ -64,9 +64,8 @@ using UnityEngine;
 
     public float GetOverallProgress()
     {
-
         int totalObjects = totalTexture + totalMud;
-        if (totalObjects == 0) return 1f;
+        if (totalObjects == 0) return 0f; // avoid instantly finishing when nothing is registered
 
         float cleanTotal = 0;
 
@@ -75,8 +74,23 @@ using UnityEngine;
             cleanTotal += clean.GetDirtAmount();
         }
 
-        progressClean = Mathf.Clamp01(cleanTotal / totalTexture);
-        progressCleanMud = Mathf.Clamp01(1f - (float)allCleanMud.Count / totalMud);
+        if (totalTexture <= 0)
+        {
+            progressClean = 0f;
+        }
+        else
+        {
+            progressClean = Mathf.Clamp01(cleanTotal / totalTexture);
+        }
+
+        if (totalMud <= 0)
+        {
+            progressCleanMud = 0f;
+        }
+        else
+        {
+            progressCleanMud = Mathf.Clamp01(1f - (float)allCleanMud.Count / totalMud);
+        }
 
         // var overallProgress = (progressClean + progressCleanMud) / 2;
         var overallProgress = progressClean + progressCleanMud;
@@ -84,8 +98,11 @@ using UnityEngine;
     }
     public float GetDustProgress()
     {
-        int totalObjects = totalTexture + totalMud;
-        if (totalObjects == 0) return 1f;
+        // Return zero until textures are registered to prevent premature 100% progress
+        if (totalTexture <= 0)
+        {
+            return 0f;
+        }
 
         float cleanTotal = 0;
         foreach (var clean in allCleans)
@@ -99,8 +116,11 @@ using UnityEngine;
 
     public float GetMudProgress()
     {
-        int totalObjects = totalTexture + totalMud;
-        if (totalObjects == 0) return 1f;
+        if (totalMud <= 0)
+        {
+            return 0f;
+        }
+
         progressCleanMud = Mathf.Clamp01(1f - (float)allCleanMud.Count / totalMud);
         return progressCleanMud;
     }

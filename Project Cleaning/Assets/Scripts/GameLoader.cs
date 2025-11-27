@@ -58,6 +58,15 @@ public class GameLoader : MonoBehaviour
             }
         }
 
+        // Pastikan seluruh manager tersedia sebelum reset (mencegah progress UI tertinggal)
+        yield return new WaitUntil(() =>
+            UIManager.Instance != null &&
+            CleanManager.Instance != null &&
+            AssembleManager.Instance != null &&
+            GamePlayManager.Instance != null &&
+            TouchManager.Instance != null
+        );
+
         // Fresh session reset so assemble state doesn't carry over between runs
         AssembleManager.Instance?.ResetForNewSession();
         CleanManager.Instance?.ResetForNewSession();
@@ -72,6 +81,10 @@ public class GameLoader : MonoBehaviour
 
         // Wait a frame so spawned objects can run Awake/Start
         yield return null;
+
+        // Rebuild tracking after all fragments register to avoid empty progress that instantly finishes
+        CleanManager.Instance?.RebuildFromScene();
+        AssembleManager.Instance?.RebuildFromScene();
 
         Debug.Log($"[GameLoader] Spawned fragments: {spawnedFragments.Count}, assembly targets: {AssembleManager.Instance?.assemblyTargets.Count}");
     }

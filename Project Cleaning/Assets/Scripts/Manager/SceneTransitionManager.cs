@@ -190,13 +190,17 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(PerformSceneTransition());
     }
 
-    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings)
+    private bool forceEnteringTransitionVisual = false;
+
+    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings, bool forceEnteringVisual = false)
     {
         if (isTransitionInProgress)
         {
             Debug.LogWarning("Staged scene transition already in progress!");
             return;
         }
+
+        forceEnteringTransitionVisual = forceEnteringVisual;
 
         // Mark direction based on destination (gameplay vs menu)
         currentTransitionDirection = finalDestinationScene.ToLower().Contains("gameplay")
@@ -357,6 +361,7 @@ public class SceneTransitionManager : MonoBehaviour
         stagedDelay = 0;
         intermediarySceneName = null;
         stagedFinalTransitionSettings = null;
+        forceEnteringTransitionVisual = false; // reset override after intermediary leg
 
         if (enableDebugLogs)
         {
@@ -1061,6 +1066,8 @@ public class SceneTransitionManager : MonoBehaviour
 
             shouldTriggerContentSwitcher = true;
             StartCoroutine(TriggerContentSwitcherAfterDelay());
+            StartCoroutine(EnsureZoomInputReadyAfterAutoFocus());
+            StartCoroutine(EnsureZoomInputReadyAfterAutoFocus()); // double guarantee
         }
         else
         {
@@ -1116,6 +1123,8 @@ public class SceneTransitionManager : MonoBehaviour
         // 5. NOW TRIGGER CONTENT SWITCHER
         Debug.Log("🎨 [HARDCODE] STEP 2: Now triggering ContentSwitcher.");
         shouldTriggerContentSwitcher = true;
+        StartCoroutine(EnsureZoomInputReadyAfterAutoFocus());
+        StartCoroutine(EnsureZoomInputReadyAfterAutoFocus()); // double guarantee
         bool contentSwitcherSuccess = TriggerContentSwitcher();
 
         if (contentSwitcherSuccess)
@@ -1170,6 +1179,9 @@ public class SceneTransitionManager : MonoBehaviour
             else
             {
                 Debug.Log("🔧 Keeping shouldTriggerContentSwitcher TRUE for menu scene");
+
+                // Make sure auto-zoom leaves controls unlocked and in zoom mode
+                StartCoroutine(EnsureZoomInputReadyAfterTransition());
             }
 
             OnContentSwitcherTriggered?.Invoke();
@@ -1185,6 +1197,58 @@ public class SceneTransitionManager : MonoBehaviour
         {
             Debug.LogWarning("Failed to find or trigger ContentSwitcher!");
         }
+    }
+
+    /// <summary>
+    /// Re-enable input after auto-zoom (stay in zoom mode; only unlock controls and mode).
+    /// </summary>
+    private IEnumerator EnsureZoomInputReadyAfterTransition()
+    {
+        // Small delay to let ContentSwitcher finish setting up the zoom view
+        yield return new WaitForSeconds(0.15f);
+
+        // Force zoom mode so drag/swipe uses zoom branch
+        GameModeManager.Instance?.ForceEnterZoomMode();
+
+        // Ensure camera controller is active (it might be disabled during instant focus)
+        var camController = TopDownCameraController.Instance;
+        if (camController != null && !camController.enabled)
+        {
+            camController.enabled = true;
+        }
+
+        // Kill any leftover transition lock
+        AdvancedInputManager.EndTransitionLock();
+
+        // Explicitly re-enable gesture input systems
+        if (AdvancedInputManager.Instance != null)
+        {
+            AdvancedInputManager.Instance.UnblockInput();
+            AdvancedInputManager.Instance.ResetGestureSystems();
+        }
+
+        // Unlock input
+        TouchManager.Instance?.DisableAllTouch(false);
+    }
+
+    /// <summary>
+    /// Ensure zoom input is ready after automatic focus/zoom (gameplay or menu).
+    /// </summary>
+    private IEnumerator EnsureZoomInputReadyAfterAutoFocus()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        GameModeManager.Instance?.ForceEnterZoomMode();
+
+        var camController = TopDownCameraController.Instance;
+        if (camController != null && !camController.enabled)
+        {
+            camController.enabled = true;
+        }
+
+        AdvancedInputManager.EndTransitionLock();
+        AdvancedInputManager.Instance?.UnblockInput();
+        TouchManager.Instance?.DisableAllTouch(false);
     }
 
     /// <summary>
@@ -1343,6 +1407,8 @@ public class SceneTransitionManager : MonoBehaviour
     public bool IsTransitionInProgress() => isTransitionInProgress;
     public bool IsReturningFromGameplayFlag() => isReturningFromGameplay;
     public string GetTransitionDirection() => currentTransitionDirection.ToString();
+    public bool ShouldForceEnteringTransitionVisual() => forceEnteringTransitionVisual;
+    public void ClearReturningFromGameplayFlag() => isReturningFromGameplay = false;
 
     public void SetTransitionDirectionToGameplay()
     {
@@ -1515,6 +1581,8 @@ public class SceneTransitionManager : MonoBehaviour
         shouldTriggerContentSwitcher = false;
         isTransitionInProgress = false;
         currentTransitionDirection = TransitionDirection.Unknown;
+        isReturningFromGameplay = false;
+        forceEnteringTransitionVisual = false;
 
         if (enableDebugLogs)
         {

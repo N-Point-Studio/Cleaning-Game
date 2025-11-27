@@ -215,10 +215,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(dustProgress);
+            progressDusts.SetValue(20);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(mudProgress);
+            progressDirts.SetValue(20);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
@@ -310,12 +310,14 @@ public class UIManager : MonoBehaviour
         }
 
         stm.ResetTransitionData();
-        stm.MarkReturningFromGameplay();
+        stm.MarkReturningFromGameplay();          // we are coming FROM gameplay back to menu
+        stm.SetTransitionDirectionToMenu();       // TransitionScreen should show exiting/return visuals
         stm.StartStagedTransition(
             "TransitionScreen",
             "New Start Game Sandy",
             0f,
-            null
+            null,
+            false // do not force entering visuals; allow controller to pick exiting mode
         );
     }
 
@@ -357,7 +359,9 @@ public class UIManager : MonoBehaviour
             return 0f;
         }
 
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / (3 + minusFactor);
+        // Prevent divide-by-zero/negative which can prematurely finish gameplay
+        int denominator = Mathf.Max(1, 3 + minusFactor);
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / denominator;
     }
 
     /// <summary>
@@ -365,6 +369,9 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void ResetProgressBars()
     {
+        // Reset visibility offset so denominator is correct for a new session
+        minusFactor = 0;
+
         if (progressDirts != null) progressDirts.SetValue(0);
         if (progressDusts != null) progressDusts.SetValue(0);
         if (progressAssemble != null) progressAssemble.SetValue(0);
