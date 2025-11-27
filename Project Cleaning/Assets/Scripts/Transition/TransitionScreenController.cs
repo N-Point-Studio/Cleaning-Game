@@ -17,12 +17,15 @@ public class TransitionScreenController : MonoBehaviour
     [Header("Visuals")]
     [SerializeField] private GameObject enteringRoot;   // Root container for entering visuals (image/anim)
     [SerializeField] private GameObject exitingRoot;    // Root container for exiting visuals (image/anim)
+    [SerializeField] private GameObject backToMenuRoot; // Optional root for back-to-menu visuals
     [SerializeField] private TextMeshProUGUI enteringMessageText;
     [SerializeField] private TextMeshProUGUI exitingMessageText;
+    [SerializeField] private TextMeshProUGUI backToMenuMessageText;
 
     [Header("Text")]
     [SerializeField] private string enteringText = "Preparing your journey...";
     [SerializeField] private string exitingText = "Returning to the museum...";
+    [SerializeField] private string backToMenuText = "Going back to the menu...";
 
     [Header("Manual Override (optional)")]
     [SerializeField] private bool forceOverride = false;
@@ -50,8 +53,11 @@ public class TransitionScreenController : MonoBehaviour
         }
 
         bool isExiting = false;
+        bool isBackToMenu = false;
         if (SceneTransitionManager.Instance != null)
         {
+            isBackToMenu = SceneTransitionManager.Instance.GetBackToMenuFlag();
+
             // Prefer explicit transition direction if available
             var direction = SceneTransitionManager.Instance.GetTransitionDirection();
             if (!string.IsNullOrEmpty(direction) && direction.Contains("ToMenu"))
@@ -64,7 +70,8 @@ public class TransitionScreenController : MonoBehaviour
             }
         }
 
-        return isExiting ? TransitionVisualMode.ExitingGameplay : TransitionVisualMode.EnteringGameplay;
+        // Back-to-menu uses exiting visuals; controller can choose which root to show
+        return isExiting || isBackToMenu ? TransitionVisualMode.ExitingGameplay : TransitionVisualMode.EnteringGameplay;
     }
 
     /// <summary>
@@ -74,8 +81,12 @@ public class TransitionScreenController : MonoBehaviour
     {
         bool entering = mode == TransitionVisualMode.EnteringGameplay;
 
+        bool useBackToMenu = SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.GetBackToMenuFlag();
+        bool showExiting = !entering && !useBackToMenu;
+
         if (enteringRoot != null) enteringRoot.SetActive(entering);
-        if (exitingRoot != null) exitingRoot.SetActive(!entering);
+        if (exitingRoot != null) exitingRoot.SetActive(showExiting);
+        if (backToMenuRoot != null) backToMenuRoot.SetActive(useBackToMenu);
 
         if (enteringMessageText != null)
         {
@@ -86,7 +97,13 @@ public class TransitionScreenController : MonoBehaviour
         if (exitingMessageText != null)
         {
             exitingMessageText.text = exitingText;
-            exitingMessageText.gameObject.SetActive(!entering);
+            exitingMessageText.gameObject.SetActive(showExiting);
+        }
+
+        if (backToMenuMessageText != null)
+        {
+            backToMenuMessageText.text = backToMenuText;
+            backToMenuMessageText.gameObject.SetActive(useBackToMenu);
         }
     }
 

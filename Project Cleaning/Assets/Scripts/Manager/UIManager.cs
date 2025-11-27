@@ -307,12 +307,17 @@ public class UIManager : MonoBehaviour
         stm.ResetTransitionData();
         stm.MarkReturningFromGameplay();          // we are coming FROM gameplay back to menu
         stm.SetTransitionDirectionToMenu();       // TransitionScreen should show exiting/return visuals
+
+        // Inform TransitionScreenController to use back-to-menu visuals
+        stm.SetBackToMenuFlag(true);
+
         stm.StartStagedTransition(
             "TransitionScreen",
             "New Start Game Sandy",
             0f,
             null,
-            false // do not force entering visuals; allow controller to pick exiting mode
+            false, // do not force entering visuals; allow controller to pick exiting mode
+            true   // use back-to-menu visuals
         );
     }
 

@@ -30,6 +30,7 @@ public class SceneTransitionManager : MonoBehaviour
     private bool shouldTriggerContentSwitcher = false;
     private bool isTransitionInProgress = false;
     private bool isReturningFromGameplay = false; // mark when coming back from gameplay
+    private bool useBackToMenuVisuals = false; // flag for TransitionScreenController
     private enum TransitionDirection { Unknown, ToGameplay, ToMenu }
     private TransitionDirection currentTransitionDirection = TransitionDirection.Unknown;
 
@@ -192,7 +193,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     private bool forceEnteringTransitionVisual = false;
 
-    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings, bool forceEnteringVisual = false)
+    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings, bool forceEnteringVisual = false, bool backToMenu = false)
     {
         if (isTransitionInProgress)
         {
@@ -201,6 +202,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         forceEnteringTransitionVisual = forceEnteringVisual;
+        useBackToMenuVisuals = backToMenu;
 
         // Mark direction based on destination (gameplay vs menu)
         currentTransitionDirection = finalDestinationScene.ToLower().Contains("gameplay")
@@ -1409,10 +1411,13 @@ public class SceneTransitionManager : MonoBehaviour
     public string GetTransitionDirection() => currentTransitionDirection.ToString();
     public bool ShouldForceEnteringTransitionVisual() => forceEnteringTransitionVisual;
     public void ClearReturningFromGameplayFlag() => isReturningFromGameplay = false;
+    public void SetBackToMenuFlag(bool value) => useBackToMenuVisuals = value;
+    public bool GetBackToMenuFlag() => useBackToMenuVisuals;
 
     public void SetTransitionDirectionToGameplay()
     {
         currentTransitionDirection = TransitionDirection.ToGameplay;
+        useBackToMenuVisuals = false; // gameplay transitions should not use back-to-menu visuals
     }
 
     public void SetTransitionDirectionToMenu()
@@ -1582,6 +1587,7 @@ public class SceneTransitionManager : MonoBehaviour
         isTransitionInProgress = false;
         currentTransitionDirection = TransitionDirection.Unknown;
         isReturningFromGameplay = false;
+        useBackToMenuVisuals = false;
         forceEnteringTransitionVisual = false;
 
         if (enableDebugLogs)

@@ -329,9 +329,20 @@ public class ObjectInteractionHandler : MonoBehaviour
 
         Debug.Log($"PlayClickFeedback for: {clickable.name}");
 
-        // Play audio feedback
-        if (clickable.ClickSound != null && clickable.TryGetComponent<AudioSource>(out var audioSource))
+        // Play audio feedback (global click + object-specific if any)
+        MenuSfxManager.Instance?.PlayClick();
+
+        AudioSource audioSource = null;
+        if (!clickable.TryGetComponent<AudioSource>(out audioSource))
+        {
+            audioSource = clickable.gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
+        if (clickable.ClickSound != null)
+        {
             audioSource.PlayOneShot(clickable.ClickSound);
+        }
 
         // Mark as focused and trigger events
         clickable.SetFocusState(true);
