@@ -15,6 +15,7 @@ public class ObjectInteractionHandler : MonoBehaviour
     [SerializeField] private bool enableSceneChange = true;
     [SerializeField] private float sceneChangeDelay = 0.5f;
     [SerializeField] private float clickValidationDelay = 0.1f; // Delay to ensure mode state is stable
+    [SerializeField] private string transitionScreenName = "TransitionScreen";
 
     [Header("ContentSwitcher Integration")]
     [SerializeField] private bool enableContentSwitcherTrigger = true;
@@ -242,12 +243,29 @@ public class ObjectInteractionHandler : MonoBehaviour
                 finalSceneName,
                 clickableObject.GetIntermediaryDelay()
             );
+            return;
         }
         // Otherwise, perform a simple, direct scene change.
         else
         {
-            Debug.Log("=== Using Direct Scene Transition (Standalone) ===");
-            StartCoroutine(ChangeSceneCoroutine(finalSceneName));
+            // Prefer global SceneTransitionManager with TransitionScreen intermediary when available
+            if (SceneTransitionManager.Instance != null)
+            {
+                Debug.Log("=== Using TransitionScreen via SceneTransitionManager ===");
+                SceneTransitionManager.Instance.SetTransitionDirectionToGameplay();
+                SceneTransitionManager.Instance.SetObjectTypeForTransition(clickableObject.GetObjectType());
+                SceneTransitionManager.Instance.StartStagedTransition(
+                    transitionScreenName,
+                    finalSceneName,
+                    0f,
+                    null
+                );
+            }
+            else
+            {
+                Debug.Log("=== Using Direct Scene Transition (Standalone) ===");
+                StartCoroutine(ChangeSceneCoroutine(finalSceneName));
+            }
         }
     }
 
