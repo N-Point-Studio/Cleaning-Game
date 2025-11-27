@@ -9827,7 +9827,7 @@ MonoBehaviour:
   ResumeButton: {fileID: 2086974278}
   AlertYes: {fileID: 1625247635}
   AlertNo: {fileID: 1142258778}
-  AlertBox: {fileID: 1237821946}
+  AlertBox: {fileID: 1335699475}
   FinishUI: {fileID: 242598037}
   FinishBackground: {fileID: 1542636678}
   FinishButtonImage: {fileID: 1649591636}
