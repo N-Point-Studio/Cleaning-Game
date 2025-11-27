@@ -44,6 +44,11 @@ public class TransitionScreenController : MonoBehaviour
             return forcedMode;
         }
 
+        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.ShouldForceEnteringTransitionVisual())
+        {
+            return TransitionVisualMode.EnteringGameplay;
+        }
+
         bool isExiting = false;
         if (SceneTransitionManager.Instance != null)
         {

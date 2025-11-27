@@ -118,6 +118,26 @@ public class AdvancedInputManager : MonoBehaviour
         inputBlockUntil = Time.time + duration;
         Debug.Log($"=== INPUT BLOCKED for {duration} seconds ===");
     }
+
+    /// <summary>
+    /// Explicitly clear any input block (useful after transitions/auto-zoom).
+    /// </summary>
+    public void UnblockInput()
+    {
+        inputBlockUntil = 0f;
+        Debug.Log("=== INPUT UNBLOCKED ===");
+    }
+
+    /// <summary>
+    /// Reset swipe/pinch/double-tap systems so the next drag in zoom works immediately.
+    /// </summary>
+    public void ResetGestureSystems()
+    {
+        swipeDetectionSystem?.CancelSwipe();
+        doubleTapDetector?.CompleteGestureReset();
+        pinchDetectionSystem?.Reset();
+        Debug.Log("=== GESTURE SYSTEMS RESET ===");
+    }
     #endregion
 
     #region Initialization
@@ -391,9 +411,11 @@ public class AdvancedInputManager : MonoBehaviour
                 break;
 
             case GameModeManager.GameMode.Zoom:
+                // Treat zoom mode always as drag priority; still let clicks process
                 objectWasClicked = (objectHandler != null && objectHandler.CheckForObjectClick(screenPosition));
-                if (!objectWasClicked)
-                    cameraDragSystem.StartDrag(screenPosition);
+                swipeDetectionSystem.CancelSwipe(); // ensure swipe system doesn't hold stale state
+                pinchDetectionSystem.Reset();  // clear pinch state when starting drag in zoom
+                cameraDragSystem.StartDrag(screenPosition);
                 break;
         }
 
@@ -885,6 +907,18 @@ public class PinchDetectionSystem
         result.Direction = distanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
         result.IsValid = true;
         return result;
+    }
+
+    public Vector2 GetPinchCenter() => pinchCenter;
+
+    public void Reset()
+    {
+        isTracking = false;
+        startDistance = 0f;
+        startTime = 0f;
+        currentDistance = 0f;
+        hasEarlyDetectionTriggered = false;
+        pinchCenter = Vector2.zero;
     }
 }
 #endregion
