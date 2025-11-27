@@ -24,6 +24,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button FinishButton; // Optional direct button reference
     [SerializeField] private Button ExitButton;
     [SerializeField] private Button ResumeButton;
+
+    [SerializeField] private Button AlertYes;
+    [SerializeField] private Button AlertNo;
+    [SerializeField] private GameObject AlertBox;
+
     [SerializeField] private GameObject FinishUI;
     [SerializeField] private GameObject FinishBackground;
     [SerializeField] private Image FinishButtonImage; // The finish button image (drag & drop)
@@ -43,23 +48,12 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        if (ExitButton != null)
-        {
-            ExitButton.onClick.AddListener(ExitButtonInteract);
-        }
-        else
-        {
-            Debug.LogWarning("[UIManager] ExitButton is not assigned in inspector.");
-        }
+        ExitButton.onClick.AddListener(ExitButtonInteract);
+        ResumeButton.onClick.AddListener(ResumeButtonInteract);
 
-        if (ResumeButton != null)
-        {
-            ResumeButton.onClick.AddListener(ResumeButtonInteract);
-        }
-        else
-        {
-            Debug.LogWarning("[UIManager] ResumeButton is not assigned in inspector.");
-        }
+        AlertYes.onClick.AddListener(AlertYesInteract);
+        AlertNo.onClick.AddListener(AlertNoInteract);
+
 
         EnsureUIInputReady();
 
@@ -283,8 +277,9 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ExitButtonInteract()
+    public void AlertYesInteract()
     {
+
         Debug.Log("Exit level");
 
         // Pastikan input UI/touch kembali aktif untuk menangkap klik
@@ -319,6 +314,20 @@ public class UIManager : MonoBehaviour
             null,
             false // do not force entering visuals; allow controller to pick exiting mode
         );
+    }
+
+    public void AlertNoInteract()
+    {
+        Debug.Log("Cancel exit level");
+        AlertBox.SetActive(false);
+        // ShowSetting(true);
+    }
+
+    public void ExitButtonInteract()
+    {
+        Debug.Log("Exit button clicked - showing alert box");
+        AlertBox.SetActive(true);
+        // ShowSetting(false);
     }
 
     /// <summary>

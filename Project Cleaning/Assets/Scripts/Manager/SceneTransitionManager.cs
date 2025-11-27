@@ -218,7 +218,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             Debug.Log($"=== STAGED TRANSITION STARTED ===\nIntermediary: {intermediaryScene}\nFinal: {finalDestinationScene}");
         }
-        
+
         SaveCameraStateForRestore();
         StartCoroutine(PerformSceneTransition(settings)); // Use settings for the first leg
     }
@@ -430,7 +430,7 @@ public class SceneTransitionManager : MonoBehaviour
                     Debug.LogWarning($"⚠️ Could not find GameObject for clicked object name: '{clickedObjectName}'.");
                 }
             }
-            
+
             // If still no settings, use the broader search fallbacks
             if (transitionToUse == null)
             {
@@ -479,7 +479,7 @@ public class SceneTransitionManager : MonoBehaviour
                     {
                         Debug.Log($"✅ EasyTransition called successfully with proper settings: Scene '{targetSceneName}', Transition '{transitionToUse.name}', Duration '{transitionTime}s'");
                     }
-                    
+
                     return true;
                 }
                 catch (System.Exception ex)
@@ -668,7 +668,7 @@ public class SceneTransitionManager : MonoBehaviour
             for (int i = 0; i < allClickables.Length; i++)
             {
                 ClickableObject obj = allClickables[i];
-                Debug.Log($"  {i+1}. {obj.name} - ObjectType: {obj.GetObjectType()} - HasValidContentSwitcher: {obj.HasValidContentSwitcher()}");
+                Debug.Log($"  {i + 1}. {obj.name} - ObjectType: {obj.GetObjectType()} - HasValidContentSwitcher: {obj.HasValidContentSwitcher()}");
             }
         }
 
@@ -1058,9 +1058,9 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 GameModeManager.Instance.ForceEnterZoomMode();
             }
-            
+
             cameraController.FocusOnObjectImmediate(targetObject.transform);
-            
+
             cameraController.enabled = true;
             Debug.Log("[InstantFocus] Camera setup complete. Controller re-enabled.");
 
@@ -1099,7 +1099,7 @@ public class SceneTransitionManager : MonoBehaviour
             Debug.LogError("[HARDCODE] Failed to find TopDownCameraController instance. Aborting.");
             yield break;
         }
-        
+
         Debug.Log("📷 [HARDCODE] STEP 1: Forcing camera position.");
 
         // 2. Define the hardcoded position and rotation.
