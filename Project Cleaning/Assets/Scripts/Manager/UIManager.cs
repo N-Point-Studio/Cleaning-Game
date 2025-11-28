@@ -209,10 +209,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(50);
+            progressDusts.SetValue(dustProgress);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(50);
+            progressDirts.SetValue(mudProgress);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
