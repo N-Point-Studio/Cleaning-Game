@@ -171,13 +171,34 @@ using UnityEngine.SceneManagement;
             }
         }
 
-        var overallProgress = progressAttachment / TotalFragments;
-        //Debug.Log($"Progress attach ({progressAttachment}/{TotalFragments}): {overallProgress}");
-        progressAttach = overallProgress;
+        // Prevent division by zero when an artefact has no assemble targets
+        int targetFragments = TotalFragments;
+        if (targetFragments <= 0)
+        {
+            targetFragments = assemblyTargets.Count;
+        }
+
+        if (targetFragments <= 0)
+        {
+            progressAttach = 1f; // nothing to assemble, treat as complete
+            return;
+        }
+
+        var overallProgress = progressAttachment / targetFragments;
+        progressAttach = Mathf.Clamp01(overallProgress);
     }
 
     public float GetAttachProgress()
     {
+        if (assemblyTargets.Count == 0 && TotalFragments <= 0)
+        {
+            return 1f; // no assembly needed
+        }
+
+        if (float.IsNaN(progressAttach) || float.IsInfinity(progressAttach))
+        {
+            return 0f;
+        }
         return progressAttach;
     }
 

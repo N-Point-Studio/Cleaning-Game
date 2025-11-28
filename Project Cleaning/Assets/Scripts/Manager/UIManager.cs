@@ -209,10 +209,10 @@ public class UIManager : MonoBehaviour
         try
         {
             float dustProgress = CleanManager.Instance.GetDustProgress();
-            progressDusts.SetValue(20);
+            progressDusts.SetValue(50);
 
             float mudProgress = CleanManager.Instance.GetMudProgress();
-            progressDirts.SetValue(20);
+            progressDirts.SetValue(50);
 
             float attachProgress = AssembleManager.Instance.GetAttachProgress();
             progressAssemble.SetValue(attachProgress);
@@ -375,7 +375,8 @@ public class UIManager : MonoBehaviour
 
         // Prevent divide-by-zero/negative which can prematurely finish gameplay
         int denominator = Mathf.Max(1, 3 + minusFactor);
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / denominator;
+        float totalProgress = progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue();
+        return totalProgress / denominator;
     }
 
     /// <summary>
