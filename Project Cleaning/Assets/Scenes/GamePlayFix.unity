@@ -9922,12 +9922,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45634d1a7cb2842ff9d7cdf1cb41ddd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  progressDirts: {fileID: 0}
-  progressDusts: {fileID: 0}
-  progressAssemble: {fileID: 0}
-  progressDirtsGO: {fileID: 0}
-  progressDustsGO: {fileID: 0}
-  progressAssembleGO: {fileID: 0}
+  progressDirts: {fileID: 296362669}
+  progressDusts: {fileID: 862186158}
+  progressAssemble: {fileID: 2091639668}
+  progressDirtsGO: {fileID: 1311056090}
+  progressDustsGO: {fileID: 2034285196}
+  progressAssembleGO: {fileID: 1655683159}
   artefactNameText: {fileID: 948767583}
   settingCanvas: {fileID: 933797011}
   FinishButton: {fileID: 1649591638}
@@ -9937,7 +9937,7 @@ MonoBehaviour:
   AlertNo: {fileID: 1142258778}
   AlertBox: {fileID: 1335699475}
   FinishUI: {fileID: 242598037}
-  FinishBackground: {fileID: 0}
+  FinishBackground: {fileID: 862727099}
   FinishButtonImage: {fileID: 1649591636}
   useImageAsButton: 1
 --- !u!114 &1181414300
@@ -16699,7 +16699,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1655683159}
   m_LocalRotation: {x: -0, y: -0, z: 0.00000001071021, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.0000047683716}
+  m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
