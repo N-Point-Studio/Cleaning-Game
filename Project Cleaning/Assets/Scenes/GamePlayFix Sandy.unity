@@ -1728,7 +1728,7 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 28.9
-  m_Range: 19.3
+  m_Range: 16.87
   m_SpotAngle: 60.00605
   m_InnerSpotAngle: 36.269463
   m_CookieSize: 10
@@ -2320,7 +2320,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 588808582}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!4 &588808586
 Transform:
   m_ObjectHideFlags: 0
@@ -15134,7 +15134,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.4
+  m_Intensity: 0.7
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -15192,13 +15192,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1488645359}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.10103941, y: 0.8949237, z: -0.3489162, w: -0.25915268}
+  m_LocalRotation: {x: -0.0989892, y: 0.8912789, z: -0.23548603, w: -0.37465912}
   m_LocalPosition: {x: 0, y: 8.5, z: 1.69}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1230114569}
-  m_LocalEulerAnglesHint: {x: 42.6, y: 212.3, z: 0}
+  m_LocalEulerAnglesHint: {x: 29.6, y: 225.6, z: 0}
 --- !u!1 &1503688925
 GameObject:
   m_ObjectHideFlags: 0
@@ -16251,7 +16251,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fa512eb104aa4430b9903bb46dba950, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  artefactData: {fileID: 11400000, guid: a3924d72a67c0455eb511e7925877898, type: 2}
+  artefactData: {fileID: 11400000, guid: be5bcc866d7c24e92a67ef37e57beff7, type: 2}
   autoSelectByObjectType: 1
   artefactMappings: []
   fallbackArtefact: {fileID: 0}
@@ -17654,7 +17654,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!1 &405263990343940839
 GameObject:
@@ -17681,7 +17681,7 @@ Transform:
   m_GameObject: {fileID: 303348965284180859}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: -0.7071068}
-  m_LocalPosition: {x: -3.12, y: -0.13999987, z: -4.43}
+  m_LocalPosition: {x: -3.12, y: -0.37, z: -4.43}
   m_LocalScale: {x: 0.33023426, y: 0.33023423, z: 0.33023423}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17796,7 +17796,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &941339348965834660
 Transform:
@@ -23054,12 +23054,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   toolType: 0
-  raycastRange: 1
+  raycastRange: 5
   dirtsLayerMask:
     serializedVersion: 2
-    m_Bits: 128
-  brush: {fileID: 2800000, guid: d13e4eb1b6fc64a95a6374ac99dea9be, type: 3}
-  brushSize: 2
+    m_Bits: 0
+  brush: {fileID: 0}
+  brushSize: 0
   surface: {fileID: 641710189888862841}
   cleaningVFX: {fileID: 1745672262}
   movementThreshold: 0.01
@@ -23175,7 +23175,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!114 &6281517006250897635
 MonoBehaviour:
@@ -23383,7 +23383,7 @@ Transform:
   m_GameObject: {fileID: 6237022814290378116}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9948179, z: -0, w: -0.10167268}
-  m_LocalPosition: {x: -2.58, y: 0.5799999, z: -8.68}
+  m_LocalPosition: {x: -2.58, y: 0.27, z: -8.68}
   m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -23533,13 +23533,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ac73e24ec62d44f0975d182d4f7417b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  toolType: 1
-  raycastRange: 1
+  toolType: 0
+  raycastRange: 5
   dirtsLayerMask:
     serializedVersion: 2
-    m_Bits: 384
-  brush: {fileID: 2800000, guid: d13e4eb1b6fc64a95a6374ac99dea9be, type: 3}
-  brushSize: 2
+    m_Bits: 0
+  brush: {fileID: 0}
+  brushSize: 0
   surface: {fileID: 7972151268151671827}
   cleaningVFX: {fileID: 450673834}
   movementThreshold: 0.01
