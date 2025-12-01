@@ -12,6 +12,7 @@ public class MenuMusicController : MonoBehaviour
     [SerializeField] private AudioClip menuMusic;
     [SerializeField] private string[] menuSceneKeywords = { "menu", "start game", "selectchapter", "sandy" };
     [SerializeField] private string[] gameplaySceneKeywords = { "gameplay", "fix", "rnd" };
+    [SerializeField] private float volume = 1f;
 
     private static MenuMusicController instance;
 
@@ -39,6 +40,16 @@ public class MenuMusicController : MonoBehaviour
         TryPlayForCurrentScene();
     }
 
+    private void OnEnable()
+    {
+        SettingManager.OnBgmVolumeChanged += SetVolume;
+    }
+
+    private void OnDisable()
+    {
+        SettingManager.OnBgmVolumeChanged -= SetVolume;
+    }
+
     private void OnDestroy()
     {
         if (instance == this)
@@ -46,6 +57,8 @@ public class MenuMusicController : MonoBehaviour
             SceneManager.sceneLoaded -= OnSceneLoaded;
             instance = null;
         }
+
+        SettingManager.OnBgmVolumeChanged -= SetVolume;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -91,6 +104,8 @@ public class MenuMusicController : MonoBehaviour
         }
 
         musicSource.loop = true;
+        musicSource.volume = volume;
+        musicSource.mute = volume <= 0.001f;
         if (!musicSource.isPlaying)
         {
             musicSource.Play();
@@ -102,6 +117,16 @@ public class MenuMusicController : MonoBehaviour
         if (musicSource != null && musicSource.isPlaying)
         {
             musicSource.Stop();
+        }
+    }
+
+    private void SetVolume(float value)
+    {
+        volume = value;
+        if (musicSource != null)
+        {
+            musicSource.volume = value;
+            musicSource.mute = value <= 0.001f;
         }
     }
 }

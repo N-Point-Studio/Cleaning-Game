@@ -57,11 +57,23 @@ public class MenuSfxManager : MonoBehaviour
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
+
+        SettingManager.OnSfxVolumeChanged -= SetVolume;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         StartCoroutine(DelayedHook());
+    }
+
+    private void OnEnable()
+    {
+        SettingManager.OnSfxVolumeChanged += SetVolume;
+    }
+
+    private void OnDisable()
+    {
+        SettingManager.OnSfxVolumeChanged -= SetVolume;
     }
 
     private System.Collections.IEnumerator DelayedHook()
@@ -137,5 +149,11 @@ public class MenuSfxManager : MonoBehaviour
         {
             audioSource.PlayOneShot(swipeSfx, volume);
         }
+    }
+
+    public void SetVolume(float value)
+    {
+        volume = value;
+        if (audioSource != null) audioSource.volume = value;
     }
 }

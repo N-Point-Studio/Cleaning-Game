@@ -15,6 +15,7 @@ public class SettingManager : MonoBehaviour
     [SerializeField] private AudioSource bgmSource;
 
     public static event Action<float> OnSfxVolumeChanged;
+    public static event Action<float> OnBgmVolumeChanged;
 
     private void Awake()
     {
@@ -38,11 +39,21 @@ public class SettingManager : MonoBehaviour
         // SAFETY CHECK: Only set volume if bgmSource is assigned
         if (bgmSource != null)
         {
-            bgmSource.volume = .5f;
+            bgmSource.volume = GetNormalizedSliderValue(BgmSlider, 0.5f);
         }
         else
         {
             Debug.LogWarning("bgmSource not assigned in SettingManager");
+        }
+
+        // Apply initial slider values so listeners get the current setting on scene start
+        if (SfxSlider != null)
+        {
+            OnSfxSliderChanged(SfxSlider.value); // Will normalize inside handler
+        }
+        if (BgmSlider != null)
+        {
+            OnBgmSliderChanged(BgmSlider.value); // Will normalize inside handler
         }
     }
 
@@ -57,22 +68,57 @@ public class SettingManager : MonoBehaviour
 
     private void OnSfxSliderChanged(float value)
     {
-        Debug.Log("OnSfxSliderChanged: " + value);
-        OnSfxVolumeChanged?.Invoke(value);
+        float normalized = GetNormalizedSliderValue(SfxSlider, value);
+        Debug.Log("OnSfxSliderChanged (normalized): " + normalized);
+        OnSfxVolumeChanged?.Invoke(normalized);
     }
 
     private void OnBgmSliderChanged(float value)
     {
-        Debug.Log("OnBgmSliderChanged: " + value);
+        float normalized = GetNormalizedSliderValue(BgmSlider, value);
+        Debug.Log("OnBgmSliderChanged (normalized): " + normalized);
 
         // SAFETY CHECK: Only set volume if bgmSource is assigned
         if (bgmSource != null)
         {
-            bgmSource.volume = value;
+            bgmSource.volume = normalized;
+            bgmSource.mute = normalized <= 0.001f;
         }
         else
         {
             Debug.LogWarning("bgmSource is null - cannot set volume");
+        }
+
+        OnBgmVolumeChanged?.Invoke(normalized);
+
+        // Belt-and-suspenders: apply to all looped/tagged music sources in scene
+        ApplyBgmVolumeToScene(normalized);
+    }
+
+    private float GetNormalizedSliderValue(Slider slider, float fallbackIfNull)
+    {
+        if (slider == null) return fallbackIfNull;
+
+        // Normalize slider value to 0..1 regardless of min/max so UI can use 0-100 or other ranges.
+        if (Mathf.Approximately(slider.maxValue, slider.minValue))
+        {
+            return Mathf.Clamp01(slider.value);
+        }
+
+        float t = Mathf.InverseLerp(slider.minValue, slider.maxValue, slider.value);
+        return Mathf.Clamp01(t);
+    }
+
+    private void ApplyBgmVolumeToScene(float normalized)
+    {
+        var audioSources = FindObjectsOfType<AudioSource>(true);
+        foreach (var src in audioSources)
+        {
+            bool looksLikeMusic = src.loop || src.CompareTag("BGM");
+            if (!looksLikeMusic) continue;
+
+            src.volume = normalized;
+            src.mute = normalized <= 0.001f;
         }
     }
 }

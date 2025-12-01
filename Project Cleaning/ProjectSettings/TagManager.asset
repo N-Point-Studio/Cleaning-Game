@@ -9,6 +9,7 @@ TagManager:
   - Tools
   - Dirts
   - InspectPosition
+  - BGM
   layers:
   - Default
   - TransparentFX
