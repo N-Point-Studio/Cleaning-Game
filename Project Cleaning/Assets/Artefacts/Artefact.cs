@@ -17,4 +17,5 @@ public class Artefact : ScriptableObject
     public string code;
     public string history;
     public List<ArtefactFragmentData> artefacts;
+    public Vector3 finishRotation;
 }

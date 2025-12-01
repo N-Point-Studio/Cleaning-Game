@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using EasyTransition;
+using Unity.Mathematics;
 
 public class GamePlayManager : MonoBehaviour
 {
@@ -119,7 +120,7 @@ public class GamePlayManager : MonoBehaviour
 
                 cluster.transform.SetPositionAndRotation(
                     Vector3.Lerp(cluster.transform.position, ClearInspect.position, Time.deltaTime * 2),
-                    Quaternion.Slerp(cluster.transform.rotation, Quaternion.Euler(90f, 0f, 0f), Time.deltaTime * 2f
+                    Quaternion.Slerp(cluster.transform.rotation, finishedRotation, Time.deltaTime * 2f
                 ));
 
                 cluster.transform.SetParent(ClearInspect);
@@ -160,7 +161,7 @@ public class GamePlayManager : MonoBehaviour
 
                 fragment.transform.SetPositionAndRotation(
                     Vector3.Lerp(fragment.transform.position, ClearInspect.position, Time.deltaTime * 2),
-                    Quaternion.Slerp(fragment.transform.rotation, Quaternion.Euler(-90f, -90f, -90f), Time.deltaTime * 2f)
+                    Quaternion.Slerp(fragment.transform.rotation, finishedRotation, Time.deltaTime * 2f)
                 );
 
                 fragment.transform.SetParent(ClearInspect);
@@ -383,5 +384,10 @@ public class GamePlayManager : MonoBehaviour
             default:
                 return ChapterType.China;
         }
+    }
+
+    public void SetFinishedRotation(Quaternion rotationEuler)
+    {
+        finishedRotation = rotationEuler;
     }
 }

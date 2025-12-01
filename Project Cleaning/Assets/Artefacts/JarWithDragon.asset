@@ -30,3 +30,4 @@ MonoBehaviour:
       type: 3}
     correctPosition: {fileID: 6667860012512372754, guid: e1d4b3cefd0d944a5bc5b866beb4608a,
       type: 3}
+  finishRotation: {x: 90, y: 0, z: 0}

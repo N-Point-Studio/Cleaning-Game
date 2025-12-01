@@ -22,3 +22,4 @@ MonoBehaviour:
   - fragment: {fileID: 2023501092284782827, guid: 0352e65ac67094ab1a361be75b37ad8f,
       type: 3}
     correctPosition: {fileID: 0}
+  finishRotation: {x: 15, y: 0, z: 150}

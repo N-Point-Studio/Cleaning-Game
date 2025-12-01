@@ -20,3 +20,4 @@ MonoBehaviour:
   - fragment: {fileID: 7262281596309485387, guid: 4f066100c2fb64d599e158e295541b30,
       type: 3}
     correctPosition: {fileID: 0}
+  finishRotation: {x: -180, y: 0, z: 0}
