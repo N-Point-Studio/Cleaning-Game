@@ -373,6 +373,19 @@ public class UIManager : MonoBehaviour
             return 0f;
         }
 
+        // ✅ SAFETY CHECK: Return 0 if managers are not ready yet
+        if (CleanManager.Instance == null || AssembleManager.Instance == null)
+        {
+            return 0f;
+        }
+
+        // ✅ SAFETY CHECK: Don't calculate progress immediately after scene load
+        // This prevents false 100% readings from uninitialized state
+        if (Time.timeSinceLevelLoad < 0.5f)
+        {
+            return 0f;
+        }
+
         // Prevent divide-by-zero/negative which can prematurely finish gameplay
         int denominator = Mathf.Max(1, 3 + minusFactor);
         return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / denominator;

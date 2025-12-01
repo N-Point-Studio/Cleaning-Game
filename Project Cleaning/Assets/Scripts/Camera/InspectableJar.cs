@@ -36,17 +36,19 @@ public class InspectableJar : MonoBehaviour
         {
             TouchManager.ZoomStart += StartZoom;
             TouchManager.ZoomEnd += StopZoom;
+            Debug.Log($"[InspectableJar] ✅ Subscribed to TouchManager zoom events on {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[InspectableJar] ⚠️ TouchManager.Instance is NULL - cannot subscribe to zoom events on {gameObject.name}");
         }
     }
 
     private void OnDisable()
     {
-        // SAFETY CHECK: Only unsubscribe if TouchManager exists
-        if (TouchManager.Instance != null)
-        {
-            TouchManager.ZoomStart -= StartZoom;
-            TouchManager.ZoomEnd -= StopZoom;
-        }
+        TouchManager.ZoomStart -= StartZoom;
+        TouchManager.ZoomEnd -= StopZoom;
+        Debug.Log($"[InspectableJar] Unsubscribed from TouchManager zoom events on {gameObject.name}");
     }
 
     private void FixedUpdate()
@@ -66,6 +68,11 @@ public class InspectableJar : MonoBehaviour
             // New input system is active, only allow interaction in zoom mode
             if (!AdvancedInputManager.Instance.IsInZoomMode())
             {
+                // ✅ DEBUG: Log why rotation is disabled
+                if (isRotating || TouchManager.Instance.isClickedOn)
+                {
+                    Debug.Log($"[InspectableJar] Rotation disabled - Not in Zoom mode. Current mode: {AdvancedInputManager.Instance.GetCurrentMode()}");
+                }
                 isRotating = false;
                 hasInitializedTouch = false;
                 return;
@@ -123,11 +130,13 @@ public class InspectableJar : MonoBehaviour
 
     private void StartZoom()
     {
+        Debug.Log($"[InspectableJar] ✅ StartZoom called - Starting zoom routine on {gameObject.name}");
         zoomRoutine = StartCoroutine(ZoomRoutine());
     }
 
     private void StopZoom()
     {
+        Debug.Log($"[InspectableJar] ✅ StopZoom called - Stopping zoom routine on {gameObject.name}");
         if (zoomRoutine != null)
             StopCoroutine(zoomRoutine);
     }

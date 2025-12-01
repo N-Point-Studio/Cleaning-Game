@@ -45,6 +45,26 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
 
         screenWidth = Screen.width;
         screenHeight = Screen.height;
+
+        // ✅ FIX: Reset all touch states when entering new gameplay scene
+        ResetTouchState();
+    }
+
+    /// <summary>
+    /// Reset all touch input states to ensure clean state for new gameplay session
+    /// </summary>
+    public void ResetTouchState()
+    {
+        curScreenPos = Vector3.zero;
+        curSecondaryPos = Vector3.zero;
+        isInteracting = false;
+        isDragging = false;
+        isRotating = false;
+        isZooming = false;
+        isTapped = false;
+        isClickedOn = false;
+
+        Debug.Log("[TouchManager] Touch state reset for new session");
     }
 
     void Update()
@@ -65,6 +85,22 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         // Add null check to prevent NullReferenceException during scene cleanup
         if (inputSystem != null)
             inputSystem.Input.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        // Clear static listeners so zoom/tap handlers don't linger into the next scene
+        ZoomStart = null;
+        ZoomEnd = null;
+        OnTapped = null;
+        OnTapReleased = null;
+        OnHoldPerformed = null;
+        OnHoldReleased = null;
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public void OnPress(InputAction.CallbackContext context)
@@ -122,18 +158,42 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
-            Debug.Log("secondary performed");
+            Debug.Log("[TouchManager] secondary touch performed - ZOOM START");
             // --- PERBAIKAN: Set status zooming jadi TRUE ---
-            isZooming = true; 
+            isZooming = true;
             // -----------------------------------------------
+
+            // ✅ DEBUG: Log event subscribers
+            if (ZoomStart != null)
+            {
+                var subscriberCount = ZoomStart.GetInvocationList().Length;
+                Debug.Log($"[TouchManager] ✅ Invoking ZoomStart event ({subscriberCount} subscribers)");
+            }
+            else
+            {
+                Debug.LogWarning("[TouchManager] ⚠️ ZoomStart event has NO subscribers!");
+            }
+
             ZoomStart?.Invoke();
         }
         else if (context.canceled)
         {
-            Debug.Log("secondary canceled");
+            Debug.Log("[TouchManager] secondary touch canceled - ZOOM END");
             // --- PERBAIKAN: Set status zooming jadi FALSE ---
             isZooming = false;
             // ------------------------------------------------
+
+            // ✅ DEBUG: Log event subscribers
+            if (ZoomEnd != null)
+            {
+                var subscriberCount = ZoomEnd.GetInvocationList().Length;
+                Debug.Log($"[TouchManager] ✅ Invoking ZoomEnd event ({subscriberCount} subscribers)");
+            }
+            else
+            {
+                Debug.LogWarning("[TouchManager] ⚠️ ZoomEnd event has NO subscribers!");
+            }
+
             ZoomEnd?.Invoke();
         }
     }

@@ -771,6 +771,19 @@ public class ClickableObject : MonoBehaviour
 
     private void UpdateLockVisual()
     {
+        if (SaveSystem.Instance == null)
+        {
+            return; // Don't change visuals until save data is available
+        }
+
+        // If this object itself is already completed, always show the unlocked state
+        // to avoid regressions when prerequisites are misread after app restart.
+        if (IsCompleted())
+        {
+            ShowUnlockedVisual();
+            return;
+        }
+
         if (PrerequisiteCompleted())
         {
             ShowUnlockedVisual();
@@ -783,6 +796,18 @@ public class ClickableObject : MonoBehaviour
 
     private void OnEnable()
     {
+        // Ensure SaveSystem exists so completion/lock checks work on cold app launch
+        EnsureSaveSystem();
+
+        if (SaveSystem.Instance == null)
+        {
+            if (waitForSaveSystemRoutine == null)
+            {
+                waitForSaveSystemRoutine = StartCoroutine(WaitForSaveSystemThenRefreshLock());
+            }
+            return; // Keep current inspector state until save data is ready
+        }
+
         // When SaveSystem isn't ready yet (happens on cold launch), wait for it before evaluating locks
         if (lockUntilPrerequisiteComplete && SaveSystem.Instance == null)
         {
@@ -801,6 +826,24 @@ public class ClickableObject : MonoBehaviour
 
         // In case SaveSystem initializes a frame later, run a delayed refresh
         StartCoroutine(RefreshLockVisualNextFrame());
+    }
+
+    private void EnsureSaveSystem()
+    {
+        if (SaveSystem.Instance != null)
+        {
+            return;
+        }
+
+        var existing = GameObject.FindObjectOfType<SaveSystem>();
+        if (existing != null)
+        {
+            return;
+        }
+
+        GameObject go = new GameObject("SaveSystem");
+        go.AddComponent<SaveSystem>();
+        DontDestroyOnLoad(go);
     }
 
     private void OnDisable()

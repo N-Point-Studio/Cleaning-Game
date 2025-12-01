@@ -39,7 +39,19 @@ public class TutorialManager : MonoBehaviour
     }
 
     private void Start()
-    {   // SAFETY CHECK: Pastikan steps tidak kosong
+    {
+        // Tandai tutorial selesai otomatis jika player sudah menyelesaikan objek (misal Coin) di save data
+        if (SaveSystem.Instance != null)
+        {
+            var save = SaveSystem.Instance.GetSaveData();
+            if (save != null && save.completedObjects.Count > 0)
+            {
+                PlayerPrefs.SetInt(TutorialCompletedKey, 1);
+                PlayerPrefs.Save();
+            }
+        }
+
+        // SAFETY CHECK: Pastikan steps tidak kosong
         if (PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1)
         {
             Debug.Log("[Tutorial] Sudah selesai sebelumnya. Tutorial tidak akan ditampilkan.");
