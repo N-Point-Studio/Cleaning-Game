@@ -14,6 +14,10 @@ public class SurfaceDetection : MonoBehaviour
     [SerializeField] private float rayLength = 10f;
     [SerializeField] private LayerMask dirtsLayerMask;
     [SerializeField] private CollisionToolsType surfaceType = CollisionToolsType.Texture;
+    [SerializeField] private RectTransform pointerUI;
+
+    public Vector2 TipPoint = new Vector2(0, 0);
+
     public Vector3 RaycastTipPos { get; private set; }
     public Vector3 RaycastTipNormal { get; private set; }
     public bool IsSurfaceDetected { get; private set; }
@@ -34,13 +38,18 @@ public class SurfaceDetection : MonoBehaviour
     {
         if (TouchManager.Instance.isClickedOn && TouchManager.Instance.isInteracting)
         {
-            if (isUsed) PerformRaycastTouch();
+            if (isUsed)
+            {
+                PerformRaycastTouch();
+                ShowPointer(TipPoint);
+            }
         }
         else
         {
             IsSurfaceDetected = false;
-            return;
+            pointerUI.gameObject.SetActive(false);
         }
+
     }
 
     private void PerformRaycastTouch()
@@ -53,12 +62,14 @@ public class SurfaceDetection : MonoBehaviour
 
         Vector2 touchPos = TouchManager.Instance.curScreenPos;
         Ray ray = Camera.main.ScreenPointToRay(new Vector2(touchPos.x, touchPos.y + 400));
+        TipPoint = new Vector2(touchPos.x, touchPos.y + 400);
+        Debug.Log("ray point: " + TipPoint);
 
         Debug.Log("current screen pos: " + touchPos);
         Debug.Log("current screen pos: " + new Vector3(touchPos.x, touchPos.y + 100));
 
         RaycastHit hit;
-        // if (Physics.Raycast(ray, out hit))
+
         if (Physics.Raycast(ray, out hit, rayLength, dirtsLayerMask))
         {
             switch (surfaceType)
@@ -84,6 +95,14 @@ public class SurfaceDetection : MonoBehaviour
             CleaningSurface = null;
             MudObject = null;
         }
+    }
+
+    private void ShowPointer(Vector2 screenPos)
+    {
+        if (SettingManager.Instance.isTipPointEnabled == false) return;
+
+        pointerUI.position = screenPos;
+        pointerUI.gameObject.SetActive(true);
     }
 
     private void EssentialDetecting(RaycastHit hit)

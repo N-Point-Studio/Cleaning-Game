@@ -10,11 +10,14 @@ public class SettingManager : MonoBehaviour
     [SerializeField] private Slider SfxSlider;
     [SerializeField] private Slider BgmSlider;
     [SerializeField] private Switch HapticSwitch;
+    [SerializeField] private Switch CueSwitch;
 
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
 
     public static event Action<float> OnSfxVolumeChanged;
+    public bool isTipPointEnabled = true;
+
 
     private void Awake()
     {
@@ -53,6 +56,8 @@ public class SettingManager : MonoBehaviour
         {
             HapticManager.Instance.SetActiveHaptic(HapticSwitch.isOn);
         }
+
+        isTipPointEnabled = CueSwitch != null && CueSwitch.isOn;
     }
 
     private void OnSfxSliderChanged(float value)
