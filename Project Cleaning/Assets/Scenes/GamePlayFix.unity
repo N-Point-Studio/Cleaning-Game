@@ -650,7 +650,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &114237809
 Transform:
@@ -1343,7 +1343,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &218897321
 Transform:
@@ -10169,7 +10169,7 @@ Light:
   m_Type: 0
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 28.9
+  m_Intensity: 7.5
   m_Range: 16.87
   m_SpotAngle: 60.00605
   m_InnerSpotAngle: 36.269463
@@ -10707,6 +10707,7 @@ MonoBehaviour:
   HapticSwitch: {fileID: 461625841}
   CueSwitch: {fileID: 1525723980}
   bgmSource: {fileID: 0}
+  isTipPointEnabled: 1
 --- !u!114 &1181414303
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17332,7 +17333,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   onImage: {fileID: 2087121223}
   offImage: {fileID: 176067042}
-  isOn: 1
+  isOn: 0
 --- !u!1 &1625247631
 GameObject:
   m_ObjectHideFlags: 0
@@ -17544,7 +17545,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &1638543263
 Transform:

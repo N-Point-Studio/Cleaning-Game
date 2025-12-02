@@ -17,14 +17,14 @@ public class SettingManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
 
-    
+
 
     public static event Action<float> OnSfxVolumeChanged;
     public static event Action<float> OnBgmVolumeChanged;
 
-    public bool isTipPointEnabled = true;
+    public bool isTipPointEnabled = false;
 
-    
+
 
     private void Awake()
     {
