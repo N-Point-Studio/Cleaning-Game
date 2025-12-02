@@ -3,7 +3,13 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Tool_Surface
+  - Tool_Grip
+  - Tools
+  - Dirts
+  - InspectPosition
+  - BGM
   layers:
   - Default
   - TransparentFX
@@ -11,10 +17,10 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - Tools
+  - Dirts
+  - Mud
+  - Model
   - 
   - 
   - 
