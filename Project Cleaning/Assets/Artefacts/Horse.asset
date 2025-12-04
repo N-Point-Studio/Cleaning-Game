@@ -22,4 +22,6 @@ MonoBehaviour:
   - fragment: {fileID: 2023501092284782827, guid: 0352e65ac67094ab1a361be75b37ad8f,
       type: 3}
     correctPosition: {fileID: 0}
-  finishRotation: {x: 15, y: 0, z: 150}
+  finishRotation: {x: -159.794, y: -179.673, z: 44.131}
+  finishPosition: {x: 0.3333753, y: -0.3721576, z: -0.01796973}
+  isSmallSized: 0

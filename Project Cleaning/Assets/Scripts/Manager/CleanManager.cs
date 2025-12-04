@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-    public class CleanManager : MonoBehaviour
-    {
-        public static CleanManager Instance;
+public class CleanManager : MonoBehaviour
+{
+    public static CleanManager Instance;
 
-        public List<Clean> allCleans = new List<Clean>();
-        public List<CleanMesh> allCleanMud = new List<CleanMesh>();
+    public List<Clean> allCleans = new List<Clean>();
+    public List<CleanMesh> allCleanMud = new List<CleanMesh>();
 
     [Header("Progress (0 = kotor, 1 = bersih)")]
     [Range(0, 1f)]
@@ -105,6 +105,7 @@ using UnityEngine;
         }
 
         float cleanTotal = 0;
+
         foreach (var clean in allCleans)
         {
             cleanTotal += clean.GetDirtAmount();
@@ -125,43 +126,43 @@ using UnityEngine;
         return progressCleanMud;
     }
 
-        public void ShowingMudProgress()
+    public void ShowingMudProgress()
+    {
+        var totalMud = allCleanMud.Count;
+        if (totalMud == 0)
         {
-            var totalMud = allCleanMud.Count;
-            if (totalMud == 0)
-            {
-                UIManager.Instance.ShowProgress(UIManager.ProgressType.Dirt, false);
-            }
+            UIManager.Instance.ShowProgress(UIManager.ProgressType.Dirt, false);
         }
-
-        public void ResetForNewSession()
-        {
-            allCleans.Clear();
-            allCleanMud.Clear();
-            totalTexture = 0;
-            totalMud = 0;
-            progressClean = 0f;
-            progressCleanMud = 0f;
-            Debug.Log("[CleanManager] Reset state for new session.");
-        }
-
-        /// <summary>
-        /// Rebuild tracking lists from scene objects (call after all fragments spawned).
-        /// </summary>
-        public void RebuildFromScene()
-        {
-            allCleans.Clear();
-            allCleanMud.Clear();
-
-            allCleans.AddRange(FindObjectsOfType<Clean>());
-            allCleanMud.AddRange(FindObjectsOfType<CleanMesh>());
-
-            totalTexture = allCleans.Count;
-            totalMud = allCleanMud.Count;
-            progressClean = 0f;
-            progressCleanMud = 0f;
-
-            Debug.Log($"[CleanManager] Rebuilt from scene. Texture={totalTexture}, Mud={totalMud}");
-        }
-
     }
+
+    public void ResetForNewSession()
+    {
+        allCleans.Clear();
+        allCleanMud.Clear();
+        totalTexture = 0;
+        totalMud = 0;
+        progressClean = 0f;
+        progressCleanMud = 0f;
+        Debug.Log("[CleanManager] Reset state for new session.");
+    }
+
+    /// <summary>
+    /// Rebuild tracking lists from scene objects (call after all fragments spawned).
+    /// </summary>
+    public void RebuildFromScene()
+    {
+        allCleans.Clear();
+        allCleanMud.Clear();
+
+        allCleans.AddRange(FindObjectsOfType<Clean>());
+        allCleanMud.AddRange(FindObjectsOfType<CleanMesh>());
+
+        totalTexture = allCleans.Count;
+        totalMud = allCleanMud.Count;
+        progressClean = 0f;
+        progressCleanMud = 0f;
+
+        Debug.Log($"[CleanManager] Rebuilt from scene. Texture={totalTexture}, Mud={totalMud}");
+    }
+
+}

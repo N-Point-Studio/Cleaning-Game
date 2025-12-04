@@ -13,6 +13,11 @@ public class ProgressBar : MonoBehaviour
     public Image checkList;
     public TextMeshProUGUI progressText;
 
+    [SerializeField] private AudioSource AudioSourceProgress;
+    [SerializeField] public AudioClip ProfressSound;
+
+    private int lastValue = -1;
+
     private void Update()
     {
         UpdateFill();
@@ -20,39 +25,37 @@ public class ProgressBar : MonoBehaviour
 
     public void SetValue(float value01)
     {
-        //Debug.Log("progress value A : " + value01);
-        if (value01 >= 0.99)
-        {
-            value01 = 1;
-        }
+        if (value01 >= 0.995f)
+            value01 = 1f;
         else
-        {
             value01 = Mathf.Clamp01(value01);
-        }
 
         current = Mathf.RoundToInt(value01 * maximum);
+
+        // 👇 Play sound WHEN we transition into 100 (not every frame)
+        if (current == 100 && lastValue != 100)
+        {
+            if (AudioSourceProgress != null && ProfressSound != null)
+                AudioSourceProgress.PlayOneShot(ProfressSound);
+        }
+
+        lastValue = current;
+
         progressText.text = current.ToString();
         checkList.enabled = current == 100;
         progressText.enabled = current != 100;
+
         UpdateFill();
     }
 
     public void UpdateFill()
     {
         var progress = (float)current / maximum;
-        //Debug.Log("progress value B : " + progress);
-        //Debug.Log("progress value C : " + current);
 
-
-        // Debug.Log($"progress bar dari {name} adalah {current}");
-        if (progress >= 99)
-        {
-            fill.fillAmount = 100;
-        }
+        if (progress >= 0.99f)
+            fill.fillAmount = 1f;
         else
-        {
             fill.fillAmount = progress;
-        }
     }
 
     public int GetValue()
@@ -60,4 +63,3 @@ public class ProgressBar : MonoBehaviour
         return current;
     }
 }
-

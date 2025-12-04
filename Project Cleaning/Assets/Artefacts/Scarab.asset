@@ -33,3 +33,6 @@ MonoBehaviour:
       type: 3}
     correctPosition: {fileID: 9062850766157083302, guid: c6ca1f3ca50f54542932760948824075,
       type: 3}
+  finishRotation: {x: 0, y: 0, z: 0}
+  finishPosition: {x: 0, y: 0, z: 0}
+  isSmallSized: 1

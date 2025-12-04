@@ -123,8 +123,10 @@ public class GameLoader : MonoBehaviour
         UIManager.Instance.SetArtefactName(artefactData.artifactName);
 
         Vector3 eulerAngles = artefactData.finishRotation;
+        Vector3 position = artefactData.finishPosition;
+
         Quaternion rotation = Quaternion.Euler(eulerAngles);
-        GamePlayManager.Instance.SetFinishedRotation(rotation);
+        GamePlayManager.Instance.SetFinishedRotationAndRotation(rotation, position);
 
         AssembleManager.Instance.ShowingAssembleProgress();
     }

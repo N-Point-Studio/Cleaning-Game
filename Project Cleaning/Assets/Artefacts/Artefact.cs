@@ -18,4 +18,6 @@ public class Artefact : ScriptableObject
     public string history;
     public List<ArtefactFragmentData> artefacts;
     public Vector3 finishRotation;
+    public Vector3 finishPosition;
+    public bool isSmallSized;
 }

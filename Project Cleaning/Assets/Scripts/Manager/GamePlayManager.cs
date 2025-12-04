@@ -29,7 +29,7 @@ public class GamePlayManager : MonoBehaviour
 
 
     private Quaternion finishedRotation = Quaternion.Euler(0f, 0f, 0f);
-    private Vector3 finishedPosition = new Vector3(0f, 0f, 0f);
+    private Vector3 finishedObjectPosition = new Vector3(0f, 0f, 0f);
 
     // Cached object context for the current gameplay session
     private ObjectType sessionObjectType = ObjectType.ChinaCoin;
@@ -117,13 +117,20 @@ public class GamePlayManager : MonoBehaviour
 
                 Debug.Log("Cluster Finished: " + cluster.name);
                 cluster.SwitchState(new ClusterFinishState(cluster));
+                cluster.transform.SetParent(ClearInspect, worldPositionStays: false);
 
-                cluster.transform.SetPositionAndRotation(
-                    Vector3.Lerp(cluster.transform.position, ClearInspect.position, Time.deltaTime * 2),
-                    Quaternion.Slerp(cluster.transform.rotation, finishedRotation, Time.deltaTime * 2f
-                ));
+                cluster.transform.localPosition = Vector3.Lerp(
+                    cluster.transform.localPosition,
+                    finishedObjectPosition,
+                    Time.deltaTime * 2f
+                );
 
-                cluster.transform.SetParent(ClearInspect);
+                cluster.transform.localRotation = Quaternion.Slerp(
+                    cluster.transform.localRotation,
+                    finishedRotation,
+                    Time.deltaTime * 2f
+                );
+
                 isGameFinished = true;
             }
             else
@@ -159,12 +166,20 @@ public class GamePlayManager : MonoBehaviour
                 Debug.Log("Fragment Finished: " + fragment.name);
                 fragment.SwitchState(new FragmentFinishState(fragment));
 
-                fragment.transform.SetPositionAndRotation(
-                    Vector3.Lerp(fragment.transform.position, ClearInspect.position, Time.deltaTime * 2),
-                    Quaternion.Slerp(fragment.transform.rotation, finishedRotation, Time.deltaTime * 2f)
+                fragment.transform.SetParent(ClearInspect, worldPositionStays: false);
+
+                fragment.transform.localPosition = Vector3.Lerp(
+                    fragment.transform.localPosition,
+                    finishedObjectPosition,
+                    Time.deltaTime * 2f
                 );
 
-                fragment.transform.SetParent(ClearInspect);
+                fragment.transform.localRotation = Quaternion.Slerp(
+                    fragment.transform.localRotation,
+                    finishedRotation,
+                    Time.deltaTime * 2f
+                );
+
                 isGameFinished = true;
             }
         }
@@ -386,8 +401,9 @@ public class GamePlayManager : MonoBehaviour
         }
     }
 
-    public void SetFinishedRotation(Quaternion rotationEuler)
+    public void SetFinishedRotationAndRotation(Quaternion rotationEuler, Vector3 position)
     {
         finishedRotation = rotationEuler;
+        finishedObjectPosition = position;
     }
 }

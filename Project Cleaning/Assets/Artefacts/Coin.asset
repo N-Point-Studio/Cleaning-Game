@@ -27,3 +27,6 @@ MonoBehaviour:
       type: 3}
     correctPosition: {fileID: 7158460592522369333, guid: 6bd600981fe9448bda98e3709c908025,
       type: 3}
+  finishRotation: {x: 0, y: 0, z: 0}
+  finishPosition: {x: 0, y: 0, z: 0}
+  isSmallSized: 1
