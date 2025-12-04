@@ -18829,7 +18829,7 @@ MonoBehaviour:
   autoSelectByObjectType: 1
   artefactMappings:
   - objectType: 0
-    artefact: {fileID: 11400000, guid: 0e8f89b3d78714e47b3ec27879c20e78, type: 2}
+    artefact: {fileID: 11400000, guid: be5bcc866d7c24e92a67ef37e57beff7, type: 2}
   - objectType: 1
     artefact: {fileID: 11400000, guid: 1c3b6e9d8184949cf8925a6e79acfa83, type: 2}
   - objectType: 2
