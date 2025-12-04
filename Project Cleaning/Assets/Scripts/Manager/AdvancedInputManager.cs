@@ -19,6 +19,8 @@ public class AdvancedInputManager : MonoBehaviour
     [SerializeField] private float maxPinchTime = 3f;
     [SerializeField] private float earlyPinchDetectionTime = 0.1f;
     [SerializeField] private float pinchVsSwipePriority = 4f;
+    [SerializeField] private float autoPinchTriggerTime = 0.25f;      // How long two fingers must stay before auto-triggering pinch
+    [SerializeField] private float autoPinchMinDistance = 6f;         // Minimum distance change (pixels) to auto-trigger
 
     // Core components
     private TopDownCameraController cameraController;
@@ -38,6 +40,8 @@ public class AdvancedInputManager : MonoBehaviour
     // Gesture conflict resolution
     private bool isPinchInProgress = false;
     private bool isSwipeBlocked = false;
+    private float pinchStartTime = 0f;
+    private float pinchStartDistance = 0f;
 
     // Singleton
     public static AdvancedInputManager Instance { get; private set; }
@@ -262,7 +266,11 @@ public class AdvancedInputManager : MonoBehaviour
                 if (gameModeManager != null && !gameModeManager.IsInInitialMode())
                 {
                     pinchDetectionSystem.ForceStartPinch();
-                    Debug.Log("=== INSTANT PINCH DETECTION - Force starting pinch ===");
+                    var touch1 = Input.GetTouch(0);
+                    var touch2 = Input.GetTouch(1);
+                    pinchStartTime = Time.time;
+                    pinchStartDistance = Vector2.Distance(touch1.position, touch2.position);
+                    Debug.Log($"=== INSTANT PINCH DETECTION - Force starting pinch (startDist={pinchStartDistance:F1}) ===");
                 }
 
                 isPinchInProgress = true;
@@ -347,6 +355,21 @@ public class AdvancedInputManager : MonoBehaviour
                 {
                     isSwipeBlocked = true;
                     Debug.Log("=== PINCH MOVEMENT DETECTED - Blocking swipe ===");
+                }
+
+                // AUTO-TRIGGER: If two fingers stay for a short time with small movement, still treat as a pinch
+                float timeHeld = Time.time - pinchStartTime;
+                float currentDistance = Vector2.Distance(touch1.position, touch2.position);
+                float distanceChange = currentDistance - pinchStartDistance;
+                if (timeHeld >= autoPinchTriggerTime && Mathf.Abs(distanceChange) >= autoPinchMinDistance)
+                {
+                    var direction = distanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
+                    Vector2 pinchCenter = (touch1.position + touch2.position) * 0.5f;
+                    Debug.Log($"=== AUTO PINCH TRIGGER: time={timeHeld:F2}s, change={distanceChange:F1} -> {direction} ===");
+                    HandlePinchGesture(direction, pinchCenter);
+                    isPinchInProgress = false;
+                    isSwipeBlocked = false;
+                    return;
                 }
 
                 // BACKUP DETECTION: Force gesture completion if significant change detected
@@ -537,7 +560,10 @@ public class AdvancedInputManager : MonoBehaviour
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
         Debug.Log($"=== HANDLE PINCH GESTURE: Direction={direction}, Mode={currentMode}, Center={pinchCenter} ===");
 
-        if (currentMode == GameModeManager.GameMode.Exploration && direction == PinchDirection.In)
+        // NOTE: Direction mapping (as requested):
+        //  - Pinch OUT (fingers apart) => Zoom IN (enter zoom)
+        //  - Pinch IN  (fingers together) => Zoom OUT (return to exploration)
+        if (currentMode == GameModeManager.GameMode.Exploration && direction == PinchDirection.Out)
         {
             // Block input and acquire lock for the transition
             BlockInputFor(0.3f);
@@ -556,7 +582,7 @@ public class AdvancedInputManager : MonoBehaviour
                 cameraAnimator?.EnterZoomModeAtCenter();
             }
         }
-        else if (currentMode == GameModeManager.GameMode.Zoom && direction == PinchDirection.Out)
+        else if (currentMode == GameModeManager.GameMode.Zoom && direction == PinchDirection.In)
         {
             // Block input for the transition
             BlockInputFor(0.4f); // Block for slightly longer than the transition

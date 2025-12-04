@@ -67,6 +67,11 @@ public class GamePlayManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!IsGameplayScene())
+        {
+            return; // Ensure gameplay logic only runs in gameplay scenes
+        }
+
         if (UIManager.Instance == null || AssembleManager.Instance == null)
         {
             return; // Scene unloading or managers not ready
@@ -398,6 +403,35 @@ public class GamePlayManager : MonoBehaviour
                 return ChapterType.Mesir;
             default:
                 return ChapterType.China;
+        }
+    }
+
+
+    private bool IsGameplayScene()
+    {
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.ToLower();
+        return sceneName.Contains("gameplay");
+    }
+
+    private void OnDisable()
+    {
+        // Stop any finish animation when leaving the gameplay scene
+        isGameFinished = false;
+        StopAllCoroutines();
+
+        if (Environment != null)
+        {
+            Environment.transform.SetPositionAndRotation(environmentStartPos, environmentStartRot);
+        }
+
+        if (GlitterParticle != null)
+        {
+            GlitterParticle.gameObject.SetActive(false);
+        }
+
+        if (ToolCamera != null)
+        {
+            ToolCamera.enabled = true;
         }
     }
 
