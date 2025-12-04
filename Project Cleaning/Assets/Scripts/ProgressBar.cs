@@ -36,7 +36,10 @@ public class ProgressBar : MonoBehaviour
         if (current == 100 && lastValue != 100)
         {
             if (AudioSourceProgress != null && ProfressSound != null)
+            {
                 AudioSourceProgress.PlayOneShot(ProfressSound);
+                HapticManager.Instance.Light();
+            }
         }
 
         lastValue = current;

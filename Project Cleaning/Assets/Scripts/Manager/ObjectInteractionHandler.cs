@@ -55,15 +55,18 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.OnEnterZoomMode += () => {
+            GameModeManager.Instance.OnEnterZoomMode += () =>
+            {
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Zoom mode entered ===");
             };
-            GameModeManager.Instance.OnEnterExplorationMode += () => {
+            GameModeManager.Instance.OnEnterExplorationMode += () =>
+            {
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Exploration mode entered ===");
             };
-            GameModeManager.Instance.OnEnterInitialMode += () => {
+            GameModeManager.Instance.OnEnterInitialMode += () =>
+            {
                 lastModeChangeTime = Time.time;
                 Debug.Log("=== OBJECT HANDLER - Initial mode entered ===");
             };

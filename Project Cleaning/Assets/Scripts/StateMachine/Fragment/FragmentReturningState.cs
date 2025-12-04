@@ -18,6 +18,7 @@ public class FragmentReturningState : FragmentBaseState
     {
 
         stateMachine.audioSource.PlayOneShot(stateMachine.putSound);
+        HapticManager.Instance.Light();
         Debug.Log(stateMachine.name + "is returning");
         stateMachine.Interaction.DisableAllInteraction();
         stateMachine.CurrentStatus = "Returning";

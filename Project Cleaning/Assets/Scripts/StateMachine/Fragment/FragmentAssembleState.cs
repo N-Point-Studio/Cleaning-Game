@@ -72,5 +72,6 @@ public class FragmentAssembledState : FragmentBaseState
         }
 
         stateMachine.audioSource.PlayOneShot(stateMachine.assembleSound);
+        HapticManager.Instance.Light();
     }
 }
