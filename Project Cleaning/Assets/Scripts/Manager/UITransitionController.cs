@@ -14,6 +14,7 @@ public class UITransitionController : MonoBehaviour
     [SerializeField] private Image startExplorationImage;
     [SerializeField] private Image additionalImage1;
     [SerializeField] private Image additionalImage2;
+    public System.Action OnStartExploration;
 
     [Header("UI Transition Settings")]
     [SerializeField] private float buttonFadeDuration = 0.5f;
@@ -133,6 +134,9 @@ public class UITransitionController : MonoBehaviour
         if (additionalImage2 != null) additionalImage2.raycastTarget = false;
 
         StartCoroutine(ElegantButtonTransition());
+
+        // Notify listeners (e.g., SaveSystem) that exploration has started
+        OnStartExploration?.Invoke();
     }
 
     private IEnumerator ElegantButtonTransition()

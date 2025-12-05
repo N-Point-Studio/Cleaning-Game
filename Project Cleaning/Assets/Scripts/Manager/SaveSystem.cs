@@ -13,6 +13,10 @@ public class SaveSystem : MonoBehaviour
     [Header("Save Settings")]
     [SerializeField] private string saveFileName = "GameProgress.json";
     [SerializeField] private bool enableDebugLogs = false;
+    [Header("UI Hooks")]
+    [SerializeField] private UnityEngine.UI.Button resetButton; // Optional: drag a Reset button here
+    [SerializeField] private bool showResetButtonInInitialModeOnly = true;
+    [SerializeField] private UITransitionController uiTransitionController; // Optional: hook StartExploration event
 
     // Current save data
     private SaveData currentSaveData;
@@ -31,6 +35,7 @@ public class SaveSystem : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             InitializeSaveSystem();
+            WireResetButton();
         }
         else
         {
@@ -267,6 +272,76 @@ public class SaveSystem : MonoBehaviour
         OnDataReset?.Invoke();
     }
 
+    private void WireResetButton()
+    {
+        if (resetButton == null)
+        {
+            return;
+        }
+
+        resetButton.onClick.RemoveListener(ResetAllProgress);
+        resetButton.onClick.AddListener(ResetAllProgress);
+        Debug.Log("[SaveSystem] Reset button wired to ResetAllProgress");
+
+        // Optional: only visible/clickable in Initial mode
+        if (showResetButtonInInitialModeOnly)
+        {
+            StartCoroutine(WaitForGameModeManagerThenHook());
+        }
+
+        // If a UITransitionController is assigned, also hide the reset button when its start transition begins
+        if (uiTransitionController == null)
+        {
+            uiTransitionController = UITransitionController.Instance;
+        }
+        if (uiTransitionController != null)
+        {
+            uiTransitionController.OnStartExploration += HideResetButton;
+        }
+    }
+
+    private System.Collections.IEnumerator WaitForGameModeManagerThenHook()
+    {
+        int attempts = 0;
+        while (GameModeManager.Instance == null && attempts < 50)
+        {
+            yield return null;
+            attempts++;
+        }
+
+        if (GameModeManager.Instance != null)
+        {
+            HandleModeChanged(GameModeManager.Instance.GetCurrentMode());
+            GameModeManager.Instance.OnModeChanged += HandleModeChanged;
+        }
+        else
+        {
+            Debug.LogWarning("[SaveSystem] GameModeManager not found; reset button visibility will not auto-toggle.");
+        }
+    }
+
+    private void HandleModeChanged(GameModeManager.GameMode mode)
+    {
+        if (!showResetButtonInInitialModeOnly || resetButton == null) return;
+        ToggleResetButton(mode == GameModeManager.GameMode.Initial);
+    }
+
+    private void ToggleResetButton(bool visible)
+    {
+        if (resetButton == null) return;
+
+        resetButton.gameObject.SetActive(visible);
+        var cg = resetButton.GetComponent<CanvasGroup>() ?? resetButton.gameObject.AddComponent<CanvasGroup>();
+        cg.alpha = visible ? 1f : 0f;
+        resetButton.interactable = visible;
+        cg.blocksRaycasts = visible;
+    }
+
+    private void HideResetButton()
+    {
+        ToggleResetButton(false);
+    }
+
     /// <summary>
     /// Reset progress then reload the current scene (for quick testing via inspector context menu).
     /// </summary>
@@ -404,6 +479,14 @@ public class SaveSystem : MonoBehaviour
     {
         if (Instance == this)
         {
+            if (GameModeManager.Instance != null)
+            {
+                GameModeManager.Instance.OnModeChanged -= HandleModeChanged;
+            }
+            if (uiTransitionController != null)
+            {
+                uiTransitionController.OnStartExploration -= HideResetButton;
+            }
             Debug.Log("=== SaveSystem DESTROYING ===");
             Debug.Log("Saving data before destroy...");
 
