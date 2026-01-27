@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Project Cleaning.sln"
+    "dotnet.defaultSolution": "Project Cleaning.slnx"
 }
