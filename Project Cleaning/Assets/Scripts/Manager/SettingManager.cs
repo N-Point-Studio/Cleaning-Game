@@ -68,11 +68,13 @@ public class SettingManager : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_ANDROID || UNITY_IOS
         // SAFETY CHECK: Prevent NullReferenceException during scene transitions
         if (HapticManager.Instance != null && HapticSwitch != null)
         {
             HapticManager.Instance.SetActiveHaptic(HapticSwitch.isOn);
         }
+#endif
 
         isTipPointEnabled = CueSwitch != null && CueSwitch.isOn;
     }

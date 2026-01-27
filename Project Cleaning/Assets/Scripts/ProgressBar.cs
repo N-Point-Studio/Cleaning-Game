@@ -38,7 +38,9 @@ public class ProgressBar : MonoBehaviour
             if (AudioSourceProgress != null && ProfressSound != null)
             {
                 AudioSourceProgress.PlayOneShot(ProfressSound);
+#if UNITY_ANDROID || UNITY_IOS
                 HapticManager.Instance.Light();
+#endif
             }
         }
 

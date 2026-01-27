@@ -1,5 +1,7 @@
 using UnityEngine;
+#if UNITY_ANDROID || UNITY_IOS
 using CandyCoded.HapticFeedback;
+#endif
 
 public class HapticManager : MonoBehaviour
 {
@@ -51,19 +53,27 @@ public class HapticManager : MonoBehaviour
         switch (type)
         {
             case HapticType.Default:
+#if UNITY_ANDROID || UNITY_IOS
                 Handheld.Vibrate();
+#endif
                 break;
 
             case HapticType.Light:
+#if UNITY_ANDROID || UNITY_IOS
                 HapticFeedback.LightFeedback();
+#endif
                 break;
 
             case HapticType.Medium:
+#if UNITY_ANDROID || UNITY_IOS
                 HapticFeedback.MediumFeedback();
+#endif
                 break;
 
             case HapticType.Heavy:
+#if UNITY_ANDROID || UNITY_IOS
                 HapticFeedback.HeavyFeedback();
+#endif
                 break;
         }
     }

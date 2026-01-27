@@ -152,7 +152,9 @@ public class ToolCleaningSurface : MonoBehaviour
             // Start continuous haptics only once
             if (!wasCleaningLastFrame)
             {
+#if UNITY_ANDROID || UNITY_IOS
                 HapticManager.Instance.StartContinuous(HapticManager.HapticType.Medium);
+#endif
             }
         }
         else
@@ -160,7 +162,9 @@ public class ToolCleaningSurface : MonoBehaviour
             // Stop when movement stops or surface lost
             if (wasCleaningLastFrame)
             {
+#if UNITY_ANDROID || UNITY_IOS
                 HapticManager.Instance.StopContinuous();
+#endif
             }
         }
 
