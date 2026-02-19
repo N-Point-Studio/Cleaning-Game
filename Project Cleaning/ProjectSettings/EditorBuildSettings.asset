@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/[APP]/Scenes/New Start Game Sandy.unity
-    guid: 623eb75db2b584121bcc5e06db26c639
+    path: Assets/[APP]/Scenes/NEW_StartGame.unity
+    guid: 7f23538085d9c4a418de29f04ea5f308
   - enabled: 1
     path: Assets/[APP]/Scenes/TransitionScreen.unity
     guid: 488486e415a42463685d3163a512d620

@@ -22,7 +22,7 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private bool onlyCreateOnMainScene = true;
 
     [Header("Scene Detection")]
-    [SerializeField] private string[] mainSceneNames = { "New Start Game Sandy", "Main Menu", "StartScene" };
+    [SerializeField] private string[] mainSceneNames = { "NEW_StartGame", "Main Menu", "StartScene" };
 
     private bool hasInitialized = false;
 

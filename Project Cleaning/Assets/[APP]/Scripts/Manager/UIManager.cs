@@ -300,7 +300,7 @@ public class UIManager : MonoBehaviour
         if (stm.IsTransitionInProgress())
         {
             Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
-            stm.ForceTransitionImmediate("New Start Game Sandy");
+            stm.ForceTransitionImmediate("NEW_StartGame");
             return;
         }
 
@@ -313,7 +313,7 @@ public class UIManager : MonoBehaviour
 
         stm.StartStagedTransition(
             "TransitionScreen",
-            "New Start Game Sandy",
+            "NEW_StartGame",
             0f,
             null,
             false, // do not force entering visuals; allow controller to pick exiting mode
@@ -454,7 +454,7 @@ public class UIManager : MonoBehaviour
                 }
 
                 Debug.Log($"Using fallback ObjectType: {fallbackObjectType}");
-                SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(fallbackObjectType, "New Start Game Sandy", "UIManager");
+                SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(fallbackObjectType, "NEW_StartGame", "UIManager");
             }
             else
             {
@@ -480,7 +480,7 @@ public class UIManager : MonoBehaviour
         if (SceneTransitionManager.Instance != null)
         {
             Debug.Log("SceneTransitionManager created successfully, triggering transition");
-            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(ObjectType.ChinaCoin, "New Start Game Sandy", "UIManager");
+            SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(ObjectType.ChinaCoin, "NEW_StartGame", "UIManager");
         }
         else
         {

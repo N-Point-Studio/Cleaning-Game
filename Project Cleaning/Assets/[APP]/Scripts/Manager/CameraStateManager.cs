@@ -219,7 +219,7 @@ public class CameraStateManager : MonoBehaviour
 
     private bool IsMenuScene(string sceneName)
     {
-        return sceneName.Contains("New Start Game Sandy") ||
+        return sceneName.Contains("NEW_StartGame") ||
                sceneName.Contains("Menu") ||
                sceneName.Contains("Main");
     }

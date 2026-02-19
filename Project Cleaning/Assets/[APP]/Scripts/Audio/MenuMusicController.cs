@@ -25,6 +25,7 @@ public class MenuMusicController : MonoBehaviour
         }
 
         instance = this;
+        transform.SetParent(null); 
         DontDestroyOnLoad(gameObject);
 
         if (musicSource == null)

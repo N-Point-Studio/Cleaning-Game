@@ -47,7 +47,9 @@ public class ClusterStateMachine : StateMachine
         {
             if (target.targetFragment == other)
             {
-                correctPos = target.correctPosition;
+                correctPos = null;
+                correctPos.position = target.correctPosition.Position;
+                correctPos.rotation = Quaternion.Euler(target.correctPosition.Rotation);
                 return true;
             }
         }

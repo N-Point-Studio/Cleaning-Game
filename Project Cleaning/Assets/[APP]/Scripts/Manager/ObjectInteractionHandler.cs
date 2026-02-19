@@ -24,6 +24,7 @@ public class ObjectInteractionHandler : MonoBehaviour
     // Core components
     private Camera playerCamera;
     private float lastModeChangeTime = 0f;
+    private ClickableObject currentlyFocusedObject;
 
     // Singleton
     public static ObjectInteractionHandler Instance { get; private set; }
@@ -52,6 +53,9 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     private void Start()
     {
+        MainMenuEvents.OnCloseArtefactDetail += HandleUIClose;
+        MainMenuEvents.OnRequestArtefactPlay += HandleUIPlay;
+
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
         {
@@ -63,6 +67,8 @@ public class ObjectInteractionHandler : MonoBehaviour
             GameModeManager.Instance.OnEnterExplorationMode += () =>
             {
                 lastModeChangeTime = Time.time;
+                 ArtefactDetailController detailUI = FindObjectOfType<ArtefactDetailController>(true);
+                if (detailUI != null && detailUI.gameObject.activeSelf) detailUI.CloseDetail();
                 Debug.Log("=== OBJECT HANDLER - Exploration mode entered ===");
             };
             GameModeManager.Instance.OnEnterInitialMode += () =>
@@ -90,6 +96,9 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (Instance == this)
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+
+            MainMenuEvents.OnCloseArtefactDetail -= HandleUIClose;
+            MainMenuEvents.OnRequestArtefactPlay -= HandleUIPlay;
         }
     }
     #endregion
@@ -167,11 +176,31 @@ public class ObjectInteractionHandler : MonoBehaviour
             return;
         }
 
+        currentlyFocusedObject = clickable;
+
         GameModeManager.Instance.EnterZoomMode();
 
         // Immediate check after mode change
         // STEP 2: Wait a frame to ensure mode change is processed, then set camera focus
         StartCoroutine(SetCameraFocusDelayed(clickable.transform));
+
+        if (clickable.artefactData != null)
+        {
+            ArtefactDetailController detailUI = FindObjectOfType<ArtefactDetailController>(true);
+            if (detailUI != null)
+            {
+                // Cek status dari fungsi IsCompleted() yang sudah ada di ClickableObject.cs (mengecek SaveSystem)
+                bool isCompleted = clickable.IsCompleted();
+                ChapterType chapter = clickable.GetChapterFromObjectType();
+
+                detailUI.OpenDetail(clickable.artefactData, chapter, isCompleted);
+                detailUI.ShowContentFadeIn();
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[Integrasi UI] ArtefactData belum di-assign di {clickable.name}!");
+        }
     }
 
     private System.Collections.IEnumerator SetCameraFocusDelayed(Transform target)
@@ -209,15 +238,17 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     private void HandleZoomClick(ClickableObject clickable)
     {
-        if (enableSceneChange && clickable.CanChangeScene())
-        {
-            PlayClickFeedback(clickable); // Play feedback before changing scene.
-            HandleSceneChange(clickable);
-        }
-        else
-        {
-            PlayClickFeedback(clickable);
-        }
+        // if (enableSceneChange && clickable.CanChangeScene())
+        // {
+        //     PlayClickFeedback(clickable); // Play feedback before changing scene.
+        //     HandleSceneChange(clickable);
+        // }
+        // else
+        // {
+        //     PlayClickFeedback(clickable);
+        // }
+
+        PlayClickFeedback(clickable);
     }
 
     private void HandleSceneChange(ClickableObject clickableObject)
@@ -614,6 +645,35 @@ public class ObjectInteractionHandler : MonoBehaviour
             Debug.Log($"{i + 1}. Name: {switcher.name}");
             Debug.Log($"   ChapterType: {switcher.GetChapterType()}");
             Debug.Log($"   ObjectType: {switcher.GetObjectType()}");
+        }
+    }
+
+    private void HandleUIClose()
+    {
+        // Saat tombol "Back" di UI ditekan -> Zoom Out
+        if (GameModeManager.Instance != null && GameModeManager.Instance.IsInZoomMode())
+        {
+            // Kembalikan kamera ke Overview
+            TopDownCameraController.Instance?.TransitionToOverview();
+            // GameModeManager.Instance.ReturnToExplorationMode();
+        }
+
+        currentlyFocusedObject = null;
+        
+        ArtefactDetailController detailUI = FindObjectOfType<ArtefactDetailController>(true);
+        if (detailUI != null) detailUI.CloseDetail();
+    }
+
+    private void HandleUIPlay(ArtefactData data)
+    {
+        // Saat tombol "Clean" di UI ditekan -> Masuk Gameplay
+        if (currentlyFocusedObject != null && enableSceneChange)
+        {
+            // Mainkan efek suara (opsional)
+            MenuSfxManager.Instance?.PlayClick();
+            
+            // Panggil transisi scene yang biasa digunakan
+            HandleSceneChange(currentlyFocusedObject);
         }
     }
     #endregion

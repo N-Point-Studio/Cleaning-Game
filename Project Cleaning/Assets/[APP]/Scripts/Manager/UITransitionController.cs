@@ -20,6 +20,7 @@ public class UITransitionController : MonoBehaviour
     [SerializeField] private float buttonFadeDuration = 0.5f;
     [SerializeField] private float buttonScaleDuration = 0.3f;
     [SerializeField] private float cameraDelayAfterButton = 0.2f;
+    private Sequence currentTransitionSequence;
 
     // Singleton
     public static UITransitionController Instance { get; private set; }
@@ -70,7 +71,7 @@ public class UITransitionController : MonoBehaviour
     private void OnDestroy()
     {
         // Kill all DOTween animations to prevent cleanup warnings
-        DOTween.Kill(this);
+        currentTransitionSequence?.Kill();
 
         // Also kill any animations on our UI images
         if (startExplorationImage != null) DOTween.Kill(startExplorationImage.transform);
@@ -146,7 +147,8 @@ public class UITransitionController : MonoBehaviour
         if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
         if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
 
-        var masterSequence = DOTween.Sequence();
+        currentTransitionSequence?.Kill();
+        currentTransitionSequence = DOTween.Sequence();
 
         for (int i = 0; i < imagesToAnimate.Count; i++)
         {
@@ -161,10 +163,10 @@ public class UITransitionController : MonoBehaviour
             imageSequence.Append(transform.DOScale(0f, buttonFadeDuration * 1.2f).SetEase(Ease.InSine));
             imageSequence.Join(canvasGroup.DOFade(0f, buttonFadeDuration * 1.2f).SetEase(Ease.InSine));
 
-            masterSequence.Insert(i * 0.15f, imageSequence);
+            currentTransitionSequence.Insert(i * 0.15f, imageSequence);
         }
 
-        yield return masterSequence.WaitForCompletion();
+        yield return currentTransitionSequence.WaitForCompletion();
 
         foreach (var image in imagesToAnimate) image.gameObject.SetActive(false);
         yield return new WaitForSeconds(0.3f);
@@ -209,7 +211,9 @@ public class UITransitionController : MonoBehaviour
 
         if (startExplorationImage != null) SetImageClickable(startExplorationImage, true);
 
-        var masterSequence = DOTween.Sequence();
+        currentTransitionSequence?.Kill();
+        currentTransitionSequence = DOTween.Sequence();
+
         for (int i = 0; i < imagesToAnimate.Count; i++)
         {
             var image = imagesToAnimate[i];
@@ -221,10 +225,10 @@ public class UITransitionController : MonoBehaviour
             imageSequence.Join(canvasGroup.DOFade(1f, buttonFadeDuration * 0.7f).SetEase(Ease.OutSine));
             imageSequence.Append(transform.DOScale(Vector3.one, buttonFadeDuration * 0.3f).SetEase(Ease.OutSine));
 
-            masterSequence.Insert(i * 0.2f, imageSequence);
+            currentTransitionSequence.Insert(i * 0.2f, imageSequence);
         }
 
-        yield return masterSequence.WaitForCompletion();
+        yield return currentTransitionSequence.WaitForCompletion();
 
         // Mark intro transition as shown
         if (SaveSystem.Instance != null)

@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ecdad67285e4111b58296d98da9caa, type: 3}
+  m_Name: CH-1102AD-01
+  m_EditorClassIdentifier: 
+  baseData:
+    id: CH-1102AD-01
+    itemName: "Coin inscribed \u201CChong Ning Tong Bao\u201D"
+    itemDescription: "The characters on this coin exhibit Emperor Huizong\u2019s
+      distinctive calligraphic style, known as \u201Cslender gold\u201D because it
+      resembled finely spun filaments of the precious metal. The emperor\u2019s writings
+      were often carved in stone or metal, as here, and circulated widely among the
+      public."
+    itemIcon: {fileID: 21300000, guid: a35ccb052ac1d48719499f27c406d94b, type: 3}
+    exclude: 0
+  completedIcon: {fileID: 21300000, guid: 670d182c0ed6c466a9d05e5db3f100da, type: 3}
+  unlockedByDefault: 0
+  artefactOrigin: 0
+  artefactFragmentDatas:
+  - prefab: {fileID: 1785754012773963059, guid: 0711851dd19994c7c92188a100a25cd7,
+      type: 3}
+    correctTransform:
+      rotation: {x: 0, y: 0, z: 0}
+      position: {x: 0.131262, y: -0.09944345, z: -0.111332566}
+  - prefab: {fileID: 7920633128953426515, guid: 6f32c287cbebd401cb88435e6d188975,
+      type: 3}
+    correctTransform:
+      rotation: {x: 0, y: 0, z: 0}
+      position: {x: -0.14916083, y: -0.09944948, z: 0.12572178}
+  finishTransform:
+    rotation: {x: 0, y: 0, z: 0}
+    position: {x: 0, y: 0, z: 0}

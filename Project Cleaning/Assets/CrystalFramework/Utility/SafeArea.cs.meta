@@ -9,3 +9,10 @@ MonoImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 130488
+  packageName: Safe Area Helper
+  packageVersion: 1.0.6
+  assetPath: Assets/CrystalFramework/Utility/SafeArea.cs
+  uploadId: 385285

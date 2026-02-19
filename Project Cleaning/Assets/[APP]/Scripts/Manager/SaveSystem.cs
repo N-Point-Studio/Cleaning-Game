@@ -266,9 +266,11 @@ public class SaveSystem : MonoBehaviour
         currentSaveData = new SaveData();
         SaveData();
 
-        Debug.Log("All game progress has been reset!");
+        PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
+        PlayerPrefs.Save();
 
-        // Notify listeners
+        Debug.Log("All game progress and tutorials have been reset!");
+
         OnDataReset?.Invoke();
     }
 
@@ -331,7 +333,13 @@ public class SaveSystem : MonoBehaviour
         if (resetButton == null) return;
 
         resetButton.gameObject.SetActive(visible);
-        var cg = resetButton.GetComponent<CanvasGroup>() ?? resetButton.gameObject.AddComponent<CanvasGroup>();
+        
+        var cg = resetButton.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = resetButton.gameObject.AddComponent<CanvasGroup>();
+        }
+        
         cg.alpha = visible ? 1f : 0f;
         resetButton.interactable = visible;
         cg.blocksRaycasts = visible;
@@ -368,6 +376,10 @@ public class SaveSystem : MonoBehaviour
             }
 
             currentSaveData = new SaveData();
+            
+            PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
+            PlayerPrefs.Save();
+
             OnDataReset?.Invoke();
         }
         catch (System.Exception e)
@@ -471,7 +483,7 @@ public class SaveSystem : MonoBehaviour
         SaveData();
 
         Debug.Log("Data saved. Cleaning up...");
-        CleanupDOTween();
+        // CleanupDOTween();
         Debug.Log("========================================");
     }
 
@@ -491,7 +503,7 @@ public class SaveSystem : MonoBehaviour
             Debug.Log("Saving data before destroy...");
 
             SaveData();
-            CleanupDOTween();
+            // CleanupDOTween();
 
             Debug.Log("SaveSystem destroyed.");
         }
@@ -500,23 +512,23 @@ public class SaveSystem : MonoBehaviour
     /// <summary>
     /// Clean up DOTween instance to avoid leftover [DOTween] GameObject warnings on scene close.
     /// </summary>
-    private void CleanupDOTween()
-    {
-        try
-        {
-            DOTween.KillAll();
-            DOTween.Clear(true);
-            var dotweenGO = GameObject.Find("[DOTween]");
-            if (dotweenGO != null)
-            {
-                Destroy(dotweenGO);
-            }
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogWarning($"DOTween cleanup failed: {ex.Message}");
-        }
-    }
+    // private void CleanupDOTween()
+    // {
+    //     try
+    //     {
+    //         DOTween.KillAll();
+    //         DOTween.Clear(true);
+    //         var dotweenGO = GameObject.Find("[DOTween]");
+    //         if (dotweenGO != null)
+    //         {
+    //             Destroy(dotweenGO);
+    //         }
+    //     }
+    //     catch (System.Exception ex)
+    //     {
+    //         Debug.LogWarning($"DOTween cleanup failed: {ex.Message}");
+    //     }
+    // }
 
     #endregion
 

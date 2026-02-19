@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-    public class AssembleManager : MonoBehaviour
-    {
-        public static AssembleManager Instance { get; private set; }
+public class AssembleManager : MonoBehaviour
+{
+    public static AssembleManager Instance { get; private set; }
 
-        public Transform InspectPosition;
-        public FragmentStateMachine CurrentFragmentInspected;
-        public ClusterStateMachine CurrentClusterInspected;
-        public List<AssemblyTarget> assemblyTargets = new();
-        public List<ClusterStateMachine> clusters = new List<ClusterStateMachine>();
-        public int TotalFragments = 0;
+    public Transform InspectPosition;
+    public FragmentStateMachine CurrentFragmentInspected;
+    public ClusterStateMachine CurrentClusterInspected;
+    public List<AssemblyTarget> assemblyTargets = new();
+    public List<ClusterStateMachine> clusters = new List<ClusterStateMachine>();
+    public int TotalFragments = 0;
 
     [Header("Progress")]
     [Range(0, 1f)]
@@ -66,10 +66,10 @@ using UnityEngine.SceneManagement;
         }
     }
 
-        private void Update()
-        {
-            AssembleProgress();
-        }
+    private void Update()
+    {
+        AssembleProgress();
+    }
 
     private void LateUpdate()
     {
@@ -97,7 +97,10 @@ using UnityEngine.SceneManagement;
         {
             if (target.targetFragment == other)
             {
-                correctPos = target.correctPosition;
+                // correctPos = target.correctPosition;
+                correctPos = null;
+                correctPos.position = target.correctPosition.Position;
+                correctPos.rotation = Quaternion.Euler(target.correctPosition.Rotation);
                 return true;
             }
         }
@@ -105,48 +108,49 @@ using UnityEngine.SceneManagement;
         return false;
     }
 
-        public void RegisterCluster(ClusterStateMachine cluster, bool isRegister)
+
+    public void RegisterCluster(ClusterStateMachine cluster, bool isRegister)
+    {
+        if (!clusters.Contains(cluster))
         {
-            if (!clusters.Contains(cluster))
+            if (isRegister)
             {
-                if (isRegister)
-                {
-                    clusters.Add(cluster);
-                }
-                else
-                {
-                    clusters.Remove(cluster);
-                }
+                clusters.Add(cluster);
+            }
+            else
+            {
+                clusters.Remove(cluster);
             }
         }
+    }
 
-        /// <summary>
-        /// Reset all assemble state for a new gameplay session.
-        /// Call this before spawning new artefact fragments.
-        /// </summary>
-        public void ResetForNewSession()
-        {
-            assemblyTargets.Clear();
-            clusters.Clear();
-            CurrentFragmentInspected = null;
-            CurrentClusterInspected = null;
-            TotalFragments = 0;
-            progressAttach = 0f;
-            RefreshInspectPosition();
-            Debug.Log("[AssembleManager] Reset state for new session.");
-        }
+    /// <summary>
+    /// Reset all assemble state for a new gameplay session.
+    /// Call this before spawning new artefact fragments.
+    /// </summary>
+    public void ResetForNewSession()
+    {
+        assemblyTargets.Clear();
+        clusters.Clear();
+        CurrentFragmentInspected = null;
+        CurrentClusterInspected = null;
+        TotalFragments = 0;
+        progressAttach = 0f;
+        RefreshInspectPosition();
+        Debug.Log("[AssembleManager] Reset state for new session.");
+    }
 
-        /// <summary>
-        /// Rebuild cluster tracking from current scene objects (call after fragments/clusters spawned).
-        /// </summary>
-        public void RebuildFromScene()
-        {
-            clusters.Clear();
-            clusters.AddRange(FindObjectsOfType<ClusterStateMachine>());
-            CurrentFragmentInspected = null;
-            CurrentClusterInspected = null;
-            Debug.Log($"[AssembleManager] Rebuilt clusters from scene. Count={clusters.Count}");
-        }
+    /// <summary>
+    /// Rebuild cluster tracking from current scene objects (call after fragments/clusters spawned).
+    /// </summary>
+    public void RebuildFromScene()
+    {
+        clusters.Clear();
+        clusters.AddRange(FindObjectsOfType<ClusterStateMachine>());
+        CurrentFragmentInspected = null;
+        CurrentClusterInspected = null;
+        Debug.Log($"[AssembleManager] Rebuilt clusters from scene. Count={clusters.Count}");
+    }
 
     private void AssembleProgress()
     {

@@ -103,7 +103,6 @@ public class DoubleTapDetector : MonoBehaviour
 
     public void HandleDoubleTap(Vector2 tapPosition)
     {
-        // Do not start a new transition if one is already happening
         if (AdvancedInputManager.IsInTransition)
         {
             Debug.Log("=== DOUBLE TAP IGNORED - Transition in progress ===");
@@ -112,43 +111,30 @@ public class DoubleTapDetector : MonoBehaviour
 
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
 
-        // Block input for a short duration to prevent the second tap from being processed as a new click
         if (AdvancedInputManager.Instance != null)
         {
-            // Use a longer delay when exiting zoom, as requested by the user
             if (currentMode == GameModeManager.GameMode.Zoom)
-            {
                 AdvancedInputManager.Instance.BlockInputFor(1.0f);
-            }
             else
-            {
                 AdvancedInputManager.Instance.BlockInputFor(0.3f);
-            }
         }
         
         Debug.Log($"=== HANDLE DOUBLE TAP: Mode={currentMode}, Position={tapPosition} ===");
 
-        // Acquire the lock before starting a transition
-        AdvancedInputManager.StartTransitionLock();
-
         switch (currentMode)
         {
             case GameModeManager.GameMode.Exploration:
-                // Double tap in exploration mode = Enter zoom mode at tap position
-                Debug.Log("=== DOUBLE TAP TO ZOOM IN ===");
-                StartCoroutine(SynchronizedEnterZoom(tapPosition));
+                Debug.Log("=== DOUBLE TAP IGNORED - Disabled in Exploration Mode ===");
                 break;
 
             case GameModeManager.GameMode.Zoom:
-                // Double tap in zoom mode = Return to exploration mode with fast animation
                 Debug.Log("=== DOUBLE TAP TO ZOOM OUT ===");
+                AdvancedInputManager.StartTransitionLock();
                 StartCoroutine(SynchronizedReturnToExploration());
                 break;
 
             case GameModeManager.GameMode.Initial:
-                // Double tap ignored in initial mode
                 Debug.Log("=== DOUBLE TAP IGNORED - Still in Initial mode ===");
-                AdvancedInputManager.EndTransitionLock(); // Release lock if no transition happens
                 break;
         }
     }

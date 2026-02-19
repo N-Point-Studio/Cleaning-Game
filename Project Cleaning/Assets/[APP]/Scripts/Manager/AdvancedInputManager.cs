@@ -115,11 +115,11 @@ public class AdvancedInputManager : MonoBehaviour
         }
 
         HandleInput();
-        if (gameModeManager != null && gameModeManager.IsInZoomMode() &&
-            cameraDragSystem != null && cameraController != null)
-        {
-            cameraDragSystem.Update(Time.deltaTime, cameraController);
-        }
+        // if (gameModeManager != null && gameModeManager.IsInZoomMode() &&
+        //     cameraDragSystem != null && cameraController != null)
+        // {
+        //     cameraDragSystem.Update(Time.deltaTime, cameraController);
+        // }
     }
     #endregion
 
@@ -450,7 +450,7 @@ public class AdvancedInputManager : MonoBehaviour
                 objectWasClicked = (objectHandler != null && objectHandler.CheckForObjectClick(screenPosition));
                 swipeDetectionSystem.CancelSwipe(); // ensure swipe system doesn't hold stale state
                 pinchDetectionSystem.Reset();  // clear pinch state when starting drag in zoom
-                cameraDragSystem.StartDrag(screenPosition);
+                // cameraDragSystem.StartDrag(screenPosition);
                 break;
         }
 
@@ -478,11 +478,8 @@ public class AdvancedInputManager : MonoBehaviour
     private void HandleInputDrag(Vector2 screenPosition)
     {
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
-        if (currentMode == GameModeManager.GameMode.Zoom)
-        {
-            cameraDragSystem.UpdateDrag(screenPosition, cameraController);
-        }
-        else if (currentMode == GameModeManager.GameMode.Exploration)
+        
+        if (currentMode == GameModeManager.GameMode.Exploration)
         {
             swipeDetectionSystem.UpdateSwipe(screenPosition);
         }
@@ -491,11 +488,8 @@ public class AdvancedInputManager : MonoBehaviour
     private void HandleInputUp()
     {
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
-        if (currentMode == GameModeManager.GameMode.Zoom)
-        {
-            cameraDragSystem.EndDrag();
-        }
-        else if (currentMode == GameModeManager.GameMode.Exploration)
+        
+        if (currentMode == GameModeManager.GameMode.Exploration)
         {
             var swipeResult = swipeDetectionSystem.EndSwipe();
             if (swipeResult.IsValid) HandleSwipeGesture(swipeResult.Direction);

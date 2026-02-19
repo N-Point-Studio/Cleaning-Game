@@ -22,6 +22,7 @@ public class ClickableImageDisplay : MonoBehaviour
     private ClickableObject clickableObject;
     private Vector3 originalScale;
     private bool isVisible = false;
+    private Sequence currentSequence;
 
     private void Awake()
     {
@@ -84,21 +85,22 @@ public class ClickableImageDisplay : MonoBehaviour
         canvasGroup.alpha = 0f;
 
         // Create smooth animation sequence
-        var sequence = DOTween.Sequence();
+        currentSequence?.Kill();
+        currentSequence = DOTween.Sequence();
 
         // Scale up with bounce
-        sequence.Append(imageGameObject.transform.DOScale(originalScale, animationDuration)
+        currentSequence.Append(imageGameObject.transform.DOScale(originalScale, animationDuration)
                        .SetEase(Ease.OutBack));
 
         // Fade in
-        sequence.Join(canvasGroup.DOFade(1f, animationDuration * 0.8f)
+        currentSequence.Join(canvasGroup.DOFade(1f, animationDuration * 0.8f)
                      .SetEase(Ease.OutSine));
 
         // Auto hide if enabled
         if (autoHideAfterSeconds)
         {
-            sequence.AppendInterval(autoHideDelay);
-            sequence.AppendCallback(HideImage);
+            currentSequence.AppendInterval(autoHideDelay);
+            currentSequence.AppendCallback(HideImage);
         }
     }
 
@@ -106,18 +108,19 @@ public class ClickableImageDisplay : MonoBehaviour
     {
         if (imageGameObject == null || !isVisible) return;
 
-        var sequence = DOTween.Sequence();
+        currentSequence?.Kill();
+        currentSequence = DOTween.Sequence();
 
         // Scale down
-        sequence.Append(imageGameObject.transform.DOScale(Vector3.zero, animationDuration * 0.7f)
+        currentSequence.Append(imageGameObject.transform.DOScale(Vector3.zero, animationDuration * 0.7f)
                        .SetEase(Ease.InBack));
 
         // Fade out
-        sequence.Join(canvasGroup.DOFade(0f, animationDuration * 0.5f)
+        currentSequence.Join(canvasGroup.DOFade(0f, animationDuration * 0.5f)
                      .SetEase(Ease.InSine));
 
         // Hide when complete
-        sequence.OnComplete(HideImmediate);
+        currentSequence.OnComplete(HideImmediate);
     }
 
     private void HideImmediate()
@@ -158,13 +161,6 @@ public class ClickableImageDisplay : MonoBehaviour
         }
 
         // Clean up DOTween
-        if (imageGameObject != null)
-        {
-            DOTween.Kill(imageGameObject.transform);
-        }
-        if (canvasGroup != null)
-        {
-            DOTween.Kill(canvasGroup);
-        }
+        currentSequence?.Kill();
     }
 }

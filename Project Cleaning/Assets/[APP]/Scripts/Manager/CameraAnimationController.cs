@@ -62,10 +62,12 @@ public class CameraAnimationController : MonoBehaviour
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
         {
-            // GameModeManager.Instance.OnEnterExplorationMode += BeginExplorationMode; // This is the line that causes the bug
             GameModeManager.Instance.OnEnterInitialMode += ExitToInitialMode;
-            GameModeManager.Instance.OnEnterZoomMode += () => { }; // Zoom handling is done through EnterZoomMode method
         }
+
+        MainMenuEvents.OnNextPage += PerformSwipeRight;
+        MainMenuEvents.OnPreviousPage += PerformSwipeLeft;
+        MainMenuEvents.OnGoToPage += JumpToPage;
     }
 
     /// <summary>
@@ -113,6 +115,7 @@ public class CameraAnimationController : MonoBehaviour
     public void ResetSlideIndex()
     {
         currentPositionIndex = 0;
+        MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
     }
 
     private IEnumerator ElegantCameraTransitionToExploration()
@@ -451,6 +454,7 @@ public class CameraAnimationController : MonoBehaviour
         if (currentPositionIndex < cameraXPositions.Length - 1)
         {
             currentPositionIndex++;
+            MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
             Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
         }
@@ -481,12 +485,30 @@ public class CameraAnimationController : MonoBehaviour
         if (currentPositionIndex > 0)
         {
             currentPositionIndex--;
+            MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
             Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
         }
         else
         {
             Debug.Log("🚫 Already at leftmost position, cannot swipe left further");
+        }
+    }
+
+    public void JumpToPage(int pageIndex)
+    {
+        if (cameraController == null)
+        {
+            cameraController = TopDownCameraController.Instance;
+            if (cameraController == null) return;
+        }
+
+        if (pageIndex >= 0 && pageIndex < cameraXPositions.Length)
+        {
+            currentPositionIndex = pageIndex;
+            
+            MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
+            AnimateToPosition(cameraXPositions[currentPositionIndex]);
         }
     }
     #endregion
@@ -552,6 +574,12 @@ public class CameraAnimationController : MonoBehaviour
             Instance = null;
             Debug.Log("✅ CameraAnimationController singleton instance cleared");
         }
+
+        MainMenuEvents.OnNextPage -= PerformSwipeRight;
+        MainMenuEvents.OnPreviousPage -= PerformSwipeLeft;
+        MainMenuEvents.OnGoToPage -= JumpToPage;
     }
     #endregion
+
+    public int GetTotalPages() => cameraXPositions.Length;
 }

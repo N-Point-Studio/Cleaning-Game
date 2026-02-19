@@ -28,6 +28,7 @@ public class ImagePopupAnimator : MonoBehaviour
 
     private Vector3 originalScale;
     private bool isAnimating = false;
+    private Sequence currentSequence;
 
     private void Awake()
     {
@@ -97,19 +98,20 @@ public class ImagePopupAnimator : MonoBehaviour
             popupCanvasGroup.alpha = 0f;
 
         // Create animation sequence
-        var sequence = DOTween.Sequence();
+        currentSequence?.Kill();
+        currentSequence = DOTween.Sequence();
 
         // Scale animation
-        sequence.Append(popupImage.transform.DOScale(originalScale, animationDuration).SetEase(scaleEase));
+        currentSequence.Append(popupImage.transform.DOScale(originalScale, animationDuration).SetEase(scaleEase));
 
         // Fade animation (parallel with scale)
         if (popupCanvasGroup != null)
         {
-            sequence.Join(popupCanvasGroup.DOFade(1f, fadeInDuration).SetEase(fadeEase));
+            currentSequence.Join(popupCanvasGroup.DOFade(1f, fadeInDuration).SetEase(fadeEase));
         }
 
         // Complete callback
-        sequence.OnComplete(() =>
+        currentSequence.OnComplete(() =>
         {
             isAnimating = false;
 
@@ -130,19 +132,20 @@ public class ImagePopupAnimator : MonoBehaviour
 
         isAnimating = true;
 
-        var sequence = DOTween.Sequence();
+        currentSequence?.Kill();
+        currentSequence = DOTween.Sequence();
 
         // Fade out first
         if (popupCanvasGroup != null)
         {
-            sequence.Append(popupCanvasGroup.DOFade(0f, fadeInDuration * 0.7f).SetEase(Ease.InSine));
+            currentSequence.Append(popupCanvasGroup.DOFade(0f, fadeInDuration * 0.7f).SetEase(Ease.InSine));
         }
 
         // Scale down
-        sequence.Join(popupImage.transform.DOScale(Vector3.zero, animationDuration * 0.8f).SetEase(Ease.InBack));
+        currentSequence.Join(popupImage.transform.DOScale(Vector3.zero, animationDuration * 0.8f).SetEase(Ease.InBack));
 
         // Hide when done
-        sequence.OnComplete(() =>
+        currentSequence.OnComplete(() =>
         {
             HideImmediate();
             isAnimating = false;
@@ -173,11 +176,6 @@ public class ImagePopupAnimator : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Clean up DOTween
-        DOTween.Kill(transform);
-        if (popupImage != null)
-            DOTween.Kill(popupImage.transform);
-        if (popupCanvasGroup != null)
-            DOTween.Kill(popupCanvasGroup);
+        currentSequence?.Kill();
     }
 }

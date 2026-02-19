@@ -8,6 +8,8 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Collider))]
 public class ClickableObject : MonoBehaviour
 {
+    [Header("Artefact Data")]
+    public ArtefactData artefactData;
 
     [Header("Audio")]
     [SerializeField] private AudioClip clickSound;
@@ -76,7 +78,7 @@ public class ClickableObject : MonoBehaviour
 
     // Shake animation components
     private Vector3 originalPosition;
-    private Sequence currentShakeSequence;
+    private Tween currentShakeSequence;
 
     // ContentSwitcher integration
     private ContentSwitcher linkedContentSwitcher;
@@ -127,8 +129,6 @@ public class ClickableObject : MonoBehaviour
 
         // Don't start shake animation automatically - only when focused/clicked
     }
-
-
 
     private void SetupContentSwitcherDetection()
     {
@@ -823,9 +823,10 @@ public class ClickableObject : MonoBehaviour
         UpdateLockVisual();
         SubscribeToSaveSystemEvents();
 
-
-        // In case SaveSystem initializes a frame later, run a delayed refresh
-        StartCoroutine(RefreshLockVisualNextFrame());
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(RefreshLockVisualNextFrame());
+        }
     }
 
     private void EnsureSaveSystem()
@@ -889,7 +890,10 @@ public class ClickableObject : MonoBehaviour
 
         SubscribeToSaveSystemEvents();
         UpdateLockVisual();
-        StartCoroutine(RefreshLockVisualNextFrame());
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(RefreshLockVisualNextFrame());
+        }
     }
 
     private System.Collections.IEnumerator RefreshLockVisualNextFrame()
@@ -1042,13 +1046,21 @@ public class ClickableObject : MonoBehaviour
 
         // Create a smooth continuous shake animation using a single tween
         // This creates a seamless up-down motion without any stops
-        var shakeTween = transform.DOLocalMoveY(originalPosition.y + shakeIntensity, shakeDuration / 2)
+        currentShakeSequence = transform.DOLocalMoveY(originalPosition.y + shakeIntensity, shakeDuration / 2)
                                  .SetEase(Ease.InOutSine)
                                  .SetLoops(-1, LoopType.Yoyo);
+    }
 
-        // Wrap in sequence for proper cleanup
-        currentShakeSequence = DOTween.Sequence();
-        currentShakeSequence.Append(shakeTween);
+    public void ForceStartShakeAnimation()
+    {
+        if (!enableShakeAnimation) return;
+
+        if (currentShakeSequence != null && currentShakeSequence.IsActive())
+            currentShakeSequence.Kill();
+
+        currentShakeSequence = transform.DOLocalMoveY(originalPosition.y + shakeIntensity, shakeDuration / 2)
+                                 .SetEase(Ease.InOutSine)
+                                 .SetLoops(-1, LoopType.Yoyo);
     }
 
     /// <summary>

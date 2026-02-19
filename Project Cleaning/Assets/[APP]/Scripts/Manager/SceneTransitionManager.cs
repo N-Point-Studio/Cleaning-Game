@@ -1000,7 +1000,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         // --- CAMERA AND CONTENT SWITCHER LOGIC ---
-        bool isMenuScene = scene.name.Contains("New Start Game Sandy") || scene.name.Contains("Menu") || scene.name.Contains("Main");
+        bool isMenuScene = scene.name.Contains("NEW_StartGame") || scene.name.Contains("Menu") || scene.name.Contains("Main");
         bool hasObjectContext = !string.IsNullOrEmpty(clickedObjectName);
 
         if (isMenuScene && hasObjectContext)
@@ -1168,7 +1168,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             // FOR MENU SCENES: Keep shouldTriggerContentSwitcher true for multiple object updates
             // FOR GAMEPLAY SCENES: Can reset it since we only trigger once
-            bool isMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("New Start Game Sandy") ||
+            bool isMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("NEW_StartGame") ||
                               UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Menu") ||
                               UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.Contains("Main");
 

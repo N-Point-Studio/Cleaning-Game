@@ -4,19 +4,19 @@ using UnityEngine;
 public class GameLoader : MonoBehaviour
 {
     [Header("Artefact To Load")]
-    public Artefact artefactData;
+    public ArtefactData artefactData;
 
     [System.Serializable]
     public struct ArtefactByObjectType
     {
         public ObjectType objectType;
-        public Artefact artefact;
+        public ArtefactData artefact;
     }
 
     [Header("Auto Select From ObjectType")]
     [SerializeField] private bool autoSelectByObjectType = true;
     [SerializeField] private ArtefactByObjectType[] artefactMappings;
-    [SerializeField] private Artefact fallbackArtefact;
+    [SerializeField] private ArtefactData fallbackArtefact;
     private readonly List<GameObject> spawnedFragments = new List<GameObject>();
 
     private void Start()
@@ -98,32 +98,32 @@ public class GameLoader : MonoBehaviour
         }
 
         AssembleManager.Instance.assemblyTargets.Clear();
-        foreach (var fragData in artefactData.artefacts)
+        foreach (var fragData in artefactData.ArtefactFragmentDatas)
         {
-            if (fragData.correctPosition == null)
+            if (fragData.CorrectTransform.Position == null)
             {
-                Debug.LogWarning("Fragment " + fragData.fragment.name + " has no correct position assigned.");
-                GameObject spawned = Instantiate(fragData.fragment);
+                Debug.LogWarning("Fragment " + fragData.Prefab.name + " has no correct position assigned.");
+                GameObject spawned = Instantiate(fragData.Prefab);
                 spawnedFragments.Add(spawned);
             }
             else
             {
-                Debug.Log("Spawning Fragment: " + fragData.fragment.name);
-                GameObject spawned = Instantiate(fragData.fragment);
+                Debug.Log("Spawning Fragment: " + fragData.Prefab.name);
+                GameObject spawned = Instantiate(fragData.Prefab);
                 spawnedFragments.Add(spawned);
 
                 FragmentStateMachine fragmentSM = spawned.GetComponent<FragmentStateMachine>();
 
-                AssemblyTarget newTarget = new AssemblyTarget(fragmentSM, fragData.correctPosition);
+                AssemblyTarget newTarget = new AssemblyTarget(fragmentSM, fragData.CorrectTransform);
 
                 AssembleManager.Instance.assemblyTargets.Add(newTarget);
             }
         }
 
-        UIManager.Instance.SetArtefactName(artefactData.artifactName);
+        UIManager.Instance.SetArtefactName(artefactData.BaseData.ItemName);
 
-        Vector3 eulerAngles = artefactData.finishRotation;
-        Vector3 position = artefactData.finishPosition;
+        Vector3 eulerAngles = artefactData.FinishTransform.Rotation;
+        Vector3 position = artefactData.FinishTransform.Position;
 
         Quaternion rotation = Quaternion.Euler(eulerAngles);
         GamePlayManager.Instance.SetFinishedRotationAndRotation(rotation, position);
@@ -131,7 +131,7 @@ public class GameLoader : MonoBehaviour
         AssembleManager.Instance.ShowingAssembleProgress();
     }
 
-    private Artefact GetArtefactForType(ObjectType type)
+    private ArtefactData GetArtefactForType(ObjectType type)
     {
         foreach (var mapping in artefactMappings)
         {

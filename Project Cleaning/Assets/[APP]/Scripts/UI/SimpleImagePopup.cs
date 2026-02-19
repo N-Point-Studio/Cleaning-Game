@@ -21,6 +21,8 @@ public class SimpleImagePopup : MonoBehaviour
     private CanvasGroup canvasGroup;
     private Vector3 originalScale;
     private bool isVisible = false;
+    private Tween scaleTween;
+    private Tween fadeTween;
 
     private void Awake()
     {
@@ -70,6 +72,9 @@ public class SimpleImagePopup : MonoBehaviour
         transform.localScale = Vector3.zero;
         canvasGroup.alpha = 0f;
 
+        scaleTween?.Kill();
+        fadeTween?.Kill();
+
         // Animate scale up
         transform.DOScale(originalScale, animationDuration)
                  .SetEase(Ease.OutBack);
@@ -89,6 +94,9 @@ public class SimpleImagePopup : MonoBehaviour
     public void HidePopup()
     {
         if (!isVisible) return;
+
+        scaleTween?.Kill();
+        fadeTween?.Kill();
 
         // Animate scale down and fade out
         transform.DOScale(Vector3.zero, animationDuration * 0.7f)
@@ -123,7 +131,7 @@ public class SimpleImagePopup : MonoBehaviour
         }
 
         // Clean up DOTween
-        DOTween.Kill(transform);
-        DOTween.Kill(canvasGroup);
+        scaleTween?.Kill();
+        fadeTween?.Kill();
     }
 }

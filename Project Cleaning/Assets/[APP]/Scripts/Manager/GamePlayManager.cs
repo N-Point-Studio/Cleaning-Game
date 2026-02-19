@@ -267,7 +267,7 @@ public class GamePlayManager : MonoBehaviour
         // Gunakan konteks objek yang sama dengan saat masuk gameplay
         ResolveObjectContext();
         ObjectType objectType = sessionObjectType;
-        string targetScene = "New Start Game Sandy"; // main menu default
+        string targetScene = "NEW_StartGame"; // main menu default
 
         Debug.Log($"Triggering transition to '{targetScene}' with ObjectType '{objectType}'");
 
