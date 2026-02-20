@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Manages saving and loading game progress using JSON
@@ -15,6 +16,7 @@ public class SaveSystem : MonoBehaviour
     [SerializeField] private bool enableDebugLogs = false;
     [Header("UI Hooks")]
     [SerializeField] private UnityEngine.UI.Button resetButton; // Optional: drag a Reset button here
+    [SerializeField] private UnityEngine.UI.Button yesResetButton; // Optional: drag a Reset button here
     [SerializeField] private bool showResetButtonInInitialModeOnly = true;
     [SerializeField] private UITransitionController uiTransitionController; // Optional: hook StartExploration event
 
@@ -271,7 +273,8 @@ public class SaveSystem : MonoBehaviour
 
         Debug.Log("All game progress and tutorials have been reset!");
 
-        OnDataReset?.Invoke();
+        ResetAllProgressAndReload();
+        // OnDataReset?.Invoke();
     }
 
     private void WireResetButton()
@@ -281,8 +284,9 @@ public class SaveSystem : MonoBehaviour
             return;
         }
 
-        resetButton.onClick.RemoveListener(ResetAllProgress);
-        resetButton.onClick.AddListener(ResetAllProgress);
+        yesResetButton.onClick.RemoveListener(ResetAllProgress);
+        // resetButton.onClick.AddListener(ResetAllProgress);
+        yesResetButton.onClick.AddListener(ResetAllProgress);
         Debug.Log("[SaveSystem] Reset button wired to ResetAllProgress");
 
         // Optional: only visible/clickable in Initial mode
@@ -333,13 +337,13 @@ public class SaveSystem : MonoBehaviour
         if (resetButton == null) return;
 
         resetButton.gameObject.SetActive(visible);
-        
+
         var cg = resetButton.GetComponent<CanvasGroup>();
         if (cg == null)
         {
             cg = resetButton.gameObject.AddComponent<CanvasGroup>();
         }
-        
+
         cg.alpha = visible ? 1f : 0f;
         resetButton.interactable = visible;
         cg.blocksRaycasts = visible;
@@ -356,9 +360,8 @@ public class SaveSystem : MonoBehaviour
     [ContextMenu("Reset All Progress & Reload Scene")]
     public void ResetAllProgressAndReload()
     {
-        ResetAllProgress();
-        var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-        UnityEngine.SceneManagement.SceneManager.LoadScene(scene.name);
+        // ResetAllProgress();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     /// <summary>
@@ -376,7 +379,7 @@ public class SaveSystem : MonoBehaviour
             }
 
             currentSaveData = new SaveData();
-            
+
             PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
             PlayerPrefs.Save();
 

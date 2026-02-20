@@ -91,23 +91,41 @@ public class AssembleManager : MonoBehaviour
         CurrentClusterInspected = stateMachine;
     }
 
-    public bool TryGetAssemblePosition(FragmentStateMachine other, out Transform correctPos)
+    public bool TryGetAssemblePosition(FragmentStateMachine other)
     {
         foreach (var target in assemblyTargets)
         {
             if (target.targetFragment == other)
             {
-                // correctPos = target.correctPosition;
-                correctPos = null;
-                correctPos.position = target.correctPosition.Position;
-                correctPos.rotation = Quaternion.Euler(target.correctPosition.Rotation);
                 return true;
             }
         }
-        correctPos = null;
         return false;
     }
 
+    public Vector3 GetAssemblePosition(FragmentStateMachine other)
+    {
+        foreach (var target in assemblyTargets)
+        {
+            if (target.targetFragment == other)
+            {
+                return target.correctPosition.Position;
+            }
+        }
+        return Vector3.zero;
+    }
+
+    public Vector3 GetAssembleRotation(FragmentStateMachine other)
+    {
+        foreach (var target in assemblyTargets)
+        {
+            if (target.targetFragment == other)
+            {
+                return target.correctPosition.Rotation;
+            }
+        }
+        return Vector3.zero;
+    }
 
     public void RegisterCluster(ClusterStateMachine cluster, bool isRegister)
     {

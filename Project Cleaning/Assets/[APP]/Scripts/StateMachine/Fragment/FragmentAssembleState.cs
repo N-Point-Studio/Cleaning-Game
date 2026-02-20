@@ -38,10 +38,18 @@ public class FragmentAssembledState : FragmentBaseState
             inspectedCluster.AddFragment(stateMachine);
             stateMachine.transform.SetParent(inspectedCluster.transform, false);
 
-            if (AssembleManager.Instance.TryGetAssemblePosition(stateMachine, out Transform correctPos))
+            // if (AssembleManager.Instance.TryGetAssemblePosition(stateMachine, out Transform correctPos))
+            // {
+            //     stateMachine.SwitchState(new FragmentAttachedState(stateMachine, correctPos));
+            // }
+
+            if (AssembleManager.Instance.TryGetAssemblePosition(stateMachine))
             {
-                stateMachine.SwitchState(new FragmentAttachedState(stateMachine, correctPos));
+                var pos = AssembleManager.Instance.GetAssemblePosition(stateMachine);
+                var rot = AssembleManager.Instance.GetAssembleRotation(stateMachine);
+                stateMachine.SwitchState(new FragmentAttachedState(stateMachine, pos, rot));
             }
+
         }
 
         if (inspectedFragment != null)
@@ -57,15 +65,27 @@ public class FragmentAssembledState : FragmentBaseState
             inspectedFragment.transform.SetParent(newCluster.transform, false);
             stateMachine.transform.SetParent(newCluster.transform, false);
 
-            if (AssembleManager.Instance.TryGetAssemblePosition(stateMachine, out Transform correctPosSM))
+
+            if (AssembleManager.Instance.TryGetAssemblePosition(stateMachine))
             {
-                stateMachine.SwitchState(new FragmentAttachedState(stateMachine, correctPosSM));
+                var pos = AssembleManager.Instance.GetAssemblePosition(stateMachine);
+                var rot = AssembleManager.Instance.GetAssembleRotation(stateMachine);
+                stateMachine.SwitchState(new FragmentAttachedState(stateMachine, pos, rot));
             }
 
-            if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment, out Transform correctPosIn))
+
+            // if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment, out Transform correctPosIn))
+            // {
+            //     inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, correctPosIn));
+            // }
+
+            if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment))
             {
-                inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, correctPosIn));
+                var pos = AssembleManager.Instance.GetAssemblePosition(inspectedFragment);
+                var rot = AssembleManager.Instance.GetAssembleRotation(inspectedFragment);
+                inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, pos, rot));
             }
+
 
             AssembleManager.Instance.SetCurrentInspectCluster(newCluster);
             AssembleManager.Instance.SetCurrentInspectFragment(null);

@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class FragmentAttachedState : FragmentBaseState
 {
-    private Transform CorrectPosition;
+    private Vector3 CorrectPosition;
+    private Vector3 CorrectRotation;
     private Coroutine moveRoutine;
     private float moveSpeed = 6f;
     private float rotationSpeed = 10f;
 
-    public FragmentAttachedState(FragmentStateMachine stateMachine, Transform correctPos) : base(stateMachine)
+    public FragmentAttachedState(FragmentStateMachine stateMachine, Vector3 correctPos, Vector3 correctRot) : base(stateMachine)
     {
         CorrectPosition = correctPos;
+        CorrectRotation = correctRot;
         stateMachine.StartCoroutine(MoveToCorrectPosition());
     }
 
@@ -57,8 +59,8 @@ public class FragmentAttachedState : FragmentBaseState
         Vector3 startPos = stateMachine.transform.localPosition;
         Quaternion startRot = stateMachine.transform.localRotation;
 
-        Vector3 targetPos = CorrectPosition.localPosition;
-        Quaternion targetRot = CorrectPosition.localRotation;
+        Vector3 targetPos = CorrectPosition;
+        Quaternion targetRot = Quaternion.Euler(CorrectRotation);
 
         float t = 0f;
 

@@ -30,9 +30,16 @@ public class ClusterAssembleState : ClusterBaseState
             {
                 inspectedCluster.AddFragment(fragment);
 
-                if (AssembleManager.Instance.TryGetAssemblePosition(fragment, out Transform correctPos))
+                // if (AssembleManager.Instance.TryGetAssemblePosition(fragment, out Transform correctPos))
+                // {
+                //     fragment.SwitchState(new FragmentAttachedState(fragment, correctPos));
+                // }
+
+                if (AssembleManager.Instance.TryGetAssemblePosition(fragment))
                 {
-                    fragment.SwitchState(new FragmentAttachedState(fragment, correctPos));
+                    var pos = AssembleManager.Instance.GetAssemblePosition(fragment);
+                    var rot = AssembleManager.Instance.GetAssembleRotation(fragment);
+                    fragment.SwitchState(new FragmentAttachedState(fragment, pos, rot));
                 }
             }
             stateMachine.connectedFragments.Clear();
@@ -56,15 +63,27 @@ public class ClusterAssembleState : ClusterBaseState
                 newCluster.AddFragment(fragment);
                 fragment.transform.SetParent(newCluster.transform, false);
 
-                if (AssembleManager.Instance.TryGetAssemblePosition(fragment, out Transform correctPos))
+                // if (AssembleManager.Instance.TryGetAssemblePosition(fragment, out Transform correctPos))
+                // {
+                //     fragment.SwitchState(new FragmentAttachedState(fragment, correctPos));
+                // }
+                if (AssembleManager.Instance.TryGetAssemblePosition(fragment))
                 {
-                    fragment.SwitchState(new FragmentAttachedState(fragment, correctPos));
+                    var pos = AssembleManager.Instance.GetAssemblePosition(fragment);
+                    var rot = AssembleManager.Instance.GetAssembleRotation(fragment);
+                    fragment.SwitchState(new FragmentAttachedState(fragment, pos, rot));
                 }
             }
 
-            if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment, out Transform correctPosIn))
+            // if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment, out Transform correctPosIn))
+            // {
+            //     inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, correctPosIn));
+            // }
+            if (AssembleManager.Instance.TryGetAssemblePosition(inspectedFragment))
             {
-                inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, correctPosIn));
+                var pos = AssembleManager.Instance.GetAssemblePosition(inspectedFragment);
+                var rot = AssembleManager.Instance.GetAssembleRotation(inspectedFragment);
+                inspectedFragment.SwitchState(new FragmentAttachedState(inspectedFragment, pos, rot));
             }
             stateMachine.connectedFragments.Clear();
             Object.Destroy(stateMachine.gameObject);
