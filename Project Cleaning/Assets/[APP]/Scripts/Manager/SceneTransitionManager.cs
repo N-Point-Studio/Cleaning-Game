@@ -193,7 +193,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     private bool forceEnteringTransitionVisual = false;
 
-    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings, bool forceEnteringVisual = false, bool backToMenu = false)
+    public void StartStagedTransition(string intermediaryScene, string finalDestinationScene, float delay, EasyTransition.TransitionSettings settings, bool forceEnteringVisual = false, bool backToMenu = false, bool saveCameraState = true)
     {
         if (isTransitionInProgress)
         {
@@ -204,7 +204,6 @@ public class SceneTransitionManager : MonoBehaviour
         forceEnteringTransitionVisual = forceEnteringVisual;
         useBackToMenuVisuals = backToMenu;
 
-        // Mark direction based on destination (gameplay vs menu)
         currentTransitionDirection = finalDestinationScene.ToLower().Contains("gameplay")
             ? TransitionDirection.ToGameplay
             : TransitionDirection.ToMenu;
@@ -214,15 +213,19 @@ public class SceneTransitionManager : MonoBehaviour
         isStagedTransition = true;
         intermediarySceneName = intermediaryScene;
         targetSceneName = intermediaryScene;
-        stagedFinalTransitionSettings = settings; // Store for the final leg
+        stagedFinalTransitionSettings = settings; 
 
         if (enableDebugLogs)
         {
             Debug.Log($"=== STAGED TRANSITION STARTED ===\nIntermediary: {intermediaryScene}\nFinal: {finalDestinationScene}");
         }
 
-        SaveCameraStateForRestore();
-        StartCoroutine(PerformSceneTransition(settings)); // Use settings for the first leg
+        if (saveCameraState)
+        {
+            SaveCameraStateForRestore();
+        }
+        
+        StartCoroutine(PerformSceneTransition(settings));
     }
 
     /// <summary>
@@ -1589,6 +1592,12 @@ public class SceneTransitionManager : MonoBehaviour
         isReturningFromGameplay = false;
         useBackToMenuVisuals = false;
         forceEnteringTransitionVisual = false;
+
+        clickedObjectName = string.Empty;
+        clickedObjectPosition = Vector3.zero;
+        
+        if (SimpleCameraFocusRestore.Instance != null) SimpleCameraFocusRestore.Instance.ClearFocusData();
+        if (CameraStateManager.Instance != null) CameraStateManager.Instance.ClearSavedState();
 
         if (enableDebugLogs)
         {

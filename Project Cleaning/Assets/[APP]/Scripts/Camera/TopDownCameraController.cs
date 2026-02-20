@@ -63,8 +63,7 @@ public class TopDownCameraController : StateMachine
             // Store current transform as overview position
             StoreCurrentAsOverview();
 
-            // Start in overview state
-            SwitchState(overviewState);
+            currentState = overviewState;
         }
         else
         {

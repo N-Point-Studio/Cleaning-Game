@@ -2,6 +2,7 @@ using System.IO;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.SceneManagement;
+using System;
 
 /// <summary>
 /// Manages saving and loading game progress using JSON
@@ -14,11 +15,6 @@ public class SaveSystem : MonoBehaviour
     [Header("Save Settings")]
     [SerializeField] private string saveFileName = "GameProgress.json";
     [SerializeField] private bool enableDebugLogs = false;
-    [Header("UI Hooks")]
-    [SerializeField] private UnityEngine.UI.Button resetButton; // Optional: drag a Reset button here
-    [SerializeField] private UnityEngine.UI.Button yesResetButton; // Optional: drag a Reset button here
-    [SerializeField] private bool showResetButtonInInitialModeOnly = true;
-    [SerializeField] private UITransitionController uiTransitionController; // Optional: hook StartExploration event
 
     // Current save data
     private SaveData currentSaveData;
@@ -31,13 +27,11 @@ public class SaveSystem : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton setup
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
             InitializeSaveSystem();
-            WireResetButton();
         }
         else
         {
@@ -47,18 +41,7 @@ public class SaveSystem : MonoBehaviour
 
     private void InitializeSaveSystem()
     {
-        // Setup save file path
         saveFilePath = Path.Combine(Application.persistentDataPath, saveFileName);
-
-        Debug.Log("========================================");
-        Debug.Log("=== SAVE SYSTEM INITIALIZATION ===");
-        Debug.Log($"Save File Name: {saveFileName}");
-        Debug.Log($"Persistent Data Path: {Application.persistentDataPath}");
-        Debug.Log($"Full Save Path: {saveFilePath}");
-        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
-        Debug.Log("========================================");
-
-        // Load existing data or create new
         LoadData();
     }
 
@@ -71,51 +54,19 @@ public class SaveSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log("========================================");
-            Debug.Log("=== LOADING SAVE DATA ===");
-            Debug.Log($"Checking file: {saveFilePath}");
-            Debug.Log($"File exists: {File.Exists(saveFilePath)}");
-
             if (File.Exists(saveFilePath))
             {
                 string jsonContent = File.ReadAllText(saveFilePath);
-
-                Debug.Log($"File size: {jsonContent.Length} characters");
-                Debug.Log($"JSON Content:\n{jsonContent}");
-
                 currentSaveData = JsonUtility.FromJson<SaveData>(jsonContent);
-
-                Debug.Log($"✅ Data loaded successfully!");
-                Debug.Log($"   Completed objects: {currentSaveData.GetCompletedCount()}");
-                Debug.Log($"   Last save time: {currentSaveData.lastSaveTime}");
-
-                if (currentSaveData.completedObjects.Count > 0)
-                {
-                    Debug.Log("   Completed objects list:");
-                    foreach (var obj in currentSaveData.completedObjects)
-                    {
-                        Debug.Log($"      - {obj.GetInfo()}");
-                    }
-                }
             }
             else
             {
-                // Create new save data if no file exists
                 currentSaveData = new SaveData();
-
-                Debug.LogWarning("⚠️ No save file found. Created new empty save data.");
-                Debug.LogWarning("   This is normal on first run.");
             }
-
-            Debug.Log("========================================");
-
-            // Notify listeners
             OnDataLoaded?.Invoke(currentSaveData);
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogError($"❌ Error loading save data: {e.Message}");
-            Debug.LogError($"   Stack trace: {e.StackTrace}");
             currentSaveData = new SaveData();
         }
     }
@@ -127,54 +78,15 @@ public class SaveSystem : MonoBehaviour
     {
         try
         {
-            Debug.Log("========================================");
-            Debug.Log("=== SAVING DATA TO DISK ===");
-
-            if (currentSaveData == null)
-            {
-                Debug.LogWarning("⚠️ currentSaveData was null! Creating new SaveData.");
-                currentSaveData = new SaveData();
-            }
-
-            // Update last save time
-            currentSaveData.lastSaveTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
+            if (currentSaveData == null) currentSaveData = new SaveData();
+            currentSaveData.lastSaveTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             string jsonContent = JsonUtility.ToJson(currentSaveData, true);
-
-            Debug.Log($"Saving to: {saveFilePath}");
-            Debug.Log($"JSON size: {jsonContent.Length} characters");
-            Debug.Log($"Completed objects: {currentSaveData.GetCompletedCount()}");
-
-            if (currentSaveData.completedObjects.Count > 0)
-            {
-                Debug.Log("Objects being saved:");
-                foreach (var obj in currentSaveData.completedObjects)
-                {
-                    Debug.Log($"   - {obj.GetInfo()}");
-                }
-            }
-
-            Debug.Log($"JSON Content:\n{jsonContent}");
-
-            // Write to file
             File.WriteAllText(saveFilePath, jsonContent);
-
-            // Verify file was written
-            bool fileExists = File.Exists(saveFilePath);
-            long fileSize = fileExists ? new FileInfo(saveFilePath).Length : 0;
-
-            Debug.Log($"✅ File written successfully!");
-            Debug.Log($"   File exists: {fileExists}");
-            Debug.Log($"   File size: {fileSize} bytes");
-            Debug.Log("========================================");
-
-            // Notify listeners
             OnDataSaved?.Invoke(currentSaveData);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"❌ Error saving data: {e.Message}");
-            Debug.LogError($"   Stack trace: {e.StackTrace}");
+            Debug.LogError($"Error saving data: {e.Message}");
         }
     }
 
@@ -187,20 +99,14 @@ public class SaveSystem : MonoBehaviour
     /// </summary>
     public SaveData GetSaveData()
     {
-        if (currentSaveData == null)
-        {
-            LoadData();
-        }
+        if (currentSaveData == null) LoadData();
         return currentSaveData;
     }
 
     /// <summary>
     /// Check if object is already completed
     /// </summary>
-    public bool IsObjectCompleted(string objectName, ObjectType objectType)
-    {
-        return GetSaveData().IsObjectCompleted(objectName, objectType);
-    }
+    public bool IsObjectCompleted(string objectName, ObjectType objectType) => GetSaveData().IsObjectCompleted(objectName, objectType);
 
     /// <summary>
     /// Mark object as completed and save
@@ -209,11 +115,6 @@ public class SaveSystem : MonoBehaviour
     {
         GetSaveData().AddCompletedObject(objectName, objectType, chapterType, position);
         SaveData();
-
-        if (enableDebugLogs)
-        {
-            Debug.Log($"Object marked as completed: {objectName} ({objectType})");
-        }
     }
 
     /// <summary>
@@ -222,24 +123,14 @@ public class SaveSystem : MonoBehaviour
     public bool RemoveCompletedObject(string objectName, ObjectType objectType)
     {
         bool removed = GetSaveData().RemoveCompletedObject(objectName, objectType);
-        if (removed)
-        {
-            SaveData();
-            if (enableDebugLogs)
-            {
-                Debug.Log($"Object removed from completed list: {objectName} ({objectType})");
-            }
-        }
+        if (removed) SaveData();
         return removed;
     }
 
     /// <summary>
     /// Check if intro transition has been shown before
     /// </summary>
-    public bool IsIntroTransitionShown()
-    {
-        return GetSaveData().IsIntroTransitionShown();
-    }
+    public bool IsIntroTransitionShown() => GetSaveData().IsIntroTransitionShown();
 
     /// <summary>
     /// Mark intro transition as shown and save
@@ -248,11 +139,6 @@ public class SaveSystem : MonoBehaviour
     {
         GetSaveData().SetIntroTransitionShown(shown);
         SaveData();
-
-        if (enableDebugLogs)
-        {
-            Debug.Log($"Intro transition marked as {(shown ? "shown" : "not shown")}");
-        }
     }
 
     #endregion
@@ -271,87 +157,13 @@ public class SaveSystem : MonoBehaviour
         PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
         PlayerPrefs.Save();
 
-        Debug.Log("All game progress and tutorials have been reset!");
-
+        if (SceneTransitionManager.Instance != null) SceneTransitionManager.Instance.ResetTransitionData();
+        if (SimpleCameraFocusRestore.Instance != null) SimpleCameraFocusRestore.Instance.ClearFocusData();
+        if (CameraStateManager.Instance != null) CameraStateManager.Instance.ClearSavedState();
+        if (CameraAnimationController.Instance != null) CameraAnimationController.Instance.ResetStartupUIState();
+        if (GameModeManager.Instance != null) GameModeManager.Instance.ExitToInitialMode();
+        
         ResetAllProgressAndReload();
-        // OnDataReset?.Invoke();
-    }
-
-    private void WireResetButton()
-    {
-        if (resetButton == null)
-        {
-            return;
-        }
-
-        yesResetButton.onClick.RemoveListener(ResetAllProgress);
-        // resetButton.onClick.AddListener(ResetAllProgress);
-        yesResetButton.onClick.AddListener(ResetAllProgress);
-        Debug.Log("[SaveSystem] Reset button wired to ResetAllProgress");
-
-        // Optional: only visible/clickable in Initial mode
-        if (showResetButtonInInitialModeOnly)
-        {
-            StartCoroutine(WaitForGameModeManagerThenHook());
-        }
-
-        // If a UITransitionController is assigned, also hide the reset button when its start transition begins
-        if (uiTransitionController == null)
-        {
-            uiTransitionController = UITransitionController.Instance;
-        }
-        if (uiTransitionController != null)
-        {
-            uiTransitionController.OnStartExploration += HideResetButton;
-        }
-    }
-
-    private System.Collections.IEnumerator WaitForGameModeManagerThenHook()
-    {
-        int attempts = 0;
-        while (GameModeManager.Instance == null && attempts < 50)
-        {
-            yield return null;
-            attempts++;
-        }
-
-        if (GameModeManager.Instance != null)
-        {
-            HandleModeChanged(GameModeManager.Instance.GetCurrentMode());
-            GameModeManager.Instance.OnModeChanged += HandleModeChanged;
-        }
-        else
-        {
-            Debug.LogWarning("[SaveSystem] GameModeManager not found; reset button visibility will not auto-toggle.");
-        }
-    }
-
-    private void HandleModeChanged(GameModeManager.GameMode mode)
-    {
-        if (!showResetButtonInInitialModeOnly || resetButton == null) return;
-        ToggleResetButton(mode == GameModeManager.GameMode.Initial);
-    }
-
-    private void ToggleResetButton(bool visible)
-    {
-        if (resetButton == null) return;
-
-        resetButton.gameObject.SetActive(visible);
-
-        var cg = resetButton.GetComponent<CanvasGroup>();
-        if (cg == null)
-        {
-            cg = resetButton.gameObject.AddComponent<CanvasGroup>();
-        }
-
-        cg.alpha = visible ? 1f : 0f;
-        resetButton.interactable = visible;
-        cg.blocksRaycasts = visible;
-    }
-
-    private void HideResetButton()
-    {
-        ToggleResetButton(false);
     }
 
     /// <summary>
@@ -360,8 +172,32 @@ public class SaveSystem : MonoBehaviour
     [ContextMenu("Reset All Progress & Reload Scene")]
     public void ResetAllProgressAndReload()
     {
-        // ResetAllProgress();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (CameraAnimationController.Instance != null) CameraAnimationController.Instance.StopAllCoroutines();
+        if (UITransitionController.Instance != null) UITransitionController.Instance.StopAllCoroutines();
+
+        AdvancedInputManager.EndTransitionLock();
+        DG.Tweening.DOTween.KillAll();
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.ResetTransitionData();
+
+            SceneTransitionManager.Instance.StartStagedTransition(
+                "TransitionScreen",
+                currentScene,
+                0.5f,
+                null,
+                false,
+                true,
+                false
+            );
+        }
+        else
+        {
+            SceneManager.LoadScene(currentScene);
+        }
     }
 
     /// <summary>
@@ -370,25 +206,11 @@ public class SaveSystem : MonoBehaviour
     [ContextMenu("Delete Save File")]
     public void DeleteSaveFile()
     {
-        try
-        {
-            if (File.Exists(saveFilePath))
-            {
-                File.Delete(saveFilePath);
-                Debug.Log("Save file deleted successfully!");
-            }
-
-            currentSaveData = new SaveData();
-
-            PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
-            PlayerPrefs.Save();
-
-            OnDataReset?.Invoke();
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Error deleting save file: {e.Message}");
-        }
+        if (File.Exists(saveFilePath)) File.Delete(saveFilePath);
+        currentSaveData = new SaveData();
+        PlayerPrefs.DeleteKey("TUTORIAL_COMPLETED");
+        PlayerPrefs.Save();
+        OnDataReset?.Invoke();
     }
 
     /// <summary>
@@ -398,36 +220,45 @@ public class SaveSystem : MonoBehaviour
     public void PrintSaveDataInfo()
     {
         var saveData = GetSaveData();
-        Debug.Log("========================================");
-        Debug.Log("=== SAVE DATA INFO ===");
-        Debug.Log($"Save File Path: {saveFilePath}");
-        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+        if (enableDebugLogs)
+        {
+            Debug.Log("========================================");
+            Debug.Log("=== SAVE DATA INFO ===");
+            Debug.Log($"Save File Path: {saveFilePath}");
+            Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+        }
 
         if (File.Exists(saveFilePath))
         {
             long fileSize = new FileInfo(saveFilePath).Length;
-            Debug.Log($"File Size: {fileSize} bytes");
-            Debug.Log($"File Last Modified: {File.GetLastWriteTime(saveFilePath)}");
-        }
-
-        Debug.Log($"Save Version: {saveData.saveVersion}");
-        Debug.Log($"Last Save Time: {saveData.lastSaveTime}");
-        Debug.Log($"Total Completed Objects: {saveData.GetCompletedCount()}");
-        Debug.Log($"Intro Transition Shown: {saveData.IsIntroTransitionShown()}");
-
-        if (saveData.completedObjects.Count > 0)
-        {
-            Debug.Log("Completed Objects:");
-            foreach (var obj in saveData.completedObjects)
+            if (enableDebugLogs)
             {
-                Debug.Log($"  - {obj.GetInfo()}");
+                Debug.Log($"File Last Modified: {File.GetLastWriteTime(saveFilePath)}");
+                Debug.Log($"File Size: {fileSize} bytes");
             }
         }
-        else
+
+        if (enableDebugLogs)
         {
-            Debug.Log("⚠️ No completed objects found.");
+            Debug.Log($"Save Version: {saveData.saveVersion}");
+            Debug.Log($"Last Save Time: {saveData.lastSaveTime}");
+            Debug.Log($"Total Completed Objects: {saveData.GetCompletedCount()}");
+            Debug.Log($"Intro Transition Shown: {saveData.IsIntroTransitionShown()}");
+
+            if (saveData.completedObjects.Count > 0)
+            {
+                Debug.Log("Completed Objects:");
+                foreach (var obj in saveData.completedObjects)
+                {
+                    Debug.Log($"  - {obj.GetInfo()}");
+                }
+            }
+            else
+            {
+                Debug.Log("⚠️ No completed objects found.");
+            }
+            Debug.Log("========================================");
         }
-        Debug.Log("========================================");
     }
 
     /// <summary>
@@ -436,24 +267,28 @@ public class SaveSystem : MonoBehaviour
     [ContextMenu("Show Save File Location")]
     public void ShowSaveFileLocation()
     {
-        Debug.Log("========================================");
-        Debug.Log("=== SAVE FILE LOCATION ===");
-        Debug.Log($"Full Path: {saveFilePath}");
-        Debug.Log($"Directory: {Path.GetDirectoryName(saveFilePath)}");
-        Debug.Log($"File Name: {Path.GetFileName(saveFilePath)}");
-        Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+        if (enableDebugLogs)
+        {
+            Debug.Log("========================================");
+            Debug.Log("=== SAVE FILE LOCATION ===");
+            Debug.Log($"Full Path: {saveFilePath}");
+            Debug.Log($"Directory: {Path.GetDirectoryName(saveFilePath)}");
+            Debug.Log($"File Name: {Path.GetFileName(saveFilePath)}");
+            Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
 
-        if (File.Exists(saveFilePath))
-        {
-            Debug.Log("✅ File found! You can manually check this file.");
-            Debug.Log($"   Last modified: {File.GetLastWriteTime(saveFilePath)}");
-            Debug.Log($"   Size: {new FileInfo(saveFilePath).Length} bytes");
+
+            if (File.Exists(saveFilePath))
+            {
+                Debug.Log("✅ File found! You can manually check this file.");
+                Debug.Log($"   Last modified: {File.GetLastWriteTime(saveFilePath)}");
+                Debug.Log($"   Size: {new FileInfo(saveFilePath).Length} bytes");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ File not found! Save may not have been written yet.");
+            }
+            Debug.Log("========================================");
         }
-        else
-        {
-            Debug.LogWarning("⚠️ File not found! Save may not have been written yet.");
-        }
-        Debug.Log("========================================");
     }
 
     #endregion
@@ -478,37 +313,38 @@ public class SaveSystem : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        Debug.Log("========================================");
-        Debug.Log("=== APPLICATION QUITTING ===");
-        Debug.Log("Saving data before quit...");
-
-        // CRITICAL: Save data before app closes
+        if (enableDebugLogs)
+        {
+            Debug.Log("========================================");
+            Debug.Log("=== APPLICATION QUITTING ===");
+            Debug.Log("Saving data before quit...");
+        }
+    
         SaveData();
 
-        Debug.Log("Data saved. Cleaning up...");
-        // CleanupDOTween();
-        Debug.Log("========================================");
+        if (enableDebugLogs)
+        {
+            // CleanupDOTween();
+            Debug.Log("Data saved. Cleaning up...");
+            Debug.Log("========================================");
+        }
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
         {
-            if (GameModeManager.Instance != null)
+            if (enableDebugLogs)
             {
-                GameModeManager.Instance.OnModeChanged -= HandleModeChanged;
+                Debug.Log("=== SaveSystem DESTROYING ===");
+                Debug.Log("Saving data before destroy...");
             }
-            if (uiTransitionController != null)
-            {
-                uiTransitionController.OnStartExploration -= HideResetButton;
-            }
-            Debug.Log("=== SaveSystem DESTROYING ===");
-            Debug.Log("Saving data before destroy...");
 
             SaveData();
             // CleanupDOTween();
-
-            Debug.Log("SaveSystem destroyed.");
+            
+            if (enableDebugLogs)
+                Debug.Log("SaveSystem destroyed.");
         }
     }
 

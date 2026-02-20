@@ -35,7 +35,8 @@ public class MenuSfxManager : MonoBehaviour
 
         if (audioSource == null)
         {
-            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
         }
 
@@ -86,7 +87,8 @@ public class MenuSfxManager : MonoBehaviour
         hookedObjects.Clear();
         if (audioSource == null)
         {
-            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
         }
 

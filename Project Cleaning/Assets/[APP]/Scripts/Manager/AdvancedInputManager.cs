@@ -429,6 +429,12 @@ public class AdvancedInputManager : MonoBehaviour
 
     private void HandleInputDown(Vector2 screenPosition)
     {
+        if (IsPointerOverUI(screenPosition))
+        {
+            Debug.Log("=== INPUT BLOCKED - Pointer is over UI ===");
+            return;
+        }
+
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
 
         // PRIORITY 1: Check for object clicks FIRST (before double-tap detection)
@@ -649,6 +655,37 @@ public class AdvancedInputManager : MonoBehaviour
         }
     }
     #endregion
+
+    private bool IsPointerOverUI(Vector2 screenPosition)
+    {
+        if (UnityEngine.EventSystems.EventSystem.current == null) return false;
+
+        UnityEngine.EventSystems.PointerEventData eventData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+        {
+            position = screenPosition
+        };
+
+        System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+        UnityEngine.EventSystems.EventSystem.current.RaycastAll(eventData, results);
+
+        foreach (var result in results)
+        {
+            Canvas uiCanvas = result.gameObject.GetComponentInParent<Canvas>();
+            if (uiCanvas != null && uiCanvas.renderMode == RenderMode.WorldSpace)
+            {
+                continue; 
+            }
+
+            UnityEngine.UI.Graphic graphic = result.gameObject.GetComponent<UnityEngine.UI.Graphic>();
+            
+            if (graphic != null && graphic.raycastTarget && graphic.color.a > 0.01f)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 // Keep the supporting input system classes at the bottom for reference
