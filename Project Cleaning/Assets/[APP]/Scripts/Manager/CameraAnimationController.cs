@@ -59,15 +59,33 @@ public class CameraAnimationController : MonoBehaviour
     {
         InitializeCameraController();
 
+        // FIX 1: Catat posisi awal SETELAH kamera diinisialisasi agar tidak bernilai (0,0,0)
+        if (cameraController != null)
+        {
+            originalCameraPosition = cameraController.transform.position;
+            originalCameraRotation = cameraController.transform.rotation.eulerAngles;
+        }
+
         // Subscribe to game mode events
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.OnEnterInitialMode += ExitToInitialMode;
+
+            if (GameModeManager.Instance.GetCurrentMode() == GameModeManager.GameMode.Initial)
+            {
+                StartCoroutine(DelayedInitialMode());
+            }
         }
 
         MainMenuEvents.OnNextPage += PerformSwipeRight;
         MainMenuEvents.OnPreviousPage += PerformSwipeLeft;
         MainMenuEvents.OnGoToPage += JumpToPage;
+    }
+
+    private IEnumerator DelayedInitialMode()
+    {
+        yield return new WaitForEndOfFrame();
+        ExitToInitialMode();
     }
 
     /// <summary>

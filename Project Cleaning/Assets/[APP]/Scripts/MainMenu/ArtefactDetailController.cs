@@ -44,7 +44,7 @@ public class ArtefactDetailController : MonoBehaviour
     {
         if (buttonBack) buttonBack.onClick.RemoveListener(OnClickBack);
         if (buttonClean) buttonClean.onClick.RemoveListener(OnClickClean);
-        transform.DOKill();
+        // transform.DOKill();
     }
 
     public void OpenDetail(ArtefactData artefactData, ChapterType chapterType, bool isCompleted)

@@ -5,9 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 
-/// <summary>
-/// Handles UI transitions and animations for the input manager
-/// </summary>
 public class UITransitionController : MonoBehaviour
 {
     [Header("UI Controls")]
@@ -20,6 +17,7 @@ public class UITransitionController : MonoBehaviour
     [SerializeField] private float buttonFadeDuration = 0.5f;
     [SerializeField] private float buttonScaleDuration = 0.3f;
     [SerializeField] private float cameraDelayAfterButton = 0.2f;
+
     private Sequence currentTransitionSequence;
 
     // Singleton
@@ -28,82 +26,75 @@ public class UITransitionController : MonoBehaviour
     #region Unity Lifecycle
     private void Awake()
     {
-        if (Instance == null)
+        if (GetComponent<RectTransform>() == null)
         {
-            Instance = this;
-            Debug.Log($"🚨 UITransitionController Instance set on GameObject: {gameObject.name}");
+            Destroy(this);
+            return;
         }
-        else
-        {
-            Debug.Log($"🚨 Destroying duplicate UITransitionController on GameObject: {gameObject.name}");
-            Destroy(gameObject);
-        }
+        Instance = this;
     }
 
     private void Start()
     {
         SetupUI();
 
-        // Show intro controls only when entering from menu fresh, not when returning from gameplay.
         bool returningFromGameplay = CameraAnimationController.Instance != null &&
                                      CameraAnimationController.Instance.IsReturningFromGameplay();
-        bool introAlreadyShownThisSession = CameraAnimationController.Instance != null &&
-                                            CameraAnimationController.Instance.HasShownStartupUI();
+        bool introAlreadyShownThisSession = SaveSystem.Instance != null &&
+                                            SaveSystem.Instance.IsIntroTransitionShown();
 
-        bool shouldShowIntro = !returningFromGameplay && !introAlreadyShownThisSession;
-
-        Debug.Log($"🚨 UITransitionController Start - returningFromGameplay={returningFromGameplay}, introAlreadyShownThisSession={introAlreadyShownThisSession}, shouldShowIntro={shouldShowIntro}");
-
-        if (shouldShowIntro)
+        if (!returningFromGameplay && !introAlreadyShownThisSession)
         {
-            if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(true);
-            if (additionalImage1 != null) additionalImage1.gameObject.SetActive(true);
-            if (additionalImage2 != null) additionalImage2.gameObject.SetActive(true);
+            ForceUIVisible();
         }
         else
         {
-            if (startExplorationImage != null) startExplorationImage.gameObject.SetActive(false);
-            if (additionalImage1 != null) additionalImage1.gameObject.SetActive(false);
-            if (additionalImage2 != null) additionalImage2.gameObject.SetActive(false);
+            ForceUIHidden();
         }
+    }
+
+    private void ForceUIVisible()
+    {
+        SetImageState(startExplorationImage, true, 1f);
+        SetImageState(additionalImage1, true, 1f);
+        SetImageState(additionalImage2, true, 1f);
+        SetImageClickable(startExplorationImage, true);
+    }
+
+    private void ForceUIHidden()
+    {
+        SetImageState(startExplorationImage, false, 0f);
+        SetImageState(additionalImage1, false, 0f);
+        SetImageState(additionalImage2, false, 0f);
+        SetImageClickable(startExplorationImage, false);
+    }
+
+    private void SetImageState(Image img, bool active, float scaleAndAlpha)
+    {
+        if (img == null) return;
+        img.gameObject.SetActive(active);
+        img.transform.localScale = Vector3.one * scaleAndAlpha;
+
+        var canvasGroup = img.GetComponent<CanvasGroup>();
+        if (canvasGroup == null) canvasGroup = img.gameObject.AddComponent<CanvasGroup>();
+        canvasGroup.alpha = scaleAndAlpha;
     }
 
     private void OnDestroy()
     {
-        // Kill all DOTween animations to prevent cleanup warnings
         currentTransitionSequence?.Kill();
-
-        // Also kill any animations on our UI images
-        if (startExplorationImage != null) DOTween.Kill(startExplorationImage.transform);
-        if (additionalImage1 != null) DOTween.Kill(additionalImage1.transform);
-        if (additionalImage2 != null) DOTween.Kill(additionalImage2.transform);
-
-        // Clear singleton reference
-        if (Instance == this)
-        {
-            Instance = null;
-        }
-
-        Debug.Log($"🚨 UITransitionController cleanup completed on {gameObject.name}");
+        if (Instance == this) Instance = null;
     }
     #endregion
 
     #region UI Setup
     public void SetupUI()
     {
-        Debug.Log($"🚨 UITransitionController.SetupUI() called on GameObject: {gameObject.name}");
-        Debug.Log($"🚨 Image references - startExplorationImage: {(startExplorationImage != null ? startExplorationImage.name : "NULL")}");
-        Debug.Log($"🚨 Image references - additionalImage1: {(additionalImage1 != null ? additionalImage1.name : "NULL")}");
-        Debug.Log($"🚨 Image references - additionalImage2: {(additionalImage2 != null ? additionalImage2.name : "NULL")}");
-
         if (startExplorationImage != null)
             SetupImageClickDetection(startExplorationImage, StartExplorationMode);
 
-        if (additionalImage1 != null)
-            additionalImage1.raycastTarget = false;
-
-        if (additionalImage2 != null)
-            additionalImage2.raycastTarget = false;
+        if (additionalImage1 != null) additionalImage1.raycastTarget = false;
+        if (additionalImage2 != null) additionalImage2.raycastTarget = false;
     }
 
     private void SetupImageClickDetection(Image targetImage, System.Action onClickAction)
@@ -131,21 +122,14 @@ public class UITransitionController : MonoBehaviour
     public void StartExplorationTransition()
     {
         SetImageClickable(startExplorationImage, false);
-        if (additionalImage1 != null) additionalImage1.raycastTarget = false;
-        if (additionalImage2 != null) additionalImage2.raycastTarget = false;
-
         StartCoroutine(ElegantButtonTransition());
-
-        // Notify listeners (e.g., SaveSystem) that exploration has started
         OnStartExploration?.Invoke();
     }
 
+    // ANIMASI DOTWEEN SAAT DI-KLIK (Menghilang)
     private IEnumerator ElegantButtonTransition()
     {
-        var imagesToAnimate = new List<Image>();
-        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
-        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
-        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
+        var imagesToAnimate = new List<Image> { startExplorationImage, additionalImage1, additionalImage2 };
 
         currentTransitionSequence?.Kill();
         currentTransitionSequence = DOTween.Sequence();
@@ -153,9 +137,12 @@ public class UITransitionController : MonoBehaviour
         for (int i = 0; i < imagesToAnimate.Count; i++)
         {
             var image = imagesToAnimate[i];
-            var canvasGroup = image.GetComponent<CanvasGroup>() ?? image.gameObject.AddComponent<CanvasGroup>();
+            if (image == null) continue;
+
+            var canvasGroup = image.GetComponent<CanvasGroup>();
+            if (canvasGroup == null) canvasGroup = image.gameObject.AddComponent<CanvasGroup>();
             var transform = image.transform;
-            var originalScale = transform.localScale;
+            var originalScale = Vector3.one;
 
             var imageSequence = DOTween.Sequence();
             imageSequence.Append(transform.DOScale(originalScale * 0.85f, buttonScaleDuration * 0.6f).SetEase(Ease.OutBack));
@@ -168,43 +155,33 @@ public class UITransitionController : MonoBehaviour
 
         yield return currentTransitionSequence.WaitForCompletion();
 
-        foreach (var image in imagesToAnimate) image.gameObject.SetActive(false);
+        ForceUIHidden(); // Safeguard agar pasti hilang
         yield return new WaitForSeconds(0.3f);
 
-        // Reset the slide position to the beginning
         CameraAnimationController.Instance?.ResetSlideIndex();
-
-        // Notify that button transition is complete
         GameModeManager.Instance?.StartExplorationMode();
-
-        // Explicitly start the camera animation for the initial transition
         CameraAnimationController.Instance?.BeginExplorationMode();
     }
 
+    // ANIMASI DOTWEEN SAAT DI-RESET (Membesar/Memantul)
     public IEnumerator ShowStartButtonElegantly(float returnTransitionDuration)
     {
-        float timestamp = Time.time;
-        Debug.Log($"🚨🚨 UITransitionController.ShowStartButtonElegantly CALLED at {timestamp}");
-        Debug.Log($"🚨🚨 returnTransitionDuration: {returnTransitionDuration}");
-
-        // Check if intro transition has already been shown
         if (SaveSystem.Instance != null && SaveSystem.Instance.IsIntroTransitionShown())
         {
-            Debug.Log($"🚨🚨 Intro transition already shown - skipping animation");
-            yield break; // Exit the coroutine without showing the transition
+            ForceUIVisible();
+            yield break;
         }
 
         yield return new WaitForSeconds(returnTransitionDuration * 0.7f);
 
-        var imagesToAnimate = new List<Image>();
-        if (startExplorationImage != null) imagesToAnimate.Add(startExplorationImage);
-        if (additionalImage1 != null) imagesToAnimate.Add(additionalImage1);
-        if (additionalImage2 != null) imagesToAnimate.Add(additionalImage2);
+        var imagesToAnimate = new List<Image> { startExplorationImage, additionalImage1, additionalImage2 };
 
         foreach (var image in imagesToAnimate)
         {
+            if (image == null) continue;
             image.gameObject.SetActive(true);
-            var canvasGroup = image.GetComponent<CanvasGroup>() ?? image.gameObject.AddComponent<CanvasGroup>();
+            var canvasGroup = image.GetComponent<CanvasGroup>();
+            if (canvasGroup == null) canvasGroup = image.gameObject.AddComponent<CanvasGroup>();
             canvasGroup.alpha = 0f;
             image.transform.localScale = Vector3.zero;
         }
@@ -217,6 +194,8 @@ public class UITransitionController : MonoBehaviour
         for (int i = 0; i < imagesToAnimate.Count; i++)
         {
             var image = imagesToAnimate[i];
+            if (image == null) continue;
+
             var canvasGroup = image.GetComponent<CanvasGroup>();
             var transform = image.transform;
 
@@ -230,88 +209,17 @@ public class UITransitionController : MonoBehaviour
 
         yield return currentTransitionSequence.WaitForCompletion();
 
-        // Mark intro transition as shown
+        ForceUIVisible(); // Safeguard agar pasti muncul 100%
+
         if (SaveSystem.Instance != null)
         {
             SaveSystem.Instance.SetIntroTransitionShown(true);
-            Debug.Log($"🚨🚨 Intro transition marked as shown in save system");
         }
-
-        Debug.Log($"🚨🚨 UITransitionController.ShowStartButtonElegantly FINISHED at {Time.time}");
-        Debug.Log($"🚨🚨 UI startup images should now be visible!");
     }
 
     private void StartExplorationMode()
     {
-        // Trigger the exploration mode start through GameModeManager
         StartExplorationTransition();
-    }
-
-    /// <summary>
-    /// Check if intro transition has been shown and hide intro images if needed
-    /// </summary>
-    private IEnumerator CheckAndHideIntroImagesIfNeeded()
-    {
-        // Wait a frame to ensure SaveSystem is ready
-        yield return null;
-
-        // Check if intro transition has already been shown
-        if (SaveSystem.Instance != null && SaveSystem.Instance.IsIntroTransitionShown())
-        {
-            Debug.Log($"🚨 Intro transition already shown - searching for and hiding intro images");
-            HideIntroImagesGlobally();
-        }
-        else
-        {
-            Debug.Log($"🚨 Intro transition not yet shown - keeping intro images visible");
-        }
-    }
-
-    /// <summary>
-    /// Search for and hide intro images globally (in case they're active by default)
-    /// </summary>
-    private void HideIntroImagesGlobally()
-    {
-        int hiddenCount = 0;
-
-        // Search for common intro image names
-        string[] possibleImageNames = {
-            "Start Exploration Image", "StartExplorationImage", "start exploration image",
-            "Additional Image 1", "AdditionalImage1", "additional image 1",
-            "Additional Image 2", "AdditionalImage2", "additional image 2",
-            "StartExploration", "StartExplorationButton", "StartButton"
-        };
-
-        foreach (string imageName in possibleImageNames)
-        {
-            GameObject imageObj = GameObject.Find(imageName);
-            if (imageObj != null && imageObj.activeInHierarchy)
-            {
-                Debug.Log($"🚨 Found and hiding intro image: {imageName}");
-                imageObj.SetActive(false);
-                hiddenCount++;
-            }
-        }
-
-        // Also search for Image components that might be intro images
-        UnityEngine.UI.Image[] allImages = FindObjectsOfType<UnityEngine.UI.Image>(true);
-        foreach (var image in allImages)
-        {
-            string imageName = image.gameObject.name.ToLower();
-            if (imageName.Contains("start") && imageName.Contains("exploration") ||
-                imageName.Contains("additional") && imageName.Contains("image") ||
-                imageName.Contains("intro") && imageName.Contains("transition"))
-            {
-                if (image.gameObject.activeInHierarchy)
-                {
-                    Debug.Log($"🚨 Found and hiding intro image by component search: {image.gameObject.name}");
-                    image.gameObject.SetActive(false);
-                    hiddenCount++;
-                }
-            }
-        }
-
-        Debug.Log($"🚨 Total intro images hidden: {hiddenCount}");
     }
 
     public float GetCameraDelayAfterButton() => cameraDelayAfterButton;
