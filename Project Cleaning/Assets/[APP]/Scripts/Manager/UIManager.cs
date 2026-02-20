@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -70,7 +71,7 @@ public class UIManager : MonoBehaviour
         if (FinishButton != null)
         {
             FinishButton.onClick.AddListener(FinishButtonInteract);
-            Debug.Log("Finish Button listener added via Button reference");
+            AppLogger.Log("Finish Button listener added via Button reference");
             return;
         }
 
@@ -78,7 +79,7 @@ public class UIManager : MonoBehaviour
         {
             // Method 1: Add EventTrigger to Image
             SetupImageAsButton();
-            Debug.Log("Finish button image listener added");
+            AppLogger.Log("Finish button image listener added");
         }
         else
         {
@@ -87,11 +88,11 @@ public class UIManager : MonoBehaviour
             if (buttonComponent != null)
             {
                 buttonComponent.onClick.AddListener(FinishButtonInteract);
-                Debug.Log("Finish button component listener added");
+                AppLogger.Log("Finish button component listener added");
             }
             else
             {
-                Debug.LogWarning("Finish button not assigned or Button component not found!");
+                AppLogger.LogWarning("Finish button not assigned or Button component not found!");
             }
         }
     }
@@ -183,7 +184,7 @@ public class UIManager : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"UIManager Update failed (likely scene unloading): {ex.Message}");
+            AppLogger.LogWarning($"UIManager Update failed (likely scene unloading): {ex.Message}");
             isSceneUnloading = true; // Stop further processing
         }
     }
@@ -193,7 +194,7 @@ public class UIManager : MonoBehaviour
         // SAFETY CHECK: Verify all progress bars still exist
         if (progressDusts == null || progressDirts == null || progressAssemble == null)
         {
-            Debug.LogWarning("ProgressBar destroyed - stopping UIManager updates");
+            AppLogger.LogWarning("ProgressBar destroyed - stopping UIManager updates");
             isSceneUnloading = true;
             return;
         }
@@ -201,7 +202,7 @@ public class UIManager : MonoBehaviour
         // SAFETY CHECK: Verify managers still exist
         if (CleanManager.Instance == null || AssembleManager.Instance == null)
         {
-            Debug.LogWarning("Manager destroyed - stopping UIManager updates");
+            AppLogger.LogWarning("Manager destroyed - stopping UIManager updates");
             isSceneUnloading = true;
             return;
         }
@@ -219,7 +220,7 @@ public class UIManager : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"ProgressUpdate failed: {ex.Message}");
+            AppLogger.LogWarning($"ProgressUpdate failed: {ex.Message}");
             isSceneUnloading = true;
         }
     }
@@ -240,7 +241,7 @@ public class UIManager : MonoBehaviour
         // SAFETY CHECK: Verify UI objects still exist before accessing
         if (FinishUI == null)
         {
-            Debug.LogWarning("FinishUI has been destroyed - cannot show/hide");
+            AppLogger.LogWarning("FinishUI has been destroyed - cannot show/hide");
             isSceneUnloading = true;
             return;
         }
@@ -251,7 +252,7 @@ public class UIManager : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"ShowFinishUI failed: {ex.Message}");
+            AppLogger.LogWarning($"ShowFinishUI failed: {ex.Message}");
             isSceneUnloading = true;
         }
     }
@@ -261,7 +262,7 @@ public class UIManager : MonoBehaviour
         // SAFETY CHECK: Verify UI objects still exist before accessing
         if (FinishBackground == null)
         {
-            Debug.LogWarning("FinishBackground has been destroyed - cannot show/hide");
+            AppLogger.LogWarning("FinishBackground has been destroyed - cannot show/hide");
             isSceneUnloading = true;
             return;
         }
@@ -272,7 +273,7 @@ public class UIManager : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"ShowFinishBackground failed: {ex.Message}");
+            AppLogger.LogWarning($"ShowFinishBackground failed: {ex.Message}");
             isSceneUnloading = true;
         }
     }
@@ -280,7 +281,7 @@ public class UIManager : MonoBehaviour
     public void AlertYesInteract()
     {
 
-        Debug.Log("Exit level");
+        AppLogger.Log("Exit level");
 
         // Pastikan input UI/touch kembali aktif untuk menangkap klik
         TouchManager.Instance?.DisableAllTouch(false);
@@ -292,14 +293,14 @@ public class UIManager : MonoBehaviour
         // Jalur utama: gunakan TransitionScreen (staged) menuju menu
         if (SceneTransitionManager.Instance == null)
         {
-            Debug.LogWarning("SceneTransitionManager not found - creating one for exit flow");
+            AppLogger.LogWarning("SceneTransitionManager not found - creating one for exit flow");
             new GameObject("SceneTransitionManager").AddComponent<SceneTransitionManager>();
         }
 
         var stm = SceneTransitionManager.Instance;
         if (stm.IsTransitionInProgress())
         {
-            Debug.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
+            AppLogger.LogWarning("Transition in progress detected during Exit - forcing immediate load to menu.");
             stm.ForceTransitionImmediate("NEW_StartGame");
             return;
         }
@@ -323,14 +324,14 @@ public class UIManager : MonoBehaviour
 
     public void AlertNoInteract()
     {
-        Debug.Log("Cancel exit level");
+        AppLogger.Log("Cancel exit level");
         AlertBox.SetActive(false);
         // ShowSetting(true);
     }
 
     public void ExitButtonInteract()
     {
-        Debug.Log("Exit button clicked - showing alert box");
+        AppLogger.Log("Exit button clicked - showing alert box");
         AlertBox.SetActive(true);
         // ShowSetting(false);
     }
@@ -345,7 +346,7 @@ public class UIManager : MonoBehaviour
         {
             var es = new GameObject("EventSystem").AddComponent<EventSystem>();
             es.gameObject.AddComponent<StandaloneInputModule>();
-            Debug.Log("[UIManager] Created missing EventSystem for UI input");
+            AppLogger.Log("[UIManager] Created missing EventSystem for UI input");
         }
 
         // Enable all GraphicRaycaster on parent canvases
@@ -361,7 +362,7 @@ public class UIManager : MonoBehaviour
 
     public void ResumeButtonInteract()
     {
-        // Debug.Log("Exit level");
+        // AppLogger.Log("Exit level");
         ShowSetting(false);
     }
 
@@ -369,7 +370,7 @@ public class UIManager : MonoBehaviour
     {
         if (progressDirts == null || progressAssemble == null || progressDusts == null)
         {
-            Debug.LogWarning("Progress bars not assigned on UIManager.");
+            AppLogger.LogWarning("Progress bars not assigned on UIManager.");
             return 0f;
         }
 
@@ -402,7 +403,7 @@ public class UIManager : MonoBehaviour
         if (progressDirts != null) progressDirts.SetValue(0);
         if (progressDusts != null) progressDusts.SetValue(0);
         if (progressAssemble != null) progressAssemble.SetValue(0);
-        Debug.Log("[UIManager] Progress bars reset.");
+        AppLogger.Log("[UIManager] Progress bars reset.");
     }
 
     /// <summary>
@@ -410,7 +411,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void FinishButtonInteract()
     {
-        Debug.Log("=== FINISH BUTTON CLICKED ===");
+        AppLogger.Log("=== FINISH BUTTON CLICKED ===");
 
         // Check if GamePlayManager exists
         if (GamePlayManager.Instance != null)
@@ -420,12 +421,12 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("GamePlayManager.Instance not found! Trying alternative transition...");
+            AppLogger.LogWarning("GamePlayManager.Instance not found! Trying alternative transition...");
 
             // FALLBACK: Try to trigger scene transition directly via SceneTransitionManager
             if (SceneTransitionManager.Instance != null)
             {
-                Debug.Log("Using SceneTransitionManager fallback for button transition");
+                AppLogger.Log("Using SceneTransitionManager fallback for button transition");
 
                 // Use a default object type for transition
                 ObjectType fallbackObjectType = ObjectType.ChinaCoin; // Default fallback
@@ -453,12 +454,12 @@ public class UIManager : MonoBehaviour
                     fallbackObjectType = ObjectType.MesirWingedScared;
                 }
 
-                Debug.Log($"Using fallback ObjectType: {fallbackObjectType}");
+                AppLogger.Log($"Using fallback ObjectType: {fallbackObjectType}");
                 SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(fallbackObjectType, "NEW_StartGame", "UIManager");
             }
             else
             {
-                Debug.LogError("SceneTransitionManager.Instance also not found! Creating one...");
+                AppLogger.LogError("SceneTransitionManager.Instance also not found! Creating one...");
 
                 // Last resort: Create SceneTransitionManager and use it
                 GameObject stmGO = new GameObject("SceneTransitionManager");
@@ -479,12 +480,12 @@ public class UIManager : MonoBehaviour
 
         if (SceneTransitionManager.Instance != null)
         {
-            Debug.Log("SceneTransitionManager created successfully, triggering transition");
+            AppLogger.Log("SceneTransitionManager created successfully, triggering transition");
             SceneTransitionManager.Instance.TransitionToMainSceneWithContentSwitcher(ObjectType.ChinaCoin, "NEW_StartGame", "UIManager");
         }
         else
         {
-            Debug.LogError("Failed to create SceneTransitionManager even after retry!");
+            AppLogger.LogError("Failed to create SceneTransitionManager even after retry!");
         }
     }
 
@@ -503,7 +504,7 @@ public class UIManager : MonoBehaviour
             color.a = enabled ? 1f : 0.5f; // Fade when disabled
             FinishButtonImage.color = color;
 
-            Debug.Log($"Finish button {(enabled ? "enabled" : "disabled")}");
+            AppLogger.Log($"Finish button {(enabled ? "enabled" : "disabled")}");
         }
     }
 
@@ -514,7 +515,7 @@ public class UIManager : MonoBehaviour
     {
         if (FinishButton != null) FinishButton.gameObject.SetActive(show);
         if (FinishButtonImage != null) FinishButtonImage.gameObject.SetActive(show);
-        Debug.Log($"Finish button {(show ? "shown" : "hidden")}");
+        AppLogger.Log($"Finish button {(show ? "shown" : "hidden")}");
     }
 
     /// <summary>
@@ -522,7 +523,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void TestFinishButton()
     {
-        Debug.Log("=== TESTING FINISH BUTTON ===");
+        AppLogger.Log("=== TESTING FINISH BUTTON ===");
         FinishButtonInteract();
     }
 
@@ -533,7 +534,7 @@ public class UIManager : MonoBehaviour
     {
         if (artefactNameText == null)
         {
-            Debug.LogWarning("artefactNameText is not assigned on UIManager.");
+            AppLogger.LogWarning("artefactNameText is not assigned on UIManager.");
             return;
         }
 
@@ -567,7 +568,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void PrepareForSceneTransition()
     {
-        Debug.Log("=== PREPARING UI MANAGER FOR SCENE TRANSITION ===");
+        AppLogger.Log("=== PREPARING UI MANAGER FOR SCENE TRANSITION ===");
 
         // Stop all Update() processing
         isSceneUnloading = true;
@@ -581,7 +582,7 @@ public class UIManager : MonoBehaviour
             Instance = null;
         }
 
-        Debug.Log("UIManager prepared for scene unload");
+        AppLogger.Log("UIManager prepared for scene unload");
     }
 
     private void OnDestroy()
@@ -593,3 +594,5 @@ public class UIManager : MonoBehaviour
         }
     }
 }
+
+

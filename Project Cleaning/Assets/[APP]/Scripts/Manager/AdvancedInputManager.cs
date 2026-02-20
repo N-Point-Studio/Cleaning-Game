@@ -1,3 +1,4 @@
+using Modules;
 using UnityEngine;
 
 /// <summary>
@@ -57,11 +58,11 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (IsInTransition)
         {
-            Debug.LogWarning("Attempted to start a new transition while one is already in progress.");
+            AppLogger.LogWarning("Attempted to start a new transition while one is already in progress.");
             return;
         }
         IsInTransition = true;
-        Debug.Log("=== TRANSITION LOCK ACQUIRED ===");
+        AppLogger.Log("=== TRANSITION LOCK ACQUIRED ===");
     }
 
     /// <summary>
@@ -70,7 +71,7 @@ public class AdvancedInputManager : MonoBehaviour
     public static void EndTransitionLock()
     {
         IsInTransition = false;
-        Debug.Log("=== TRANSITION LOCK RELEASED ===");
+        AppLogger.Log("=== TRANSITION LOCK RELEASED ===");
     }
 
     #region Unity Lifecycle
@@ -130,7 +131,7 @@ public class AdvancedInputManager : MonoBehaviour
     public void BlockInputFor(float duration)
     {
         inputBlockUntil = Time.time + duration;
-        Debug.Log($"=== INPUT BLOCKED for {duration} seconds ===");
+        AppLogger.Log($"=== INPUT BLOCKED for {duration} seconds ===");
     }
 
     /// <summary>
@@ -139,7 +140,7 @@ public class AdvancedInputManager : MonoBehaviour
     public void UnblockInput()
     {
         inputBlockUntil = 0f;
-        Debug.Log("=== INPUT UNBLOCKED ===");
+        AppLogger.Log("=== INPUT UNBLOCKED ===");
     }
 
     /// <summary>
@@ -152,7 +153,7 @@ public class AdvancedInputManager : MonoBehaviour
         pinchDetectionSystem?.Reset();
         isPinchInProgress = false;
         isSwipeBlocked = false;
-        Debug.Log("=== GESTURE SYSTEMS RESET ===");
+        AppLogger.Log("=== GESTURE SYSTEMS RESET ===");
     }
     #endregion
 
@@ -177,7 +178,7 @@ public class AdvancedInputManager : MonoBehaviour
         cameraAnimator = CameraAnimationController.Instance;
         if (cameraAnimator == null || cameraAnimator.gameObject == null)
         {
-            Debug.LogWarning("⚠️ CameraAnimationController.Instance is null or destroyed, retrying in next frame");
+            AppLogger.LogWarning("⚠️ CameraAnimationController.Instance is null or destroyed, retrying in next frame");
             StartCoroutine(RetryInitializeCameraAnimator());
         }
 
@@ -207,14 +208,14 @@ public class AdvancedInputManager : MonoBehaviour
 
             if (cameraAnimator != null && cameraAnimator.gameObject != null)
             {
-                Debug.Log($"✅ CameraAnimationController successfully initialized after {retryCount} retries");
+                AppLogger.Log($"✅ CameraAnimationController successfully initialized after {retryCount} retries");
                 break;
             }
         }
 
         if (cameraAnimator == null || cameraAnimator.gameObject == null)
         {
-            Debug.LogError($"❌ Failed to initialize CameraAnimationController after {maxRetries} retries - swipe functionality will not work");
+            AppLogger.LogError($"❌ Failed to initialize CameraAnimationController after {maxRetries} retries - swipe functionality will not work");
         }
     }
 
@@ -230,7 +231,7 @@ public class AdvancedInputManager : MonoBehaviour
             doubleTapDetector.CompleteGestureReset();
         }
 
-        Debug.Log($"=== INPUT MANAGER - Mode changed to: {newMode}, gesture cooldown reset ===");
+        AppLogger.Log($"=== INPUT MANAGER - Mode changed to: {newMode}, gesture cooldown reset ===");
     }
     #endregion
 
@@ -270,12 +271,12 @@ public class AdvancedInputManager : MonoBehaviour
                     var touch2 = Input.GetTouch(1);
                     pinchStartTime = Time.time;
                     pinchStartDistance = Vector2.Distance(touch1.position, touch2.position);
-                    Debug.Log($"=== INSTANT PINCH DETECTION - Force starting pinch (startDist={pinchStartDistance:F1}) ===");
+                    AppLogger.Log($"=== INSTANT PINCH DETECTION - Force starting pinch (startDist={pinchStartDistance:F1}) ===");
                 }
 
                 isPinchInProgress = true;
                 isSwipeBlocked = true;
-                Debug.Log("=== PINCH MODE STARTED - Canceling swipe, blocking single touch ===");
+                AppLogger.Log("=== PINCH MODE STARTED - Canceling swipe, blocking single touch ===");
             }
             HandlePinchInput();
             return; // Exit early to prevent single touch processing
@@ -291,17 +292,17 @@ public class AdvancedInputManager : MonoBehaviour
                     {
                         isPinchInProgress = false;
                         isSwipeBlocked = false;
-                        Debug.Log("=== PINCH MODE ENDED - Single touch began ===");
+                        AppLogger.Log("=== PINCH MODE ENDED - Single touch began ===");
                     }
 
                     if (!isSwipeBlocked)
                     {
-                        Debug.Log("=== Single Touch Began - Calling HandleInputDown ===");
+                        AppLogger.Log("=== Single Touch Began - Calling HandleInputDown ===");
                         HandleInputDown(touch.position);
                     }
                     else
                     {
-                        Debug.Log("=== Single Touch Began - BLOCKED by pinch ===");
+                        AppLogger.Log("=== Single Touch Began - BLOCKED by pinch ===");
                     }
                     break;
                 case TouchPhase.Moved:
@@ -318,7 +319,7 @@ public class AdvancedInputManager : MonoBehaviour
         {
             if (isPinchInProgress || isSwipeBlocked)
             {
-                Debug.Log("=== All touches ended - Resetting gesture states ===");
+                AppLogger.Log("=== All touches ended - Resetting gesture states ===");
             }
             isPinchInProgress = false;
             isSwipeBlocked = false;
@@ -330,17 +331,17 @@ public class AdvancedInputManager : MonoBehaviour
         var touch1 = Input.GetTouch(0);
         var touch2 = Input.GetTouch(1);
 
-        Debug.Log($"=== PINCH INPUT: T1={touch1.phase}, T2={touch2.phase}, PinchInProgress={isPinchInProgress}, SwipeBlocked={isSwipeBlocked} ===");
+        AppLogger.Log($"=== PINCH INPUT: T1={touch1.phase}, T2={touch2.phase}, PinchInProgress={isPinchInProgress}, SwipeBlocked={isSwipeBlocked} ===");
 
         if (touch1.phase == TouchPhase.Began || touch2.phase == TouchPhase.Began)
         {
             if (!gameModeManager.IsInInitialMode())
             {
-                Debug.Log($"=== PINCH TOUCH BEGAN - Distance: {Vector2.Distance(touch1.position, touch2.position):F1} (already started by ForceStart) ===");
+                AppLogger.Log($"=== PINCH TOUCH BEGAN - Distance: {Vector2.Distance(touch1.position, touch2.position):F1} (already started by ForceStart) ===");
             }
             else
             {
-                Debug.Log("=== PINCH BLOCKED - Still in Initial mode ===");
+                AppLogger.Log("=== PINCH BLOCKED - Still in Initial mode ===");
             }
         }
         else if (touch1.phase == TouchPhase.Moved || touch2.phase == TouchPhase.Moved)
@@ -348,13 +349,13 @@ public class AdvancedInputManager : MonoBehaviour
             if (isPinchInProgress)
             {
                 var earlyPinchResult = pinchDetectionSystem.UpdatePinch();
-                Debug.Log($"=== PINCH UPDATE: Distance={earlyPinchResult.CurrentDistance:F1}, Change={earlyPinchResult.DistanceChange:F1}, EarlyDetection={earlyPinchResult.HasEarlyDetection} ===");
+                AppLogger.Log($"=== PINCH UPDATE: Distance={earlyPinchResult.CurrentDistance:F1}, Change={earlyPinchResult.DistanceChange:F1}, EarlyDetection={earlyPinchResult.HasEarlyDetection} ===");
 
                 // ADAPTIVE DETECTION: Use early detection flag to block swipes.
                 if (earlyPinchResult.HasEarlyDetection)
                 {
                     isSwipeBlocked = true;
-                    Debug.Log("=== PINCH MOVEMENT DETECTED - Blocking swipe ===");
+                    AppLogger.Log("=== PINCH MOVEMENT DETECTED - Blocking swipe ===");
                 }
 
                 // AUTO-TRIGGER: If two fingers stay for a short time with small movement, still treat as a pinch
@@ -365,7 +366,7 @@ public class AdvancedInputManager : MonoBehaviour
                 {
                     var direction = distanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
                     Vector2 pinchCenter = (touch1.position + touch2.position) * 0.5f;
-                    Debug.Log($"=== AUTO PINCH TRIGGER: time={timeHeld:F2}s, change={distanceChange:F1} -> {direction} ===");
+                    AppLogger.Log($"=== AUTO PINCH TRIGGER: time={timeHeld:F2}s, change={distanceChange:F1} -> {direction} ===");
                     HandlePinchGesture(direction, pinchCenter);
                     isPinchInProgress = false;
                     isSwipeBlocked = false;
@@ -375,13 +376,13 @@ public class AdvancedInputManager : MonoBehaviour
                 // BACKUP DETECTION: Force gesture completion if significant change detected
                 if (earlyPinchResult.DistanceChange > pinchThreshold * 0.8f) // 80% of threshold
                 {
-                    Debug.Log("=== BACKUP PINCH DETECTION - Near threshold reached ===");
+                    AppLogger.Log("=== BACKUP PINCH DETECTION - Near threshold reached ===");
                 }
             }
             else
             {
                 // Fallback: If pinch was not in progress but we detect 2 moving touches, try to start detection
-                Debug.Log("=== FALLBACK PINCH DETECTION ATTEMPT ===");
+                AppLogger.Log("=== FALLBACK PINCH DETECTION ATTEMPT ===");
                 if (!gameModeManager.IsInInitialMode())
                 {
                     pinchDetectionSystem.ForceStartPinch();
@@ -396,11 +397,11 @@ public class AdvancedInputManager : MonoBehaviour
             if (isPinchInProgress)
             {
                 var pinchResult = pinchDetectionSystem.EndPinch();
-                Debug.Log($"=== PINCH ENDED: Valid={pinchResult.IsValid}, Direction={pinchResult.Direction}, Change={pinchResult.DistanceChange:F1} ===");
+                AppLogger.Log($"=== PINCH ENDED: Valid={pinchResult.IsValid}, Direction={pinchResult.Direction}, Change={pinchResult.DistanceChange:F1} ===");
 
                 if (pinchResult.IsValid)
                 {
-                    Debug.Log($"=== EXECUTING PINCH GESTURE: {pinchResult.Direction} at {pinchResult.PinchCenter} ===");
+                    AppLogger.Log($"=== EXECUTING PINCH GESTURE: {pinchResult.Direction} at {pinchResult.PinchCenter} ===");
                     HandlePinchGesture(pinchResult.Direction, pinchResult.PinchCenter);
                 }
                 else
@@ -409,20 +410,20 @@ public class AdvancedInputManager : MonoBehaviour
                     float changeThreshold = pinchThreshold * 0.6f; // 60% of normal threshold
                     if (Mathf.Abs(pinchResult.DistanceChange) >= changeThreshold)
                     {
-                        Debug.Log($"=== FALLBACK PINCH EXECUTION: Change {pinchResult.DistanceChange:F1} >= {changeThreshold:F1} ===");
+                        AppLogger.Log($"=== FALLBACK PINCH EXECUTION: Change {pinchResult.DistanceChange:F1} >= {changeThreshold:F1} ===");
                         var direction = pinchResult.DistanceChange > 0 ? PinchDirection.Out : PinchDirection.In;
                         HandlePinchGesture(direction, pinchResult.PinchCenter);
                     }
                     else
                     {
-                        Debug.Log($"=== PINCH FAILED: Change {pinchResult.DistanceChange:F1} < threshold {pinchThreshold:F1} ===");
+                        AppLogger.Log($"=== PINCH FAILED: Change {pinchResult.DistanceChange:F1} < threshold {pinchThreshold:F1} ===");
                     }
                 }
 
                 // AGGRESSIVE STATE CLEANUP: Always reset pinch state after processing
                 isPinchInProgress = false;
                 isSwipeBlocked = false;
-                Debug.Log("=== PINCH STATE RESET - Ready for next gesture ===");
+                AppLogger.Log("=== PINCH STATE RESET - Ready for next gesture ===");
             }
         }
     }
@@ -431,7 +432,7 @@ public class AdvancedInputManager : MonoBehaviour
     {
         if (IsPointerOverUI(screenPosition))
         {
-            Debug.Log("=== INPUT BLOCKED - Pointer is over UI ===");
+            AppLogger.Log("=== INPUT BLOCKED - Pointer is over UI ===");
             return;
         }
 
@@ -467,7 +468,7 @@ public class AdvancedInputManager : MonoBehaviour
             bool canDoubleTap = doubleTapDetector.CheckForDoubleTap(screenPosition);
             if (canDoubleTap)
             {
-                Debug.Log("=== DOUBLE TAP DETECTED - Handling gesture ===");
+                AppLogger.Log("=== DOUBLE TAP DETECTED - Handling gesture ===");
                 doubleTapDetector.HandleDoubleTap(screenPosition);
                 return; // Exit early - double tap handled
             }
@@ -506,29 +507,29 @@ public class AdvancedInputManager : MonoBehaviour
     #region Gesture Handling
     private void HandleSwipeGesture(SwipeDirection direction)
     {
-        Debug.Log($"🎯 HandleSwipeGesture called - Direction: {direction}");
+        AppLogger.Log($"🎯 HandleSwipeGesture called - Direction: {direction}");
 
         // DEFENSIVE: Check if cameraAnimator is still valid
         if (cameraAnimator == null || cameraAnimator.gameObject == null)
         {
-            Debug.LogError("❌ CameraAnimationController is null or destroyed - cannot perform swipe. Attempting to reinitialize...");
+            AppLogger.LogError("❌ CameraAnimationController is null or destroyed - cannot perform swipe. Attempting to reinitialize...");
             cameraAnimator = CameraAnimationController.Instance;
 
             if (cameraAnimator == null)
             {
-                Debug.LogError("❌ CameraAnimationController.Instance is still null - swipe will not work");
+                AppLogger.LogError("❌ CameraAnimationController.Instance is still null - swipe will not work");
                 return;
             }
             else
             {
-                Debug.Log("✅ CameraAnimationController successfully reinitialized");
+                AppLogger.Log("✅ CameraAnimationController successfully reinitialized");
             }
         }
 
         // ADDITIONAL FIX: Ensure game mode is correct before performing swipe
         if (gameModeManager != null && !gameModeManager.IsInExplorationMode())
         {
-            Debug.LogWarning("⚠️ Not in exploration mode - ensuring exploration mode is active before swipe");
+            AppLogger.LogWarning("⚠️ Not in exploration mode - ensuring exploration mode is active before swipe");
             gameModeManager.ReturnToExplorationMode();
         }
 
@@ -538,11 +539,11 @@ public class AdvancedInputManager : MonoBehaviour
         switch (direction)
         {
             case SwipeDirection.Right:
-                Debug.Log($"🎯 Performing PerformSwipeLeft on {cameraAnimator.name}");
+                AppLogger.Log($"🎯 Performing PerformSwipeLeft on {cameraAnimator.name}");
                 cameraAnimator?.PerformSwipeLeft();
                 break;
             case SwipeDirection.Left:
-                Debug.Log($"🎯 Performing PerformSwipeRight on {cameraAnimator.name}");
+                AppLogger.Log($"🎯 Performing PerformSwipeRight on {cameraAnimator.name}");
                 cameraAnimator?.PerformSwipeRight();
                 break;
         }
@@ -553,12 +554,12 @@ public class AdvancedInputManager : MonoBehaviour
         // Do not start a new transition if one is already happening
         if (IsInTransition)
         {
-            Debug.Log("=== PINCH IGNORED - Transition in progress ===");
+            AppLogger.Log("=== PINCH IGNORED - Transition in progress ===");
             return;
         }
 
         var currentMode = gameModeManager?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
-        Debug.Log($"=== HANDLE PINCH GESTURE: Direction={direction}, Mode={currentMode}, Center={pinchCenter} ===");
+        AppLogger.Log($"=== HANDLE PINCH GESTURE: Direction={direction}, Mode={currentMode}, Center={pinchCenter} ===");
 
         // NOTE: Direction mapping (as requested):
         //  - Pinch OUT (fingers apart) => Zoom IN (enter zoom)
@@ -569,7 +570,7 @@ public class AdvancedInputManager : MonoBehaviour
             BlockInputFor(0.3f);
             StartTransitionLock();
 
-            Debug.Log("=== PINCH IN - Attempting to enter zoom mode ===");
+            AppLogger.Log("=== PINCH IN - Attempting to enter zoom mode ===");
             gameModeManager?.EnterZoomMode();
 
             if (pinchCenter != default)
@@ -578,7 +579,7 @@ public class AdvancedInputManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("=== PINCH CENTER IS DEFAULT - Using center fallback ===");
+                AppLogger.Log("=== PINCH CENTER IS DEFAULT - Using center fallback ===");
                 cameraAnimator?.EnterZoomModeAtCenter();
             }
         }
@@ -587,12 +588,12 @@ public class AdvancedInputManager : MonoBehaviour
             // Block input for the transition
             BlockInputFor(0.4f); // Block for slightly longer than the transition
 
-            Debug.Log("=== PINCH OUT - Returning to exploration mode with synchronized transition ===");
+            AppLogger.Log("=== PINCH OUT - Returning to exploration mode with synchronized transition ===");
             StartCoroutine(SynchronizedPinchReturnToExploration());
         }
         else
         {
-            Debug.Log($"=== PINCH GESTURE IGNORED - Mode: {currentMode}, Direction: {direction} ===");
+            AppLogger.Log($"=== PINCH GESTURE IGNORED - Mode: {currentMode}, Direction: {direction} ===");
         }
     }
     #endregion
@@ -639,7 +640,7 @@ public class AdvancedInputManager : MonoBehaviour
     #region Unity Lifecycle Cleanup
     private void OnDestroy()
     {
-        Debug.Log($"🔍 AdvancedInputManager.OnDestroy() called");
+        AppLogger.Log($"🔍 AdvancedInputManager.OnDestroy() called");
 
         // Unsubscribe from events to prevent memory leaks
         if (gameModeManager != null)
@@ -651,7 +652,7 @@ public class AdvancedInputManager : MonoBehaviour
         if (Instance == this)
         {
             Instance = null;
-            Debug.Log("✅ AdvancedInputManager singleton instance cleared");
+            AppLogger.Log("✅ AdvancedInputManager singleton instance cleared");
         }
     }
     #endregion
@@ -794,7 +795,7 @@ public class SwipeDetectionSystem
         if (isTracking)
         {
             isTracking = false;
-            Debug.Log("=== SWIPE CANCELED - Pinch priority ===");
+            AppLogger.Log("=== SWIPE CANCELED - Pinch priority ===");
         }
     }
 
@@ -905,7 +906,7 @@ public class PinchDetectionSystem
         // Calculate and store pinch center point
         pinchCenter = (touch1.position + touch2.position) * 0.5f;
 
-        Debug.Log($"=== FORCE START PINCH - Distance: {startDistance:F1}, Center: {pinchCenter} ===");
+        AppLogger.Log($"=== FORCE START PINCH - Distance: {startDistance:F1}, Center: {pinchCenter} ===");
     }
 
     public PinchUpdateResult UpdatePinch()
@@ -994,3 +995,4 @@ public class PinchDetectionSystem
     }
 }
 #endregion
+

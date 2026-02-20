@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class ClusterCreatedState : ClusterBaseState
 {
@@ -9,7 +10,7 @@ public class ClusterCreatedState : ClusterBaseState
     {
         stateMachine.DisableAllInteraction();
 
-        Debug.Log("Cluster state: created");
+        AppLogger.Log("Cluster state: created");
 
         stateMachine.SetClusterState(ClusterState.Created);
         stateMachine.BoxCollider.enabled = false;
@@ -23,7 +24,7 @@ public class ClusterCreatedState : ClusterBaseState
 
         stateMachine.Interaction.SetInitialPos(stateMachine.connectedFragments[0].InitialPosition);
 
-        Debug.Log("initial position dari " + stateMachine.connectedFragments[0].name + " adalah " + stateMachine.connectedFragments[0].InitialPosition);
+        AppLogger.Log("initial position dari " + stateMachine.connectedFragments[0].name + " adalah " + stateMachine.connectedFragments[0].InitialPosition);
     }
     public override void Tick(float deltaTime)
     {
@@ -34,3 +35,4 @@ public class ClusterCreatedState : ClusterBaseState
         stateMachine.BoxCollider.enabled = true;
     }
 }
+

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class ClusterMoveToInspect : ClusterBaseState
 {
@@ -9,7 +10,7 @@ public class ClusterMoveToInspect : ClusterBaseState
     {
         stateMachine.Interaction.DisableAllInteraction();
 
-        Debug.Log("Cluster state: Move to inspect");
+        AppLogger.Log("Cluster state: Move to inspect");
 
         stateMachine.SetClusterState(ClusterState.MoveToInspect);
 
@@ -54,3 +55,4 @@ public class ClusterMoveToInspect : ClusterBaseState
         stateMachine.Interaction.DisableAllInteraction();
     }
 }
+

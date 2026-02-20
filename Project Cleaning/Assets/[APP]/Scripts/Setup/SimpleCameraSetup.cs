@@ -1,4 +1,5 @@
 using UnityEngine;
+using Modules;
 
 /// <summary>
 /// AUTO-SETUP: Simple camera restoration system
@@ -16,7 +17,7 @@ public class SimpleCameraSetup : MonoBehaviour
             GameObject simpleCameraGO = new GameObject("SimpleCameraFocusRestore");
             simpleCameraGO.AddComponent<SimpleCameraFocusRestore>();
 
-            Debug.Log("✅ AUTO-SETUP: SimpleCameraFocusRestore created automatically");
+            AppLogger.Log("✅ AUTO-SETUP: SimpleCameraFocusRestore created automatically");
         }
 
         // Disable complex systems to prevent conflicts
@@ -24,12 +25,13 @@ public class SimpleCameraSetup : MonoBehaviour
         if (cameraStateManager != null)
         {
             cameraStateManager.gameObject.SetActive(false);
-            Debug.Log("🔧 AUTO-SETUP: Disabled conflicting CameraStateManager");
+            AppLogger.Log("🔧 AUTO-SETUP: Disabled conflicting CameraStateManager");
         }
 
-        Debug.Log("🎯 SIMPLE CAMERA SYSTEM READY - No manual setup required!");
+        AppLogger.Log("🎯 SIMPLE CAMERA SYSTEM READY - No manual setup required!");
 
         // Destroy this setup script after auto-setup is complete
         Destroy(this);
     }
 }
+

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class ClusterInspectState : ClusterBaseState
 {
@@ -8,7 +9,7 @@ public class ClusterInspectState : ClusterBaseState
 
     public override void Enter()
     {
-        Debug.Log("Cluster state: inspect");
+        AppLogger.Log("Cluster state: inspect");
         stateMachine.Interaction.DisableAllInteraction();
 
 
@@ -32,3 +33,4 @@ public class ClusterInspectState : ClusterBaseState
     }
 
 }
+

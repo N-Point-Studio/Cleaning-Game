@@ -1,4 +1,5 @@
 using UnityEngine;
+using Modules;
 
 /// <summary>
 /// Simple component to show image popup when object is clicked
@@ -45,7 +46,7 @@ public class ClickableImagePopup : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Cannot show popup for {gameObject.name}: " +
+            AppLogger.LogWarning($"Cannot show popup for {gameObject.name}: " +
                             $"Sprite={popupSprite != null}, " +
                             $"Animator={ImagePopupAnimator.Instance != null}");
         }
@@ -76,3 +77,4 @@ public class ClickableImagePopup : MonoBehaviour
         }
     }
 }
+

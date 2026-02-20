@@ -1,4 +1,5 @@
 using System.Collections;
+using Modules;
 using UnityEngine;
 
 /// <summary>
@@ -512,7 +513,7 @@ public class CameraStateManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"[CameraStateManager] {message}");
+            AppLogger.Log($"[CameraStateManager] {message}");
         }
     }
 
@@ -523,20 +524,20 @@ public class CameraStateManager : MonoBehaviour
     [ContextMenu("Debug: Print Current State")]
     public void DebugPrintCurrentState()
     {
-        Debug.Log($"=== CAMERA STATE DEBUG ===");
-        Debug.Log($"Persistent State: {persistentState}");
-        Debug.Log($"Is Valid: {persistentState.IsValid()}");
-        Debug.Log($"Restoration In Progress: {isRestorationInProgress}");
+        AppLogger.Log($"=== CAMERA STATE DEBUG ===");
+        AppLogger.Log($"Persistent State: {persistentState}");
+        AppLogger.Log($"Is Valid: {persistentState.IsValid()}");
+        AppLogger.Log($"Restoration In Progress: {isRestorationInProgress}");
 
         var topDownCamera = TopDownCameraController.Instance;
         if (topDownCamera != null)
         {
             var currentFocus = topDownCamera.GetCurrentFocus();
-            Debug.Log($"Current Camera Focus: {(currentFocus != null ? currentFocus.name : "NULL")}");
+            AppLogger.Log($"Current Camera Focus: {(currentFocus != null ? currentFocus.name : "NULL")}");
         }
         else
         {
-            Debug.Log("TopDownCameraController: NULL");
+            AppLogger.Log("TopDownCameraController: NULL");
         }
     }
 
@@ -562,3 +563,4 @@ public class CameraStateManager : MonoBehaviour
 
     #endregion
 }
+

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class SurfaceDetection : MonoBehaviour
 {
@@ -63,10 +64,10 @@ public class SurfaceDetection : MonoBehaviour
         Vector2 touchPos = TouchManager.Instance.curScreenPos;
         Ray ray = Camera.main.ScreenPointToRay(new Vector2(touchPos.x, touchPos.y + 400));
         TipPoint = new Vector2(touchPos.x, touchPos.y + 400);
-        Debug.Log("ray point: " + TipPoint);
+        AppLogger.Log("ray point: " + TipPoint);
 
-        Debug.Log("current screen pos: " + touchPos);
-        Debug.Log("current screen pos: " + new Vector3(touchPos.x, touchPos.y + 100));
+        AppLogger.Log("current screen pos: " + touchPos);
+        AppLogger.Log("current screen pos: " + new Vector3(touchPos.x, touchPos.y + 100));
 
         RaycastHit hit;
 
@@ -86,7 +87,7 @@ public class SurfaceDetection : MonoBehaviour
                     break;
 
             }
-            Debug.Log("hitting: " + hit.transform.name);
+            AppLogger.Log("hitting: " + hit.transform.name);
         }
         else
         {
@@ -116,8 +117,8 @@ public class SurfaceDetection : MonoBehaviour
         RaycastTipRotation = Vector3.SignedAngle(Vector3.up, projectedUp, hit.normal);
 
         TextureSurface = hit.textureCoord;
-        Debug.Log("uv coord: " + TextureSurface);
-        Debug.Log("hitting: " + hit.transform.name + "is surface detected: " + IsSurfaceDetected);
+        AppLogger.Log("uv coord: " + TextureSurface);
+        AppLogger.Log("hitting: " + hit.transform.name + "is surface detected: " + IsSurfaceDetected);
 
         // --- TAMBAHAN TUTORIAL ---
         // Jika terdeteksi menyentuh permukaan, anggap user sudah bisa cleaning
@@ -129,3 +130,4 @@ public class SurfaceDetection : MonoBehaviour
 
     }
 }
+

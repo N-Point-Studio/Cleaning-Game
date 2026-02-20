@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using Modules;
 using DG.Tweening;
 using UnityEngine.SceneManagement;
 using System;
@@ -86,7 +87,7 @@ public class SaveSystem : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error saving data: {e.Message}");
+            AppLogger.LogError($"Error saving data: {e.Message}");
         }
     }
 
@@ -222,10 +223,10 @@ public class SaveSystem : MonoBehaviour
         var saveData = GetSaveData();
         if (enableDebugLogs)
         {
-            Debug.Log("========================================");
-            Debug.Log("=== SAVE DATA INFO ===");
-            Debug.Log($"Save File Path: {saveFilePath}");
-            Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+            AppLogger.Log("========================================");
+            AppLogger.Log("=== SAVE DATA INFO ===");
+            AppLogger.Log($"Save File Path: {saveFilePath}");
+            AppLogger.Log($"File Exists: {File.Exists(saveFilePath)}");
         }
 
         if (File.Exists(saveFilePath))
@@ -233,31 +234,31 @@ public class SaveSystem : MonoBehaviour
             long fileSize = new FileInfo(saveFilePath).Length;
             if (enableDebugLogs)
             {
-                Debug.Log($"File Last Modified: {File.GetLastWriteTime(saveFilePath)}");
-                Debug.Log($"File Size: {fileSize} bytes");
+                AppLogger.Log($"File Last Modified: {File.GetLastWriteTime(saveFilePath)}");
+                AppLogger.Log($"File Size: {fileSize} bytes");
             }
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log($"Save Version: {saveData.saveVersion}");
-            Debug.Log($"Last Save Time: {saveData.lastSaveTime}");
-            Debug.Log($"Total Completed Objects: {saveData.GetCompletedCount()}");
-            Debug.Log($"Intro Transition Shown: {saveData.IsIntroTransitionShown()}");
+            AppLogger.Log($"Save Version: {saveData.saveVersion}");
+            AppLogger.Log($"Last Save Time: {saveData.lastSaveTime}");
+            AppLogger.Log($"Total Completed Objects: {saveData.GetCompletedCount()}");
+            AppLogger.Log($"Intro Transition Shown: {saveData.IsIntroTransitionShown()}");
 
             if (saveData.completedObjects.Count > 0)
             {
-                Debug.Log("Completed Objects:");
+                AppLogger.Log("Completed Objects:");
                 foreach (var obj in saveData.completedObjects)
                 {
-                    Debug.Log($"  - {obj.GetInfo()}");
+                    AppLogger.Log($"  - {obj.GetInfo()}");
                 }
             }
             else
             {
-                Debug.Log("⚠️ No completed objects found.");
+                AppLogger.Log("⚠️ No completed objects found.");
             }
-            Debug.Log("========================================");
+            AppLogger.Log("========================================");
         }
     }
 
@@ -269,25 +270,25 @@ public class SaveSystem : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("========================================");
-            Debug.Log("=== SAVE FILE LOCATION ===");
-            Debug.Log($"Full Path: {saveFilePath}");
-            Debug.Log($"Directory: {Path.GetDirectoryName(saveFilePath)}");
-            Debug.Log($"File Name: {Path.GetFileName(saveFilePath)}");
-            Debug.Log($"File Exists: {File.Exists(saveFilePath)}");
+            AppLogger.Log("========================================");
+            AppLogger.Log("=== SAVE FILE LOCATION ===");
+            AppLogger.Log($"Full Path: {saveFilePath}");
+            AppLogger.Log($"Directory: {Path.GetDirectoryName(saveFilePath)}");
+            AppLogger.Log($"File Name: {Path.GetFileName(saveFilePath)}");
+            AppLogger.Log($"File Exists: {File.Exists(saveFilePath)}");
 
 
             if (File.Exists(saveFilePath))
             {
-                Debug.Log("✅ File found! You can manually check this file.");
-                Debug.Log($"   Last modified: {File.GetLastWriteTime(saveFilePath)}");
-                Debug.Log($"   Size: {new FileInfo(saveFilePath).Length} bytes");
+                AppLogger.Log("✅ File found! You can manually check this file.");
+                AppLogger.Log($"   Last modified: {File.GetLastWriteTime(saveFilePath)}");
+                AppLogger.Log($"   Size: {new FileInfo(saveFilePath).Length} bytes");
             }
             else
             {
-                Debug.LogWarning("⚠️ File not found! Save may not have been written yet.");
+                AppLogger.LogWarning("⚠️ File not found! Save may not have been written yet.");
             }
-            Debug.Log("========================================");
+            AppLogger.Log("========================================");
         }
     }
 
@@ -315,9 +316,9 @@ public class SaveSystem : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("========================================");
-            Debug.Log("=== APPLICATION QUITTING ===");
-            Debug.Log("Saving data before quit...");
+            AppLogger.Log("========================================");
+            AppLogger.Log("=== APPLICATION QUITTING ===");
+            AppLogger.Log("Saving data before quit...");
         }
     
         SaveData();
@@ -325,8 +326,8 @@ public class SaveSystem : MonoBehaviour
         if (enableDebugLogs)
         {
             // CleanupDOTween();
-            Debug.Log("Data saved. Cleaning up...");
-            Debug.Log("========================================");
+            AppLogger.Log("Data saved. Cleaning up...");
+            AppLogger.Log("========================================");
         }
     }
 
@@ -336,15 +337,15 @@ public class SaveSystem : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log("=== SaveSystem DESTROYING ===");
-                Debug.Log("Saving data before destroy...");
+                AppLogger.Log("=== SaveSystem DESTROYING ===");
+                AppLogger.Log("Saving data before destroy...");
             }
 
             SaveData();
             // CleanupDOTween();
             
             if (enableDebugLogs)
-                Debug.Log("SaveSystem destroyed.");
+                AppLogger.Log("SaveSystem destroyed.");
         }
     }
 
@@ -365,7 +366,7 @@ public class SaveSystem : MonoBehaviour
     //     }
     //     catch (System.Exception ex)
     //     {
-    //         Debug.LogWarning($"DOTween cleanup failed: {ex.Message}");
+    //         AppLogger.LogWarning($"DOTween cleanup failed: {ex.Message}");
     //     }
     // }
 
@@ -399,3 +400,5 @@ public class SaveSystem : MonoBehaviour
 
     #endregion
 }
+
+

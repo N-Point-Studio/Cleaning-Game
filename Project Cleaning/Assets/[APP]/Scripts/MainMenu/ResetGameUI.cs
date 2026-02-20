@@ -1,3 +1,4 @@
+using Modules;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,7 @@ public class ResetGameUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[ResetGameUI] yes button belum dimasukkan di Inspector!");
+            AppLogger.LogWarning("[ResetGameUI] yes button belum dimasukkan di Inspector!");
         }
     }
 
@@ -28,7 +29,7 @@ public class ResetGameUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("SaveSystem Not found!");
+            AppLogger.LogError("SaveSystem Not found!");
             if (yesResetButton != null) yesResetButton.interactable = true;
         }
     }
@@ -41,3 +42,4 @@ public class ResetGameUI : MonoBehaviour
         }
     }
 }
+

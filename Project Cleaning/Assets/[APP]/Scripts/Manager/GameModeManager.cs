@@ -1,4 +1,5 @@
 using System;
+using Modules;
 using UnityEngine;
 
 /// <summary>
@@ -52,37 +53,37 @@ public class GameModeManager : MonoBehaviour
 
     public void EnterZoomMode()
     {
-        Debug.Log($"=== ENTER ZOOM MODE CALLED: Current mode = {currentGameMode} ===");
+        AppLogger.Log($"=== ENTER ZOOM MODE CALLED: Current mode = {currentGameMode} ===");
 
         if (currentGameMode != GameMode.Exploration)
         {
-            Debug.LogWarning($"=== ZOOM MODE BLOCKED: Can only enter zoom from Exploration mode, currently in {currentGameMode} ===");
+            AppLogger.LogWarning($"=== ZOOM MODE BLOCKED: Can only enter zoom from Exploration mode, currently in {currentGameMode} ===");
             return;
         }
 
-        Debug.Log("=== ZOOM MODE TRANSITION: Exploration -> Zoom ===");
+        AppLogger.Log("=== ZOOM MODE TRANSITION: Exploration -> Zoom ===");
         ChangeMode(GameMode.Zoom);
         OnEnterZoomMode?.Invoke();
     }
 
     public void ForceEnterZoomMode()
     {
-        Debug.Log($"=== FORCE ENTER ZOOM MODE: Current mode = {currentGameMode} ===");
+        AppLogger.Log($"=== FORCE ENTER ZOOM MODE: Current mode = {currentGameMode} ===");
         ChangeMode(GameMode.Zoom);
         OnEnterZoomMode?.Invoke();
     }
 
     public void ReturnToExplorationMode()
     {
-        Debug.Log($"=== RETURN TO EXPLORATION MODE CALLED: Current mode = {currentGameMode} ===");
+        AppLogger.Log($"=== RETURN TO EXPLORATION MODE CALLED: Current mode = {currentGameMode} ===");
 
         if (currentGameMode != GameMode.Zoom)
         {
-            Debug.LogWarning($"=== EXPLORATION MODE BLOCKED: Can only return to exploration from Zoom mode, currently in {currentGameMode} ===");
+            AppLogger.LogWarning($"=== EXPLORATION MODE BLOCKED: Can only return to exploration from Zoom mode, currently in {currentGameMode} ===");
             return;
         }
 
-        Debug.Log("=== EXPLORATION MODE TRANSITION: Zoom -> Exploration ===");
+        AppLogger.Log("=== EXPLORATION MODE TRANSITION: Zoom -> Exploration ===");
         ChangeMode(GameMode.Exploration);
         OnEnterExplorationMode?.Invoke();
     }
@@ -98,10 +99,11 @@ public class GameModeManager : MonoBehaviour
         GameMode previousMode = currentGameMode;
         currentGameMode = newMode;
 
-        Debug.Log($"=== MODE CHANGED: {previousMode} -> {newMode} ===");
-        Debug.LogWarning($"=== MODE CHANGE STACK TRACE ===\n{System.Environment.StackTrace}");
+        AppLogger.Log($"=== MODE CHANGED: {previousMode} -> {newMode} ===");
+        AppLogger.LogWarning($"=== MODE CHANGE STACK TRACE ===\n{System.Environment.StackTrace}");
 
         OnModeChanged?.Invoke(newMode);
     }
     #endregion
 }
+

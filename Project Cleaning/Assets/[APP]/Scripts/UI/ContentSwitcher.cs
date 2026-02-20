@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Modules;
 
 [System.Serializable]
 public enum ChapterType
@@ -88,14 +89,14 @@ public class ContentSwitcher : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log($"[ContentSwitcher] Start() called for {chapterType} {objectType} - Current state: {currentState}");
+        AppLogger.Log($"[ContentSwitcher] Start() called for {chapterType} {objectType} - Current state: {currentState}");
 
         // ✅ CRITICAL FIX: Check if we're already completed before doing anything
         bool wasAlreadyCompleted = CheckIfThisObjectCompleted();
 
         if (wasAlreadyCompleted)
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} is already completed - setting permanent state immediately");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} is already completed - setting permanent state immediately");
             currentState = ContentSwitcherState.PermanentCompleted;
             ApplyPermanentCompletionVisualState();
 
@@ -104,7 +105,7 @@ public class ContentSwitcher : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} not completed - setting up initial state");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} not completed - setting up initial state");
             SetupInitialState();
         }
 
@@ -119,11 +120,11 @@ public class ContentSwitcher : MonoBehaviour
         // ✅ CRITICAL FIX: DO NOT RESET UI IF ALREADY PERMANENTLY COMPLETED
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] SetupInitialState() called but {chapterType} {objectType} is permanently completed - IGNORING to prevent reset!");
+            AppLogger.Log($"[ContentSwitcher] SetupInitialState() called but {chapterType} {objectType} is permanently completed - IGNORING to prevent reset!");
             return;
         }
 
-        Debug.Log($"[ContentSwitcher] Setting up initial state for {chapterType} {objectType}");
+        AppLogger.Log($"[ContentSwitcher] Setting up initial state for {chapterType} {objectType}");
 
         // Show initial content
         if (initialText != null)
@@ -160,11 +161,11 @@ public class ContentSwitcher : MonoBehaviour
             // Remove any existing listeners to prevent conflicts
             triggerButton.onClick.RemoveAllListeners();
             triggerButton.onClick.AddListener(OnButtonClicked);
-            Debug.Log($"[ContentSwitcher-{gameObject.name}] Button listener set for {chapterType} chapter");
+            AppLogger.Log($"[ContentSwitcher-{gameObject.name}] Button listener set for {chapterType} chapter");
         }
         else
         {
-            Debug.LogWarning($"[ContentSwitcher-{gameObject.name}] No trigger button assigned for {chapterType} chapter!");
+            AppLogger.LogWarning($"[ContentSwitcher-{gameObject.name}] No trigger button assigned for {chapterType} chapter!");
         }
     }
 
@@ -183,13 +184,13 @@ public class ContentSwitcher : MonoBehaviour
     {
         if (isAnimating)
         {
-            Debug.LogWarning($"[ContentSwitcher-{gameObject.name}] Animation in progress - ignoring completion trigger");
+            AppLogger.LogWarning($"[ContentSwitcher-{gameObject.name}] Animation in progress - ignoring completion trigger");
             return;
         }
 
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher-{gameObject.name}] Already permanently completed - ignoring trigger");
+            AppLogger.Log($"[ContentSwitcher-{gameObject.name}] Already permanently completed - ignoring trigger");
             return;
         }
 
@@ -198,26 +199,26 @@ public class ContentSwitcher : MonoBehaviour
         {
             if (chapterType != currentTestingChapter)
             {
-                Debug.Log($"[ContentSwitcher-{gameObject.name}] Ignoring trigger - Testing {currentTestingChapter}, but this is {chapterType}");
+                AppLogger.Log($"[ContentSwitcher-{gameObject.name}] Ignoring trigger - Testing {currentTestingChapter}, but this is {chapterType}");
                 return;
             }
-            Debug.Log($"[ContentSwitcher-{gameObject.name}] === TESTING MODE: {chapterType.ToString().ToUpper()} CHAPTER ===");
+            AppLogger.Log($"[ContentSwitcher-{gameObject.name}] === TESTING MODE: {chapterType.ToString().ToUpper()} CHAPTER ===");
         }
 
         string instanceName = gameObject.name;
-        Debug.Log($"[ContentSwitcher-{instanceName}] Triggered completion for {chapterType} chapter. Current state: {currentState}");
+        AppLogger.Log($"[ContentSwitcher-{instanceName}] Triggered completion for {chapterType} chapter. Current state: {currentState}");
 
         // Check if we have completed objects for this specific object/chapter
         bool hasCompletedObjects = CheckIfThisObjectCompleted();
 
         if (hasCompletedObjects)
         {
-            Debug.Log($"[ContentSwitcher-{instanceName}] === PERMANENT COMPLETION: {chapterType.ToString().ToUpper()} CHAPTER ===");
+            AppLogger.Log($"[ContentSwitcher-{instanceName}] === PERMANENT COMPLETION: {chapterType.ToString().ToUpper()} CHAPTER ===");
             StartCoroutine(ShowPermanentCompletionAnimation());
         }
         else
         {
-            Debug.Log($"[ContentSwitcher-{instanceName}] No completion for this object - staying in initial state");
+            AppLogger.Log($"[ContentSwitcher-{instanceName}] No completion for this object - staying in initial state");
         }
     }
 
@@ -227,7 +228,7 @@ public class ContentSwitcher : MonoBehaviour
     private IEnumerator ShowPermanentCompletionAnimation()
     {
         isAnimating = true;
-        Debug.Log($"[ContentSwitcher] Starting permanent completion animation for {chapterType} chapter");
+        AppLogger.Log($"[ContentSwitcher] Starting permanent completion animation for {chapterType} chapter");
 
         // Fade out initial content
         yield return StartCoroutine(FadeOutGameObject(initialText));
@@ -259,7 +260,7 @@ public class ContentSwitcher : MonoBehaviour
         ApplyPermanentCompletionVisualState();
 
         isAnimating = false;
-        Debug.Log($"[ContentSwitcher] Permanent completion animation completed for {chapterType} chapter - STATE: {currentState}");
+        AppLogger.Log($"[ContentSwitcher] Permanent completion animation completed for {chapterType} chapter - STATE: {currentState}");
     }
 
     /// <summary>
@@ -315,19 +316,19 @@ public class ContentSwitcher : MonoBehaviour
     private IEnumerator RevealContentWithAnimation()
     {
         isAnimating = true;
-        Debug.Log($"[ContentSwitcher] RevealContentWithAnimation started for {chapterType} chapter");
+        AppLogger.Log($"[ContentSwitcher] RevealContentWithAnimation started for {chapterType} chapter");
 
         // Fade out initial content only (keep nextArtifactImage1 visible)
-        Debug.Log("[ContentSwitcher] Fading out initial content (keeping nextArtifactImage1 visible)");
+        AppLogger.Log("[ContentSwitcher] Fading out initial content (keeping nextArtifactImage1 visible)");
         yield return StartCoroutine(FadeOutGameObject(initialText));
 
         // Hide initial content only
         if (initialText != null)
         {
             initialText.SetActive(false);
-            Debug.Log("[ContentSwitcher] Initial text hidden");
+            AppLogger.Log("[ContentSwitcher] Initial text hidden");
         }
-        Debug.Log("[ContentSwitcher] NextArtifactImage1 remains visible during text animations");
+        AppLogger.Log("[ContentSwitcher] NextArtifactImage1 remains visible during text animations");
 
         // Show and fade in after image
         if (afterImage != null)
@@ -340,11 +341,11 @@ public class ContentSwitcher : MonoBehaviour
         yield return StartCoroutine(ShowTextsSequentially());
 
         // After text animations are done, show image transition based on chapter type
-        Debug.Log($"[ContentSwitcher] Starting chapter-specific image transition for {chapterType}");
+        AppLogger.Log($"[ContentSwitcher] Starting chapter-specific image transition for {chapterType}");
         yield return StartCoroutine(ShowImageTransitionByChapter());
 
         // ✅ DEPRECATED: This method is obsolete
-        Debug.LogWarning("[ContentSwitcher] RevealContentWithAnimation is deprecated - use ShowPermanentCompletionAnimation");
+        AppLogger.LogWarning("[ContentSwitcher] RevealContentWithAnimation is deprecated - use ShowPermanentCompletionAnimation");
 
         isAnimating = false;
     }
@@ -352,43 +353,43 @@ public class ContentSwitcher : MonoBehaviour
     private IEnumerator RevealChinaChapter()
     {
         isAnimating = true;
-        Debug.Log("[CHINA CHAPTER] Starting reveal animation specifically for China testing");
+        AppLogger.Log("[CHINA CHAPTER] Starting reveal animation specifically for China testing");
 
         // Step 1: Fade out initial China content
-        Debug.Log("[CHINA CHAPTER] Step 1: Hiding initial China content");
+        AppLogger.Log("[CHINA CHAPTER] Step 1: Hiding initial China content");
         yield return StartCoroutine(FadeOutGameObject(initialText));
         yield return StartCoroutine(FadeOutGameObject(nextArtifactImage1));
 
         if (initialText != null)
         {
             initialText.SetActive(false);
-            Debug.Log("[CHINA CHAPTER] Initial China text hidden");
+            AppLogger.Log("[CHINA CHAPTER] Initial China text hidden");
         }
         if (nextArtifactImage1 != null)
         {
             nextArtifactImage1.SetActive(false);
-            Debug.Log("[CHINA CHAPTER] China artifact preview (nextArtifactImage1) hidden");
+            AppLogger.Log("[CHINA CHAPTER] China artifact preview (nextArtifactImage1) hidden");
         }
 
         // Step 2: Show China processed image
-        Debug.Log("[CHINA CHAPTER] Step 2: Showing China processed artifact");
+        AppLogger.Log("[CHINA CHAPTER] Step 2: Showing China processed artifact");
         if (afterImage != null)
         {
             afterImage.SetActive(true);
             yield return StartCoroutine(FadeInGameObject(afterImage));
-            Debug.Log("[CHINA CHAPTER] China processed artifact (afterImage) shown");
+            AppLogger.Log("[CHINA CHAPTER] China processed artifact (afterImage) shown");
         }
 
         // Step 3: Show China text sequence
-        Debug.Log("[CHINA CHAPTER] Step 3: Starting China text sequence");
+        AppLogger.Log("[CHINA CHAPTER] Step 3: Starting China text sequence");
         yield return StartCoroutine(ShowTextsSequentially());
 
         // Step 4: Show China final artifact preview
-        Debug.Log("[CHINA CHAPTER] Step 4: Showing China final artifact preview");
+        AppLogger.Log("[CHINA CHAPTER] Step 4: Showing China final artifact preview");
         yield return StartCoroutine(ShowChinaImageTransition());
 
         // ✅ DEPRECATED: This method is obsolete
-        Debug.LogWarning("[ContentSwitcher] RevealChinaChapter is deprecated and should not be used");
+        AppLogger.LogWarning("[ContentSwitcher] RevealChinaChapter is deprecated and should not be used");
 
         isAnimating = false;
     }
@@ -399,7 +400,7 @@ public class ContentSwitcher : MonoBehaviour
     [System.Obsolete("Manual hiding removed - permanent completion only")]
     private IEnumerator HideContentWithAnimation()
     {
-        Debug.LogWarning("[ContentSwitcher] HideContentWithAnimation is deprecated - permanent completion cannot be hidden");
+        AppLogger.LogWarning("[ContentSwitcher] HideContentWithAnimation is deprecated - permanent completion cannot be hidden");
         yield break;
     }
 
@@ -529,12 +530,12 @@ public class ContentSwitcher : MonoBehaviour
     private IEnumerator ShowChinaImageTransition()
     {
         // China specific image transition - Hide nextArtifactImage1 and show nextArtifactImage2
-        Debug.Log("[ContentSwitcher] Starting China chapter image transition");
+        AppLogger.Log("[ContentSwitcher] Starting China chapter image transition");
 
         // First, fade out nextArtifactImage1
         if (nextArtifactImage1 != null)
         {
-            Debug.Log("[ContentSwitcher] Hiding nextArtifactImage1 (China preview)");
+            AppLogger.Log("[ContentSwitcher] Hiding nextArtifactImage1 (China preview)");
             yield return StartCoroutine(FadeOutGameObject(nextArtifactImage1));
             nextArtifactImage1.SetActive(false);
         }
@@ -542,26 +543,26 @@ public class ContentSwitcher : MonoBehaviour
         // Then, show nextArtifactImage2
         if (nextArtifactImage2 != null)
         {
-            Debug.Log("[ContentSwitcher] Showing nextArtifactImage2 for China chapter");
+            AppLogger.Log("[ContentSwitcher] Showing nextArtifactImage2 for China chapter");
             nextArtifactImage2.SetActive(true);
             yield return StartCoroutine(FadeInGameObject(nextArtifactImage2));
-            Debug.Log("[ContentSwitcher] China chapter image transition completed");
+            AppLogger.Log("[ContentSwitcher] China chapter image transition completed");
         }
         else
         {
-            Debug.LogWarning("[ContentSwitcher] nextArtifactImage2 is null for China chapter");
+            AppLogger.LogWarning("[ContentSwitcher] nextArtifactImage2 is null for China chapter");
         }
     }
 
     private IEnumerator ShowIndonesiaImageTransition()
     {
         // Indonesia specific image transition - Hide nextArtifactImage1 and show nextArtifactImage2
-        Debug.Log("[ContentSwitcher] Starting Indonesia chapter image transition");
+        AppLogger.Log("[ContentSwitcher] Starting Indonesia chapter image transition");
 
         // First, fade out nextArtifactImage1
         if (nextArtifactImage1 != null)
         {
-            Debug.Log("[ContentSwitcher] Hiding nextArtifactImage1 (Indonesia preview)");
+            AppLogger.Log("[ContentSwitcher] Hiding nextArtifactImage1 (Indonesia preview)");
             yield return StartCoroutine(FadeOutGameObject(nextArtifactImage1));
             nextArtifactImage1.SetActive(false);
         }
@@ -569,22 +570,22 @@ public class ContentSwitcher : MonoBehaviour
         // Then, show nextArtifactImage2
         if (nextArtifactImage2 != null)
         {
-            Debug.Log("[ContentSwitcher] Showing nextArtifactImage2 for Indonesia chapter");
+            AppLogger.Log("[ContentSwitcher] Showing nextArtifactImage2 for Indonesia chapter");
             nextArtifactImage2.SetActive(true);
             yield return StartCoroutine(FadeInGameObject(nextArtifactImage2));
-            Debug.Log("[ContentSwitcher] Indonesia chapter image transition completed");
+            AppLogger.Log("[ContentSwitcher] Indonesia chapter image transition completed");
         }
     }
 
     private IEnumerator ShowMesirImageTransition()
     {
         // Mesir specific image transition - Hide nextArtifactImage1 and show nextArtifactImage2
-        Debug.Log("[ContentSwitcher] Starting Mesir chapter image transition");
+        AppLogger.Log("[ContentSwitcher] Starting Mesir chapter image transition");
 
         // First, fade out nextArtifactImage1
         if (nextArtifactImage1 != null)
         {
-            Debug.Log("[ContentSwitcher] Hiding nextArtifactImage1 (Mesir preview)");
+            AppLogger.Log("[ContentSwitcher] Hiding nextArtifactImage1 (Mesir preview)");
             yield return StartCoroutine(FadeOutGameObject(nextArtifactImage1));
             nextArtifactImage1.SetActive(false);
         }
@@ -592,10 +593,10 @@ public class ContentSwitcher : MonoBehaviour
         // Then, show nextArtifactImage2
         if (nextArtifactImage2 != null)
         {
-            Debug.Log("[ContentSwitcher] Showing nextArtifactImage2 for Mesir chapter");
+            AppLogger.Log("[ContentSwitcher] Showing nextArtifactImage2 for Mesir chapter");
             nextArtifactImage2.SetActive(true);
             yield return StartCoroutine(FadeInGameObject(nextArtifactImage2));
-            Debug.Log("[ContentSwitcher] Mesir chapter image transition completed");
+            AppLogger.Log("[ContentSwitcher] Mesir chapter image transition completed");
         }
     }
 
@@ -636,21 +637,21 @@ public class ContentSwitcher : MonoBehaviour
     [System.Obsolete("Cannot reset permanently completed ContentSwitcher")]
     public void ResetToInitialState()
     {
-        Debug.Log($"[ContentSwitcher] ResetToInitialState() called for {chapterType} {objectType} - Current state: {currentState}");
+        AppLogger.Log($"[ContentSwitcher] ResetToInitialState() called for {chapterType} {objectType} - Current state: {currentState}");
 
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.LogError($"[ContentSwitcher] ❌ CRITICAL: Attempted to reset permanently completed {chapterType} {objectType} - BLOCKED!");
+            AppLogger.LogError($"[ContentSwitcher] ❌ CRITICAL: Attempted to reset permanently completed {chapterType} {objectType} - BLOCKED!");
             return;
         }
 
         if (isAnimating)
         {
-            Debug.LogWarning($"[ContentSwitcher] Cannot reset while animating for {chapterType} {objectType}");
+            AppLogger.LogWarning($"[ContentSwitcher] Cannot reset while animating for {chapterType} {objectType}");
             return;
         }
 
-        Debug.Log($"[ContentSwitcher] Resetting {chapterType} {objectType} to initial state");
+        AppLogger.Log($"[ContentSwitcher] Resetting {chapterType} {objectType} to initial state");
         currentState = ContentSwitcherState.Initial;
         SetupInitialState();
     }
@@ -663,7 +664,7 @@ public class ContentSwitcher : MonoBehaviour
     {
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] ShowInitialText() ignored for permanently completed {chapterType} {objectType}");
+            AppLogger.Log($"[ContentSwitcher] ShowInitialText() ignored for permanently completed {chapterType} {objectType}");
             return;
         }
 
@@ -747,7 +748,7 @@ public class ContentSwitcher : MonoBehaviour
     /// </summary>
     private void ShowContentForCompletedObject(CompletedObject completedObj)
     {
-        Debug.Log($"[ContentSwitcher] Showing content for completed object: {completedObj.objectName} ({completedObj.objectType})");
+        AppLogger.Log($"[ContentSwitcher] Showing content for completed object: {completedObj.objectName} ({completedObj.objectType})");
 
         // Show the completion state immediately (no animation)
         if (initialText != null) initialText.SetActive(false);
@@ -765,7 +766,7 @@ public class ContentSwitcher : MonoBehaviour
         ShowNextArtifactForChapter();
 
         // ✅ DEPRECATED: This method is obsolete - no longer using isContentRevealed
-        Debug.LogWarning("[ContentSwitcher] ShowContentForCompletedObject is deprecated");
+        AppLogger.LogWarning("[ContentSwitcher] ShowContentForCompletedObject is deprecated");
     }
 
     /// <summary>
@@ -791,7 +792,7 @@ public class ContentSwitcher : MonoBehaviour
     /// </summary>
     private void UpdateNextArtifactPreview()
     {
-        Debug.Log($"[ContentSwitcher] UpdateNextArtifactPreview DISABLED to prevent reset issue for {chapterType} {objectType}");
+        AppLogger.Log($"[ContentSwitcher] UpdateNextArtifactPreview DISABLED to prevent reset issue for {chapterType} {objectType}");
 
         // ✅ FIX: DO NOT update next artifact preview automatically
         // This was causing completed ContentSwitchers to reset their UI
@@ -826,19 +827,19 @@ public class ContentSwitcher : MonoBehaviour
     {
         if (SaveSystem.Instance == null)
         {
-            Debug.LogWarning("[ContentSwitcher] SaveSystem not available - cannot update China artifact preview");
+            AppLogger.LogWarning("[ContentSwitcher] SaveSystem not available - cannot update China artifact preview");
             return;
         }
 
         var saveData = SaveSystem.Instance.GetSaveData();
         var chinaObjects = saveData.GetCompletedObjectsByChapter(ChapterType.China);
 
-        Debug.Log($"[ContentSwitcher] China chapter has {chinaObjects.Count} completed objects");
+        AppLogger.Log($"[ContentSwitcher] China chapter has {chinaObjects.Count} completed objects");
 
         // ✅ FIX: Only update next artifact images if permanently completed
         if (currentState != ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] China not permanently completed yet - skipping next artifact update");
+            AppLogger.Log($"[ContentSwitcher] China not permanently completed yet - skipping next artifact update");
             return;
         }
 
@@ -847,14 +848,14 @@ public class ContentSwitcher : MonoBehaviour
             // All China objects completed - show Indonesia preview
             if (nextArtifactImage1 != null) nextArtifactImage1.SetActive(false);
             if (nextArtifactImage2 != null) nextArtifactImage2.SetActive(true); // Indonesia preview
-            Debug.Log("[ContentSwitcher] All China objects completed - showing Indonesia preview");
+            AppLogger.Log("[ContentSwitcher] All China objects completed - showing Indonesia preview");
         }
         else
         {
             // Show next China artifact
             if (nextArtifactImage1 != null) nextArtifactImage1.SetActive(true);
             if (nextArtifactImage2 != null) nextArtifactImage2.SetActive(false);
-            Debug.Log($"[ContentSwitcher] China progress: {chinaObjects.Count}/3 - showing next China artifact");
+            AppLogger.Log($"[ContentSwitcher] China progress: {chinaObjects.Count}/3 - showing next China artifact");
         }
     }
 
@@ -865,19 +866,19 @@ public class ContentSwitcher : MonoBehaviour
     {
         if (SaveSystem.Instance == null)
         {
-            Debug.LogWarning("[ContentSwitcher] SaveSystem not available - cannot update Indonesia artifact preview");
+            AppLogger.LogWarning("[ContentSwitcher] SaveSystem not available - cannot update Indonesia artifact preview");
             return;
         }
 
         var saveData = SaveSystem.Instance.GetSaveData();
         var indonesiaObjects = saveData.GetCompletedObjectsByChapter(ChapterType.Indonesia);
 
-        Debug.Log($"[ContentSwitcher] Indonesia chapter has {indonesiaObjects.Count} completed objects");
+        AppLogger.Log($"[ContentSwitcher] Indonesia chapter has {indonesiaObjects.Count} completed objects");
 
         // ✅ FIX: Only update next artifact images if permanently completed
         if (currentState != ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] Indonesia not permanently completed yet - skipping next artifact update");
+            AppLogger.Log($"[ContentSwitcher] Indonesia not permanently completed yet - skipping next artifact update");
             return;
         }
 
@@ -886,14 +887,14 @@ public class ContentSwitcher : MonoBehaviour
             // Indonesia completed - show Mesir preview
             if (nextArtifactImage1 != null) nextArtifactImage1.SetActive(false);
             if (nextArtifactImage2 != null) nextArtifactImage2.SetActive(true); // Mesir preview
-            Debug.Log("[ContentSwitcher] Indonesia completed - showing Mesir preview");
+            AppLogger.Log("[ContentSwitcher] Indonesia completed - showing Mesir preview");
         }
         else
         {
             // Show Indonesia artifact
             if (nextArtifactImage1 != null) nextArtifactImage1.SetActive(true);
             if (nextArtifactImage2 != null) nextArtifactImage2.SetActive(false);
-            Debug.Log("[ContentSwitcher] Showing Indonesia artifact");
+            AppLogger.Log("[ContentSwitcher] Showing Indonesia artifact");
         }
     }
 
@@ -905,14 +906,14 @@ public class ContentSwitcher : MonoBehaviour
         // ✅ FIX: Only update next artifact images if permanently completed
         if (currentState != ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] Mesir not permanently completed yet - skipping next artifact update");
+            AppLogger.Log($"[ContentSwitcher] Mesir not permanently completed yet - skipping next artifact update");
             return;
         }
 
         // Mesir is the last chapter - show completion or credits
         if (nextArtifactImage1 != null) nextArtifactImage1.SetActive(false);
         if (nextArtifactImage2 != null) nextArtifactImage2.SetActive(true); // Completion/Credits
-        Debug.Log("[ContentSwitcher] Mesir chapter - showing final completion state");
+        AppLogger.Log("[ContentSwitcher] Mesir chapter - showing final completion state");
     }
 
     /// <summary>
@@ -922,7 +923,7 @@ public class ContentSwitcher : MonoBehaviour
     {
         // ✅ CHANGE: Don't auto-trigger - wait for SceneTransitionManager to trigger us
         // SceneTransitionManager will call OnButtonClicked() when ready
-        Debug.Log($"[ContentSwitcher] {chapterType} waiting for SceneTransitionManager trigger instead of auto-applying save data");
+        AppLogger.Log($"[ContentSwitcher] {chapterType} waiting for SceneTransitionManager trigger instead of auto-applying save data");
 
         // Don't apply save data automatically - let SceneTransitionManager handle the timing
         yield break;
@@ -943,7 +944,7 @@ public class ContentSwitcher : MonoBehaviour
         // Check if this specific object type is completed
         bool isCompleted = saveData.IsObjectCompleted(objectType.ToString(), objectType);
 
-        Debug.Log($"[ContentSwitcher] Checking {objectType} completion - Result: {isCompleted}");
+        AppLogger.Log($"[ContentSwitcher] Checking {objectType} completion - Result: {isCompleted}");
         return isCompleted;
     }
 
@@ -963,7 +964,7 @@ public class ContentSwitcher : MonoBehaviour
     {
         if (SaveSystem.Instance == null)
         {
-            Debug.Log($"[ContentSwitcher] SaveSystem not available - keeping initial state for {chapterType}");
+            AppLogger.Log($"[ContentSwitcher] SaveSystem not available - keeping initial state for {chapterType}");
             return;
         }
 
@@ -971,21 +972,21 @@ public class ContentSwitcher : MonoBehaviour
         var saveData = SaveSystem.Instance.GetSaveData();
         var completedInChapter = saveData.GetCompletedObjectsByChapter(chapterType);
 
-        Debug.Log($"[ContentSwitcher] Checking completion for {chapterType} chapter - Found {completedInChapter.Count} completed objects");
+        AppLogger.Log($"[ContentSwitcher] Checking completion for {chapterType} chapter - Found {completedInChapter.Count} completed objects");
 
         if (completedInChapter.Count > 0)
         {
             // Show completion animation instead of static state
-            Debug.Log($"[ContentSwitcher] Found completed objects in {chapterType} - triggering completion animation");
+            AppLogger.Log($"[ContentSwitcher] Found completed objects in {chapterType} - triggering completion animation");
 
             // Trigger the button click animation to show completion
             // ✅ DEPRECATED: This method is obsolete - use TriggerCompletionFromGameplay
-            Debug.LogWarning("[ContentSwitcher] ApplySaveDataStateIfAvailable is deprecated");
+            AppLogger.LogWarning("[ContentSwitcher] ApplySaveDataStateIfAvailable is deprecated");
             TriggerCompletionFromGameplay();
         }
         else
         {
-            Debug.Log($"[ContentSwitcher] No completed objects in {chapterType} - keeping initial state");
+            AppLogger.Log($"[ContentSwitcher] No completed objects in {chapterType} - keeping initial state");
         }
     }
 
@@ -995,13 +996,13 @@ public class ContentSwitcher : MonoBehaviour
     public void SetTestingChapter(ChapterType testChapter)
     {
         currentTestingChapter = testChapter;
-        Debug.Log($"[Testing] Current testing chapter set to: {testChapter}");
+        AppLogger.Log($"[Testing] Current testing chapter set to: {testChapter}");
     }
 
     public void EnableTestingMode(bool enabled)
     {
         enableTestingMode = enabled;
-        Debug.Log($"[Testing] Testing mode: {(enabled ? "ENABLED" : "DISABLED")}");
+        AppLogger.Log($"[Testing] Testing mode: {(enabled ? "ENABLED" : "DISABLED")}");
     }
 
     // Quick testing methods
@@ -1035,7 +1036,7 @@ public class ContentSwitcher : MonoBehaviour
         {
             SaveSystem.Instance.OnDataLoaded += OnSaveDataChanged;
             SaveSystem.Instance.OnDataSaved += OnSaveDataChanged;
-            Debug.Log($"[ContentSwitcher] Subscribed to SaveSystem events for {chapterType} chapter");
+            AppLogger.Log($"[ContentSwitcher] Subscribed to SaveSystem events for {chapterType} chapter");
         }
     }
 
@@ -1049,7 +1050,7 @@ public class ContentSwitcher : MonoBehaviour
         {
             SaveSystem.Instance.OnDataLoaded -= OnSaveDataChanged;
             SaveSystem.Instance.OnDataSaved -= OnSaveDataChanged;
-            Debug.Log($"[ContentSwitcher] Unsubscribed from SaveSystem events for {chapterType} chapter");
+            AppLogger.Log($"[ContentSwitcher] Unsubscribed from SaveSystem events for {chapterType} chapter");
         }
     }
 
@@ -1058,13 +1059,13 @@ public class ContentSwitcher : MonoBehaviour
     /// </summary>
     private void OnSaveDataChanged(SaveData saveData)
     {
-        Debug.Log($"[ContentSwitcher] Save data changed - checking if update needed for {chapterType} object {objectType}");
+        AppLogger.Log($"[ContentSwitcher] Save data changed - checking if update needed for {chapterType} object {objectType}");
 
         // ✅ CRITICAL FIX: Only respond to save data changes if we're in initial state
         // DO NOT modify permanently completed ContentSwitchers!
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} permanently completed - IGNORING save data change to prevent reset");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} permanently completed - IGNORING save data change to prevent reset");
             return;
         }
 
@@ -1082,19 +1083,19 @@ public class ContentSwitcher : MonoBehaviour
         // ✅ DOUBLE-CHECK: Make sure we haven't been marked as completed during delay
         if (currentState == ContentSwitcherState.PermanentCompleted)
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} became completed during delay - aborting update");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} became completed during delay - aborting update");
             yield break;
         }
 
         // Check if this specific object should now be completed
         if (CheckIfThisObjectCompleted())
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} now completed - triggering permanent completion");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} now completed - triggering permanent completion");
             TriggerCompletionFromGameplay();
         }
         else
         {
-            Debug.Log($"[ContentSwitcher] {chapterType} {objectType} still not completed - no state change needed");
+            AppLogger.Log($"[ContentSwitcher] {chapterType} {objectType} still not completed - no state change needed");
         }
     }
 
@@ -1108,7 +1109,7 @@ public class ContentSwitcher : MonoBehaviour
         if (triggerButton != null)
         {
             triggerButton.onClick.RemoveListener(OnButtonClicked);
-            Debug.Log($"[ContentSwitcher-{gameObject.name}] Button listener removed for {chapterType} chapter");
+            AppLogger.Log($"[ContentSwitcher-{gameObject.name}] Button listener removed for {chapterType} chapter");
         }
     }
 }

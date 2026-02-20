@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class Tool : MonoBehaviour
 {
@@ -19,7 +20,7 @@ public class Tool : MonoBehaviour
     private void Awake()
     {
         if (surfaceDetection == null)
-            Debug.LogWarning("[Tool] SurfaceDetection belum di-assign!");
+            AppLogger.LogWarning("[Tool] SurfaceDetection belum di-assign!");
 
         initialRotation = transform.rotation;
     }
@@ -43,7 +44,7 @@ public class Tool : MonoBehaviour
 
     private void StickToSurface()
     {
-        //Debug.Log("[surface] stick to ");
+        //AppLogger.Log("[surface] stick to ");
         Vector3 targetPos = surfaceDetection.RaycastTipPos;
         Vector3 targetNormal = surfaceDetection.RaycastTipNormal;
         //NOTE PENTING! kalo mau ubah ke koordinat X, Y ubah ke Vector3.up!
@@ -56,7 +57,7 @@ public class Tool : MonoBehaviour
 
     private void ReturnToInitial()
     {
-        //Debug.Log("[surface] initial to ");
+        //AppLogger.Log("[surface] initial to ");
         transform.position = Vector3.Lerp(transform.position, initialPosition.position, Time.deltaTime * moveSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * rotateSpeed);
     }
@@ -70,3 +71,4 @@ public class Tool : MonoBehaviour
         Gizmos.DrawSphere(transform.position, 0.03f);
     }
 }
+

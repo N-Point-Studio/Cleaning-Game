@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Modules;
 
 /// <summary>
 /// Specific test for debugging "destroyed object" errors during scene transitions
@@ -23,7 +24,7 @@ public class DestroyedObjectErrorTest : MonoBehaviour
     {
         if (isTestRunning)
         {
-            Debug.LogWarning("Test already running!");
+            AppLogger.LogWarning("Test already running!");
             return;
         }
 
@@ -35,7 +36,7 @@ public class DestroyedObjectErrorTest : MonoBehaviour
     {
         if (isTestRunning)
         {
-            Debug.LogWarning("Test already running!");
+            AppLogger.LogWarning("Test already running!");
             return;
         }
 
@@ -343,7 +344,7 @@ public class DestroyedObjectErrorTest : MonoBehaviour
     {
         if (enableDetailedLogging)
         {
-            Debug.Log($"[DestroyedObjectErrorTest] {message}");
+            AppLogger.Log($"[DestroyedObjectErrorTest] {message}");
         }
     }
 
@@ -396,3 +397,4 @@ public class DestroyedObjectErrorTest : MonoBehaviour
         GUI.EndGroup();
     }
 }
+

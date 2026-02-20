@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class ClusterReturningState : ClusterBaseState
 {
@@ -8,14 +9,14 @@ public class ClusterReturningState : ClusterBaseState
 
     public override void Enter()
     {
-        Debug.Log("Cluster state: returning");
+        AppLogger.Log("Cluster state: returning");
 
         stateMachine.SetClusterState(ClusterState.Return);
         stateMachine.transform.SetParent(null);
         stateMachine.Interaction.DisableAllInteraction();
 
 
-        // Debug.Log($"Entering returning cluster state with: {stateMachine.InitialPosition}");
+        // AppLogger.Log($"Entering returning cluster state with: {stateMachine.InitialPosition}");
     }
 
     public override void Tick(float deltaTime)
@@ -45,3 +46,4 @@ public class ClusterReturningState : ClusterBaseState
         stateMachine.Interaction.DisableAllInteraction();
     }
 }
+

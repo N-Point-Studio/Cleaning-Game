@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Modules;
 using UnityEngine.InputSystem;
 
 public class TouchManager : MonoBehaviour, InputSystem.IInputActions
@@ -64,7 +65,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         isTapped = false;
         isClickedOn = false;
 
-        Debug.Log("[TouchManager] Touch state reset for new session");
+        AppLogger.Log("[TouchManager] Touch state reset for new session");
     }
 
     void Update()
@@ -158,7 +159,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
     {
         if (context.performed)
         {
-            Debug.Log("[TouchManager] secondary touch performed - ZOOM START");
+            AppLogger.Log("[TouchManager] secondary touch performed - ZOOM START");
             // --- PERBAIKAN: Set status zooming jadi TRUE ---
             isZooming = true;
             // -----------------------------------------------
@@ -167,18 +168,18 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             if (ZoomStart != null)
             {
                 var subscriberCount = ZoomStart.GetInvocationList().Length;
-                Debug.Log($"[TouchManager] ✅ Invoking ZoomStart event ({subscriberCount} subscribers)");
+                AppLogger.Log($"[TouchManager] ✅ Invoking ZoomStart event ({subscriberCount} subscribers)");
             }
             else
             {
-                Debug.LogWarning("[TouchManager] ⚠️ ZoomStart event has NO subscribers!");
+                AppLogger.LogWarning("[TouchManager] ⚠️ ZoomStart event has NO subscribers!");
             }
 
             ZoomStart?.Invoke();
         }
         else if (context.canceled)
         {
-            Debug.Log("[TouchManager] secondary touch canceled - ZOOM END");
+            AppLogger.Log("[TouchManager] secondary touch canceled - ZOOM END");
             // --- PERBAIKAN: Set status zooming jadi FALSE ---
             isZooming = false;
             // ------------------------------------------------
@@ -187,11 +188,11 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             if (ZoomEnd != null)
             {
                 var subscriberCount = ZoomEnd.GetInvocationList().Length;
-                Debug.Log($"[TouchManager] ✅ Invoking ZoomEnd event ({subscriberCount} subscribers)");
+                AppLogger.Log($"[TouchManager] ✅ Invoking ZoomEnd event ({subscriberCount} subscribers)");
             }
             else
             {
-                Debug.LogWarning("[TouchManager] ⚠️ ZoomEnd event has NO subscribers!");
+                AppLogger.LogWarning("[TouchManager] ⚠️ ZoomEnd event has NO subscribers!");
             }
 
             ZoomEnd?.Invoke();
@@ -208,7 +209,7 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
         else if (context.canceled)
         {
             isTapped = false;
-            Debug.Log("tap release");
+            AppLogger.Log("tap release");
             OnTapReleased?.Invoke();
         }
     }
@@ -244,13 +245,15 @@ public class TouchManager : MonoBehaviour, InputSystem.IInputActions
             OnTapReleased?.Invoke();
             OnHoldReleased?.Invoke();
 
-            Debug.Log("All Touch Disabled");
+            AppLogger.Log("All Touch Disabled");
         }
         else
         {
             inputSystem.Input.Enable();
-            Debug.Log("All Touch Enabled");
+            AppLogger.Log("All Touch Enabled");
         }
     }
 
 }
+
+

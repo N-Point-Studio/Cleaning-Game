@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 using TMPro;
 using System.Collections.Generic;
+using Modules;
 
 [RequireComponent(typeof(Collider))]
 public class ClickableObject : MonoBehaviour
@@ -113,12 +114,12 @@ public class ClickableObject : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("No TextMeshProUGUI component found in popup GameObject!");
+                AppLogger.LogWarning("No TextMeshProUGUI component found in popup GameObject!");
             }
         }
         else
         {
-            Debug.LogWarning("popupTextGameObject is null!");
+            AppLogger.LogWarning("popupTextGameObject is null!");
         }
     }
 
@@ -156,28 +157,28 @@ public class ClickableObject : MonoBehaviour
         // Object type detection and logging
         if (detectObjectOnClick)
         {
-            Debug.Log($"=== OBJECT CLICKED ===");
-            Debug.Log($"Object Name: {gameObject.name}");
-            Debug.Log($"Object Type: {objectType}");
-            Debug.Log($"Chapter: {GetChapterFromObjectType()}");
+            AppLogger.Log($"=== OBJECT CLICKED ===");
+            AppLogger.Log($"Object Name: {gameObject.name}");
+            AppLogger.Log($"Object Type: {objectType}");
+            AppLogger.Log($"Chapter: {GetChapterFromObjectType()}");
 
             // NEW: Log completion status
             if (IsCompleted())
             {
-                Debug.Log($"Status: ✅ COMPLETED (Replaying)");
+                AppLogger.Log($"Status: ✅ COMPLETED (Replaying)");
             }
             else
             {
-                Debug.Log($"Status: 🔥 NEW");
+                AppLogger.Log($"Status: 🔥 NEW");
             }
 
-            Debug.Log($"===================");
+            AppLogger.Log($"===================");
         }
 
         // If locked and prerequisite not met, block interaction
         if (lockUntilPrerequisiteComplete && !PrerequisiteCompleted())
         {
-            Debug.LogWarning($"[{name}] Locked until {prerequisiteObjectType} completed.");
+            AppLogger.LogWarning($"[{name}] Locked until {prerequisiteObjectType} completed.");
             ShowLockedVisual();
             return;
         }
@@ -439,42 +440,42 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     private void ValidateContentSwitcher()
     {
-        Debug.Log($"=== VALIDATING CONTENT SWITCHER FOR {gameObject.name} ===");
+        AppLogger.Log($"=== VALIDATING CONTENT SWITCHER FOR {gameObject.name} ===");
 
         if (contentSwitcherObject == null)
         {
-            Debug.LogError($"❌ ContentSwitcher Object is NULL for {gameObject.name}");
+            AppLogger.LogError($"❌ ContentSwitcher Object is NULL for {gameObject.name}");
             hasValidContentSwitcher = false;
             linkedContentSwitcher = null;
             return;
         }
 
-        Debug.Log($"✅ ContentSwitcher Object assigned: {contentSwitcherObject.name}");
+        AppLogger.Log($"✅ ContentSwitcher Object assigned: {contentSwitcherObject.name}");
 
         linkedContentSwitcher = contentSwitcherObject.GetComponent<ContentSwitcher>();
 
         if (linkedContentSwitcher != null)
         {
-            Debug.Log($"✅ ContentSwitcher component found on {contentSwitcherObject.name}");
-            Debug.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
-            Debug.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
+            AppLogger.Log($"✅ ContentSwitcher component found on {contentSwitcherObject.name}");
+            AppLogger.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
+            AppLogger.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
             hasValidContentSwitcher = true;
         }
         else
         {
-            Debug.LogError($"❌ NO ContentSwitcher component found on {contentSwitcherObject.name}");
-            Debug.LogError($"   Available components on {contentSwitcherObject.name}:");
+            AppLogger.LogError($"❌ NO ContentSwitcher component found on {contentSwitcherObject.name}");
+            AppLogger.LogError($"   Available components on {contentSwitcherObject.name}:");
 
             Component[] allComponents = contentSwitcherObject.GetComponents<Component>();
             foreach (Component comp in allComponents)
             {
-                Debug.LogError($"   - {comp.GetType().Name}");
+                AppLogger.LogError($"   - {comp.GetType().Name}");
             }
 
             hasValidContentSwitcher = false;
         }
 
-        Debug.Log($"=== VALIDATION RESULT: {(hasValidContentSwitcher ? "VALID" : "INVALID")} ===");
+        AppLogger.Log($"=== VALIDATION RESULT: {(hasValidContentSwitcher ? "VALID" : "INVALID")} ===");
     }
 
     /// <summary>
@@ -525,29 +526,29 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     public bool HasValidContentSwitcher()
     {
-        Debug.Log($"=== CHECKING VALIDITY FOR {gameObject.name} ===");
-        Debug.Log($"hasValidContentSwitcher: {hasValidContentSwitcher}");
-        Debug.Log($"linkedContentSwitcher != null: {linkedContentSwitcher != null}");
-        Debug.Log($"contentSwitcherObject != null: {contentSwitcherObject != null}");
+        AppLogger.Log($"=== CHECKING VALIDITY FOR {gameObject.name} ===");
+        AppLogger.Log($"hasValidContentSwitcher: {hasValidContentSwitcher}");
+        AppLogger.Log($"linkedContentSwitcher != null: {linkedContentSwitcher != null}");
+        AppLogger.Log($"contentSwitcherObject != null: {contentSwitcherObject != null}");
 
         if (contentSwitcherObject != null)
         {
-            Debug.Log($"Assigned ContentSwitcher Object: {contentSwitcherObject.name}");
+            AppLogger.Log($"Assigned ContentSwitcher Object: {contentSwitcherObject.name}");
 
             // Re-validate in case something changed
             var currentComponent = contentSwitcherObject.GetComponent<ContentSwitcher>();
-            Debug.Log($"ContentSwitcher component currently exists: {currentComponent != null}");
+            AppLogger.Log($"ContentSwitcher component currently exists: {currentComponent != null}");
 
             // FAILSAFE: Auto re-validation if state inconsistent
             if (!hasValidContentSwitcher && currentComponent != null)
             {
-                Debug.LogWarning($"⚠️ Auto-fixing validation state for {gameObject.name}");
+                AppLogger.LogWarning($"⚠️ Auto-fixing validation state for {gameObject.name}");
                 linkedContentSwitcher = currentComponent;
                 hasValidContentSwitcher = true;
             }
             else if (hasValidContentSwitcher && currentComponent == null)
             {
-                Debug.LogWarning($"⚠️ ContentSwitcher component lost! Invalidating for {gameObject.name}");
+                AppLogger.LogWarning($"⚠️ ContentSwitcher component lost! Invalidating for {gameObject.name}");
                 linkedContentSwitcher = null;
                 hasValidContentSwitcher = false;
             }
@@ -555,13 +556,13 @@ public class ClickableObject : MonoBehaviour
         else if (hasValidContentSwitcher)
         {
             // If ContentSwitcher object is null but we think it's valid, fix this
-            Debug.LogWarning($"⚠️ ContentSwitcher Object is null! Invalidating for {gameObject.name}");
+            AppLogger.LogWarning($"⚠️ ContentSwitcher Object is null! Invalidating for {gameObject.name}");
             hasValidContentSwitcher = false;
             linkedContentSwitcher = null;
         }
 
         bool isValid = hasValidContentSwitcher && linkedContentSwitcher != null;
-        Debug.Log($"FINAL VALIDATION RESULT: {isValid}");
+        AppLogger.Log($"FINAL VALIDATION RESULT: {isValid}");
 
         return isValid;
     }
@@ -646,7 +647,7 @@ public class ClickableObject : MonoBehaviour
 
         if (targetObj == gameObject)
         {
-            Debug.Log($"✅ Object {gameObject.name} marked as completed but remains clickable for replay");
+            AppLogger.Log($"✅ Object {gameObject.name} marked as completed but remains clickable for replay");
         }
     }
 
@@ -665,38 +666,38 @@ public class ClickableObject : MonoBehaviour
     [ContextMenu("Validate ContentSwitcher Setup")]
     public void ValidateSetup()
     {
-        Debug.Log($"=== MANUAL VALIDATION STARTED FOR {name} ===");
+        AppLogger.Log($"=== MANUAL VALIDATION STARTED FOR {name} ===");
 
         SetupContentSwitcherDetection();
 
         if (hasValidContentSwitcher)
         {
-            Debug.Log($"✅ ContentSwitcher setup is VALID for {name}");
-            Debug.Log($"   Linked ContentSwitcher: {linkedContentSwitcher.name}");
-            Debug.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
-            Debug.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
+            AppLogger.Log($"✅ ContentSwitcher setup is VALID for {name}");
+            AppLogger.Log($"   Linked ContentSwitcher: {linkedContentSwitcher.name}");
+            AppLogger.Log($"   Chapter Type: {linkedContentSwitcher.GetChapterType()}");
+            AppLogger.Log($"   Object Type: {linkedContentSwitcher.GetObjectType()}");
         }
         else
         {
-            Debug.LogError($"❌ ContentSwitcher setup is INVALID for {name}");
+            AppLogger.LogError($"❌ ContentSwitcher setup is INVALID for {name}");
 
             if (contentSwitcherObject == null)
             {
-                Debug.LogError("   Problem: No ContentSwitcher Object assigned!");
-                Debug.LogError("   Solution: Drag a GameObject with ContentSwitcher component to Content Switcher Object field");
+                AppLogger.LogError("   Problem: No ContentSwitcher Object assigned!");
+                AppLogger.LogError("   Solution: Drag a GameObject with ContentSwitcher component to Content Switcher Object field");
             }
             else
             {
                 var component = contentSwitcherObject.GetComponent<ContentSwitcher>();
                 if (component == null)
                 {
-                    Debug.LogError($"   Problem: Object '{contentSwitcherObject.name}' has no ContentSwitcher component!");
-                    Debug.LogError("   Solution: Add ContentSwitcher component to the assigned GameObject");
+                    AppLogger.LogError($"   Problem: Object '{contentSwitcherObject.name}' has no ContentSwitcher component!");
+                    AppLogger.LogError("   Solution: Add ContentSwitcher component to the assigned GameObject");
                 }
             }
         }
 
-        Debug.Log($"=== MANUAL VALIDATION COMPLETED ===");
+        AppLogger.Log($"=== MANUAL VALIDATION COMPLETED ===");
     }
 
     /// <summary>
@@ -705,7 +706,7 @@ public class ClickableObject : MonoBehaviour
     [ContextMenu("Force Refresh ContentSwitcher")]
     public void ForceRefreshContentSwitcher()
     {
-        Debug.Log($"=== FORCE REFRESHING CONTENT SWITCHER FOR {name} ===");
+        AppLogger.Log($"=== FORCE REFRESHING CONTENT SWITCHER FOR {name} ===");
 
         // Reset validation state
         hasValidContentSwitcher = false;
@@ -714,7 +715,7 @@ public class ClickableObject : MonoBehaviour
         // Re-run validation
         ValidateContentSwitcher();
 
-        Debug.Log($"=== FORCE REFRESH COMPLETED ===");
+        AppLogger.Log($"=== FORCE REFRESH COMPLETED ===");
     }
 
     /// <summary>
@@ -724,7 +725,7 @@ public class ClickableObject : MonoBehaviour
     public void TestApplyChanges()
     {
         ApplyContentSwitcherChanges();
-        Debug.Log($"Applied ContentSwitcher changes for {name}");
+        AppLogger.Log($"Applied ContentSwitcher changes for {name}");
     }
 
     #endregion
@@ -926,7 +927,7 @@ public class ClickableObject : MonoBehaviour
 
         if (popupTextGameObject == null || textMeshPro == null)
         {
-            Debug.LogError($"TextMeshPro setup failed! GameObject: {popupTextGameObject != null}, TextMeshPro: {textMeshPro != null}");
+            AppLogger.LogError($"TextMeshPro setup failed! GameObject: {popupTextGameObject != null}, TextMeshPro: {textMeshPro != null}");
             return;
         }
 
@@ -935,7 +936,7 @@ public class ClickableObject : MonoBehaviour
 
         if (string.IsNullOrEmpty(fullTextContent))
         {
-            Debug.LogError("No text content to display!");
+            AppLogger.LogError("No text content to display!");
             return;
         }
 
@@ -948,7 +949,7 @@ public class ClickableObject : MonoBehaviour
                 return;
         }
 
-        Debug.Log($"Starting text animation: '{fullTextContent}'");
+        AppLogger.Log($"Starting text animation: '{fullTextContent}'");
 
         isPopupVisible = true;
         popupTextGameObject.SetActive(true);
@@ -976,7 +977,7 @@ public class ClickableObject : MonoBehaviour
         //     currentTextSequence.AppendCallback(HidePopupText);
         // }
 
-        Debug.Log("Text animation started!");
+        AppLogger.Log("Text animation started!");
     }
 
     /// <summary>
@@ -986,7 +987,7 @@ public class ClickableObject : MonoBehaviour
     {
         if (popupTextGameObject == null || !isPopupVisible) return;
 
-        Debug.Log("Hiding text popup");
+        AppLogger.Log("Hiding text popup");
 
         // Kill any existing animation
         if (currentTextSequence != null && currentTextSequence.IsActive())
@@ -1017,11 +1018,11 @@ public class ClickableObject : MonoBehaviour
     [System.Obsolete("For debugging only")]
     public void TestPopupManual()
     {
-        Debug.Log("=== MANUAL TEST TEXT POPUP ===");
-        Debug.Log($"Popup GameObject: {(popupTextGameObject != null ? popupTextGameObject.name : "NULL")}");
-        Debug.Log($"TextMeshPro: {(textMeshPro != null ? "Found" : "NULL")}");
-        Debug.Log($"Text Content: '{fullTextContent}'");
-        Debug.Log($"Is Popup Visible: {isPopupVisible}");
+        AppLogger.Log("=== MANUAL TEST TEXT POPUP ===");
+        AppLogger.Log($"Popup GameObject: {(popupTextGameObject != null ? popupTextGameObject.name : "NULL")}");
+        AppLogger.Log($"TextMeshPro: {(textMeshPro != null ? "Found" : "NULL")}");
+        AppLogger.Log($"Text Content: '{fullTextContent}'");
+        AppLogger.Log($"Is Popup Visible: {isPopupVisible}");
 
         ShowPopupText();
     }
@@ -1094,7 +1095,7 @@ public class ClickableObject : MonoBehaviour
     /// </summary>
     public static void CleanupCurrentScene()
     {
-        Debug.Log("=== CLEANING UP CURRENT SCENE ===");
+        AppLogger.Log("=== CLEANING UP CURRENT SCENE ===");
 
         // 1. Stop all DOTween animations
         DOTween.KillAll();
@@ -1124,7 +1125,7 @@ public class ClickableObject : MonoBehaviour
         // 5. Force garbage collection
         System.GC.Collect();
 
-        Debug.Log($"Scene cleanup completed. Cleaned {allClickables.Length} clickables, {allParticles.Length} particles, {allAudioSources.Length} audio sources");
+        AppLogger.Log($"Scene cleanup completed. Cleaned {allClickables.Length} clickables, {allParticles.Length} particles, {allAudioSources.Length} audio sources");
     }
 
     /// <summary>
@@ -1190,3 +1191,4 @@ public class ClickableObject : MonoBehaviour
     }
     */
 }
+

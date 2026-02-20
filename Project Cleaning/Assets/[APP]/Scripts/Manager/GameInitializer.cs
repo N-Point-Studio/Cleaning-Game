@@ -1,3 +1,4 @@
+using Modules;
 using UnityEngine;
 
 /// <summary>
@@ -48,14 +49,14 @@ public class GameInitializer : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log($"Skipping system initialization - not on main scene. Current scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+                AppLogger.Log($"Skipping system initialization - not on main scene. Current scene: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
             }
             yield break;
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log("Starting safe system initialization...");
+            AppLogger.Log("Starting safe system initialization...");
         }
 
         hasInitialized = true;
@@ -84,7 +85,7 @@ public class GameInitializer : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== SAFE SYSTEM INITIALIZATION START ===");
+            AppLogger.Log("=== SAFE SYSTEM INITIALIZATION START ===");
         }
 
         int systemsCreated = 0;
@@ -101,17 +102,17 @@ public class GameInitializer : MonoBehaviour
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log("✅ SaveSystem created successfully");
+                    AppLogger.Log("✅ SaveSystem created successfully");
                 }
             }
             else if (enableDebugLogs)
             {
-                Debug.Log("ℹ️ SaveSystem already exists - skipping creation");
+                AppLogger.Log("ℹ️ SaveSystem already exists - skipping creation");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"❌ Failed to create SaveSystem: {ex.Message}");
+            AppLogger.LogError($"❌ Failed to create SaveSystem: {ex.Message}");
         }
 
         // 2. Create SceneTransitionManager if it doesn't exist (safe check)
@@ -126,17 +127,17 @@ public class GameInitializer : MonoBehaviour
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log("✅ SceneTransitionManager created successfully");
+                    AppLogger.Log("✅ SceneTransitionManager created successfully");
                 }
             }
             else if (enableDebugLogs)
             {
-                Debug.Log("ℹ️ SceneTransitionManager already exists - skipping creation");
+                AppLogger.Log("ℹ️ SceneTransitionManager already exists - skipping creation");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"❌ Failed to create SceneTransitionManager: {ex.Message}");
+            AppLogger.LogError($"❌ Failed to create SceneTransitionManager: {ex.Message}");
         }
 
         // 3. Verify TouchManager doesn't conflict
@@ -144,21 +145,21 @@ public class GameInitializer : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning("⚠️ TouchManager not found - this might cause touch input issues");
+                AppLogger.LogWarning("⚠️ TouchManager not found - this might cause touch input issues");
             }
         }
         else if (enableDebugLogs)
         {
-            Debug.Log("✅ TouchManager found and ready");
+            AppLogger.Log("✅ TouchManager found and ready");
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== SAFE SYSTEM INITIALIZATION COMPLETED ===");
-            Debug.Log($"Systems created: {systemsCreated}");
-            Debug.Log($"SaveSystem ready: {SaveSystem.Instance != null}");
-            Debug.Log($"SceneTransitionManager ready: {SceneTransitionManager.Instance != null}");
-            Debug.Log($"TouchManager ready: {TouchManager.Instance != null}");
+            AppLogger.Log($"=== SAFE SYSTEM INITIALIZATION COMPLETED ===");
+            AppLogger.Log($"Systems created: {systemsCreated}");
+            AppLogger.Log($"SaveSystem ready: {SaveSystem.Instance != null}");
+            AppLogger.Log($"SceneTransitionManager ready: {SceneTransitionManager.Instance != null}");
+            AppLogger.Log($"TouchManager ready: {TouchManager.Instance != null}");
         }
     }
 
@@ -169,7 +170,7 @@ public class GameInitializer : MonoBehaviour
     public void ManualInitializeSystems()
     {
         InitializeSystems();
-        Debug.Log("Systems manually initialized");
+        AppLogger.Log("Systems manually initialized");
     }
 
     /// <summary>
@@ -178,17 +179,18 @@ public class GameInitializer : MonoBehaviour
     [ContextMenu("Check System Status")]
     public void CheckSystemStatus()
     {
-        Debug.Log("=== SYSTEM STATUS ===");
-        Debug.Log($"SaveSystem: {(SaveSystem.Instance != null ? "✅ Active" : "❌ Missing")}");
-        Debug.Log($"SceneTransitionManager: {(SceneTransitionManager.Instance != null ? "✅ Active" : "❌ Missing")}");
+        AppLogger.Log("=== SYSTEM STATUS ===");
+        AppLogger.Log($"SaveSystem: {(SaveSystem.Instance != null ? "✅ Active" : "❌ Missing")}");
+        AppLogger.Log($"SceneTransitionManager: {(SceneTransitionManager.Instance != null ? "✅ Active" : "❌ Missing")}");
 
         if (SaveSystem.Instance != null)
         {
             var saveData = SaveSystem.Instance.GetSaveData();
-            Debug.Log($"SaveSystem - Completed Objects: {saveData.GetCompletedCount()}");
-            Debug.Log($"SaveSystem - Save File: {(SaveSystem.Instance.SaveFileExists() ? "✅ Exists" : "❌ Not Found")}");
+            AppLogger.Log($"SaveSystem - Completed Objects: {saveData.GetCompletedCount()}");
+            AppLogger.Log($"SaveSystem - Save File: {(SaveSystem.Instance.SaveFileExists() ? "✅ Exists" : "❌ Not Found")}");
         }
 
-        Debug.Log("====================");
+        AppLogger.Log("====================");
     }
 }
+

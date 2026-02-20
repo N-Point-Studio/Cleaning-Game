@@ -1,3 +1,4 @@
+using System.Collections;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -11,6 +12,8 @@ public class ArtefactDetailController : MonoBehaviour
     [SerializeField] private Sprite defaultBgSprite;
     [SerializeField] private Image imageBg;
     [SerializeField] private Sprite[] backgroundSprites;
+    [SerializeField] private ContentSizeFitter contentSizeFitter;
+    [SerializeField] private ScrollRect scrollRect;
 
     [Header("Icon Target")]
     [SerializeField] private Image imageIcon;
@@ -44,7 +47,6 @@ public class ArtefactDetailController : MonoBehaviour
     {
         if (buttonBack) buttonBack.onClick.RemoveListener(OnClickBack);
         if (buttonClean) buttonClean.onClick.RemoveListener(OnClickClean);
-        // transform.DOKill();
     }
 
     public void OpenDetail(ArtefactData artefactData, ChapterType chapterType, bool isCompleted)
@@ -67,6 +69,7 @@ public class ArtefactDetailController : MonoBehaviour
         {
             imageBg.sprite = defaultBgSprite;
         }
+
         if (currentArtefactData == null) return;
 
         imageIcon.sprite = isCompleted ? currentArtefactData.CompletedIcon : currentArtefactData.BaseData.ItemIcon;
@@ -84,6 +87,8 @@ public class ArtefactDetailController : MonoBehaviour
         HideContentInstant();
 
         root.SetActive(true);
+
+        StartCoroutine(RefreshAndScrollToTop());
     }
 
     public void CloseDetail()
@@ -136,13 +141,29 @@ public class ArtefactDetailController : MonoBehaviour
     private void OnClickBack()
     {
         MainMenuEvents.OnCloseArtefactDetail?.Invoke();
-        // TODO: zoom out pake manager
     }
 
     private void OnClickClean()
     {
         if (currentArtefactData == null) return;
         MainMenuEvents.OnRequestArtefactPlay?.Invoke(currentArtefactData);
-        // TODO: kasih tau ke manager untuk mulai ke gameplay scene
+    }
+
+    private IEnumerator RefreshAndScrollToTop()
+    {
+        yield return new WaitForEndOfFrame();
+
+        Canvas.ForceUpdateCanvases();
+
+        if (contentSizeFitter != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentSizeFitter.GetComponent<RectTransform>());
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.verticalNormalizedPosition = 1f;
+        }
     }
 }
+

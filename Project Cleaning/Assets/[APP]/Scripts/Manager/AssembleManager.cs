@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -50,7 +51,7 @@ public class AssembleManager : MonoBehaviour
         if (foundByTag != null)
         {
             InspectPosition = foundByTag.transform;
-            Debug.Log($"[AssembleManager] InspectPosition assigned via tag: {InspectPosition.name}");
+            AppLogger.Log($"[AssembleManager] InspectPosition assigned via tag: {InspectPosition.name}");
             return;
         }
 
@@ -58,11 +59,11 @@ public class AssembleManager : MonoBehaviour
         if (foundByName != null)
         {
             InspectPosition = foundByName.transform;
-            Debug.Log($"[AssembleManager] InspectPosition assigned via name: {InspectPosition.name}");
+            AppLogger.Log($"[AssembleManager] InspectPosition assigned via name: {InspectPosition.name}");
         }
         else
         {
-            Debug.LogWarning("[AssembleManager] InspectPosition not found in scene. Assign it via tag 'InspectPosition' or name.");
+            AppLogger.LogWarning("[AssembleManager] InspectPosition not found in scene. Assign it via tag 'InspectPosition' or name.");
         }
     }
 
@@ -155,7 +156,7 @@ public class AssembleManager : MonoBehaviour
         TotalFragments = 0;
         progressAttach = 0f;
         RefreshInspectPosition();
-        Debug.Log("[AssembleManager] Reset state for new session.");
+        AppLogger.Log("[AssembleManager] Reset state for new session.");
     }
 
     /// <summary>
@@ -167,7 +168,7 @@ public class AssembleManager : MonoBehaviour
         clusters.AddRange(FindObjectsOfType<ClusterStateMachine>());
         CurrentFragmentInspected = null;
         CurrentClusterInspected = null;
-        Debug.Log($"[AssembleManager] Rebuilt clusters from scene. Count={clusters.Count}");
+        AppLogger.Log($"[AssembleManager] Rebuilt clusters from scene. Count={clusters.Count}");
     }
 
     private void AssembleProgress()
@@ -188,13 +189,11 @@ public class AssembleManager : MonoBehaviour
                 if (fragment.CurrentStatus == "Attached")
                 {
                     progressAttachment += 1;
-                    //Debug.Log("persentase naik");
                 }
             }
         }
 
         var overallProgress = progressAttachment / TotalFragments;
-        //Debug.Log($"Progress attach ({progressAttachment}/{TotalFragments}): {overallProgress}");
         progressAttach = overallProgress;
     }
 
@@ -205,7 +204,7 @@ public class AssembleManager : MonoBehaviour
 
     public void ShowingAssembleProgress()
     {
-        Debug.Log("Showing Assemble Progress " + assemblyTargets.Count);
+        AppLogger.Log("Showing Assemble Progress " + assemblyTargets.Count);
         TotalFragments = assemblyTargets.Count;
         if (assemblyTargets.Count == 0)
         {
@@ -213,3 +212,4 @@ public class AssembleManager : MonoBehaviour
         }
     }
 }
+

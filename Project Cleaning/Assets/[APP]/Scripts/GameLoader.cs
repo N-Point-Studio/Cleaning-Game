@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class GameLoader : MonoBehaviour
 {
@@ -29,11 +30,11 @@ public class GameLoader : MonoBehaviour
         // Debug incoming context so we can spot why a default Coin might be used.
         if (SceneTransitionManager.Instance != null)
         {
-            Debug.Log($"[GameLoader] STM present. Incoming ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}, Chapter: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
+            AppLogger.Log($"[GameLoader] STM present. Incoming ObjectType: {SceneTransitionManager.Instance.GetCurrentObjectType()}, Chapter: {SceneTransitionManager.Instance.GetCurrentChapterType()}");
         }
         else
         {
-            Debug.LogWarning("[GameLoader] SceneTransitionManager missing on load - auto-select may fallback to default artefact.");
+            AppLogger.LogWarning("[GameLoader] SceneTransitionManager missing on load - auto-select may fallback to default artefact.");
         }
 
         // Auto-pick artefact based on the ObjectType coming from menu (via SceneTransitionManager)
@@ -45,16 +46,16 @@ public class GameLoader : MonoBehaviour
             if (mapped != null)
             {
                 artefactData = mapped;
-                Debug.Log($"[GameLoader] Auto-selected artefact for {targetType}: {artefactData.name}");
+                AppLogger.Log($"[GameLoader] Auto-selected artefact for {targetType}: {artefactData.name}");
             }
             else if (fallbackArtefact != null)
             {
                 artefactData = fallbackArtefact;
-                Debug.LogWarning($"[GameLoader] No mapping found for {targetType}. Using fallback artefact: {fallbackArtefact.name}");
+                AppLogger.LogWarning($"[GameLoader] No mapping found for {targetType}. Using fallback artefact: {fallbackArtefact.name}");
             }
             else
             {
-                Debug.LogWarning($"[GameLoader] No mapping found for {targetType}. Using pre-assigned artefact: {(artefactData != null ? artefactData.name : "NULL")}");
+                AppLogger.LogWarning($"[GameLoader] No mapping found for {targetType}. Using pre-assigned artefact: {(artefactData != null ? artefactData.name : "NULL")}");
             }
         }
 
@@ -86,14 +87,14 @@ public class GameLoader : MonoBehaviour
         CleanManager.Instance?.RebuildFromScene();
         AssembleManager.Instance?.RebuildFromScene();
 
-        Debug.Log($"[GameLoader] Spawned fragments: {spawnedFragments.Count}, assembly targets: {AssembleManager.Instance?.assemblyTargets.Count}");
+        AppLogger.Log($"[GameLoader] Spawned fragments: {spawnedFragments.Count}, assembly targets: {AssembleManager.Instance?.assemblyTargets.Count}");
     }
 
     public void LoadArtefact()
     {
         if (artefactData == null)
         {
-            Debug.LogError("No Artefact assigned to GameLoader!");
+            AppLogger.LogError("No Artefact assigned to GameLoader!");
             return;
         }
 
@@ -102,13 +103,13 @@ public class GameLoader : MonoBehaviour
         {
             if (fragData.CorrectTransform.Position == null)
             {
-                Debug.LogWarning("Fragment " + fragData.Prefab.name + " has no correct position assigned.");
+                AppLogger.LogWarning("Fragment " + fragData.Prefab.name + " has no correct position assigned.");
                 GameObject spawned = Instantiate(fragData.Prefab);
                 spawnedFragments.Add(spawned);
             }
             else
             {
-                Debug.Log("Spawning Fragment: " + fragData.Prefab.name);
+                AppLogger.Log("Spawning Fragment: " + fragData.Prefab.name);
                 GameObject spawned = Instantiate(fragData.Prefab);
                 spawnedFragments.Add(spawned);
 
@@ -161,3 +162,4 @@ public class GameLoader : MonoBehaviour
         UIManager.Instance.ResetProgressBars();
     }
 }
+

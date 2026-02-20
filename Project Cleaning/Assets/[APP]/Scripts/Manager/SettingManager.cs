@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Modules;
 using UnityEngine.UI;
 
 public class SettingManager : MonoBehaviour
@@ -35,12 +36,12 @@ public class SettingManager : MonoBehaviour
         if (SfxSlider != null)
             SfxSlider.onValueChanged.AddListener(OnSfxSliderChanged);
         else
-            Debug.LogWarning("SfxSlider not assigned in SettingManager");
+            AppLogger.LogWarning("SfxSlider not assigned in SettingManager");
 
         if (BgmSlider != null)
             BgmSlider.onValueChanged.AddListener(OnBgmSliderChanged);
         else
-            Debug.LogWarning("BgmSlider not assigned in SettingManager");
+            AppLogger.LogWarning("BgmSlider not assigned in SettingManager");
     }
 
     private void Start()
@@ -52,7 +53,7 @@ public class SettingManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("bgmSource not assigned in SettingManager");
+            AppLogger.LogWarning("bgmSource not assigned in SettingManager");
         }
 
         // Apply initial slider values so listeners get the current setting on scene start
@@ -82,14 +83,14 @@ public class SettingManager : MonoBehaviour
     private void OnSfxSliderChanged(float value)
     {
         float normalized = GetNormalizedSliderValue(SfxSlider, value);
-        Debug.Log("OnSfxSliderChanged (normalized): " + normalized);
+        AppLogger.Log("OnSfxSliderChanged (normalized): " + normalized);
         OnSfxVolumeChanged?.Invoke(normalized);
     }
 
     private void OnBgmSliderChanged(float value)
     {
         float normalized = GetNormalizedSliderValue(BgmSlider, value);
-        Debug.Log("OnBgmSliderChanged (normalized): " + normalized);
+        AppLogger.Log("OnBgmSliderChanged (normalized): " + normalized);
 
         // SAFETY CHECK: Only set volume if bgmSource is assigned
         if (bgmSource != null)
@@ -99,7 +100,7 @@ public class SettingManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("bgmSource is null - cannot set volume");
+            AppLogger.LogWarning("bgmSource is null - cannot set volume");
         }
 
         OnBgmVolumeChanged?.Invoke(normalized);
@@ -135,3 +136,5 @@ public class SettingManager : MonoBehaviour
         }
     }
 }
+
+

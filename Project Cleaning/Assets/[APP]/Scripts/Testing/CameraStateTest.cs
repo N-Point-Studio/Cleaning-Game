@@ -1,4 +1,5 @@
 using UnityEngine;
+using Modules;
 
 /// <summary>
 /// Test script untuk memverifikasi Camera State Restoration functionality
@@ -43,7 +44,7 @@ public class CameraStateTest : MonoBehaviour
     [ContextMenu("Test: Save Camera State")]
     public void TestSaveCameraState()
     {
-        Debug.Log("🧪 === TESTING CAMERA STATE SAVE ===");
+        AppLogger.Log("🧪 === TESTING CAMERA STATE SAVE ===");
 
         var cameraStateManager = FindObjectOfType<CameraStateManager>();
         if (cameraStateManager != null)
@@ -55,74 +56,74 @@ public class CameraStateTest : MonoBehaviour
                 if (topDownCamera != null)
                 {
                     topDownCamera.SetFocusTarget(testFocusTarget);
-                    Debug.Log($"✅ Test focus target set: {testFocusTarget.name}");
+                    AppLogger.Log($"✅ Test focus target set: {testFocusTarget.name}");
                 }
             }
 
             cameraStateManager.SaveCurrentCameraState();
             var savedState = cameraStateManager.GetSavedState();
-            Debug.Log($"✅ Saved state: {savedState}");
+            AppLogger.Log($"✅ Saved state: {savedState}");
         }
         else
         {
-            Debug.LogError("❌ CameraStateManager not found!");
+            AppLogger.LogError("❌ CameraStateManager not found!");
         }
 
-        Debug.Log("🧪 === TEST SAVE COMPLETED ===");
+        AppLogger.Log("🧪 === TEST SAVE COMPLETED ===");
     }
 
     [ContextMenu("Test: Restore Camera State")]
     public void TestRestoreCameraState()
     {
-        Debug.Log("🧪 === TESTING CAMERA STATE RESTORE ===");
+        AppLogger.Log("🧪 === TESTING CAMERA STATE RESTORE ===");
 
         var cameraStateManager = FindObjectOfType<CameraStateManager>();
         if (cameraStateManager != null)
         {
             var savedState = cameraStateManager.GetSavedState();
-            Debug.Log($"📝 Current saved state: {savedState}");
+            AppLogger.Log($"📝 Current saved state: {savedState}");
 
             if (cameraStateManager.HasValidStateToRestore())
             {
                 cameraStateManager.RestoreCameraState();
-                Debug.Log("✅ Restoration triggered");
+                AppLogger.Log("✅ Restoration triggered");
             }
             else
             {
-                Debug.LogWarning("⚠️ No valid state to restore");
+                AppLogger.LogWarning("⚠️ No valid state to restore");
             }
         }
         else
         {
-            Debug.LogError("❌ CameraStateManager not found!");
+            AppLogger.LogError("❌ CameraStateManager not found!");
         }
 
-        Debug.Log("🧪 === TEST RESTORE COMPLETED ===");
+        AppLogger.Log("🧪 === TEST RESTORE COMPLETED ===");
     }
 
     [ContextMenu("Test: Clear Camera State")]
     public void TestClearCameraState()
     {
-        Debug.Log("🧪 === TESTING CAMERA STATE CLEAR ===");
+        AppLogger.Log("🧪 === TESTING CAMERA STATE CLEAR ===");
 
         var cameraStateManager = FindObjectOfType<CameraStateManager>();
         if (cameraStateManager != null)
         {
             cameraStateManager.ClearSavedState();
-            Debug.Log("✅ Camera state cleared");
+            AppLogger.Log("✅ Camera state cleared");
         }
         else
         {
-            Debug.LogError("❌ CameraStateManager not found!");
+            AppLogger.LogError("❌ CameraStateManager not found!");
         }
 
-        Debug.Log("🧪 === TEST CLEAR COMPLETED ===");
+        AppLogger.Log("🧪 === TEST CLEAR COMPLETED ===");
     }
 
     [ContextMenu("Test: Simulate Scene Transition")]
     public void TestSimulateSceneTransition()
     {
-        Debug.Log("🧪 === TESTING SCENE TRANSITION SIMULATION ===");
+        AppLogger.Log("🧪 === TESTING SCENE TRANSITION SIMULATION ===");
 
         // Step 1: Save current state
         TestSaveCameraState();
@@ -133,65 +134,65 @@ public class CameraStateTest : MonoBehaviour
         {
             topDownCamera.SetFocusTarget(null);
             topDownCamera.TransitionToOverview();
-            Debug.Log("✅ Simulated scene unload (cleared focus, returned to overview)");
+            AppLogger.Log("✅ Simulated scene unload (cleared focus, returned to overview)");
         }
 
         // Step 3: Wait and restore (simulate scene reload)
         StartCoroutine(SimulateSceneReload());
 
-        Debug.Log("🧪 === SCENE TRANSITION SIMULATION STARTED ===");
+        AppLogger.Log("🧪 === SCENE TRANSITION SIMULATION STARTED ===");
     }
 
     private System.Collections.IEnumerator SimulateSceneReload()
     {
-        Debug.Log("⏳ Simulating scene reload delay...");
+        AppLogger.Log("⏳ Simulating scene reload delay...");
         yield return new WaitForSeconds(2f);
 
-        Debug.Log("🔄 Simulating scene loaded - triggering restoration");
+        AppLogger.Log("🔄 Simulating scene loaded - triggering restoration");
         TestRestoreCameraState();
 
-        Debug.Log("✅ Scene transition simulation completed");
+        AppLogger.Log("✅ Scene transition simulation completed");
     }
 
     [ContextMenu("Test: Print System Status")]
     public void TestPrintSystemStatus()
     {
-        Debug.Log("🧪 === CAMERA STATE SYSTEM STATUS ===");
+        AppLogger.Log("🧪 === CAMERA STATE SYSTEM STATUS ===");
 
         // Check CameraStateManager
         var cameraStateManager = FindObjectOfType<CameraStateManager>();
-        Debug.Log($"CameraStateManager: {(cameraStateManager != null ? "FOUND" : "NOT FOUND")}");
+        AppLogger.Log($"CameraStateManager: {(cameraStateManager != null ? "FOUND" : "NOT FOUND")}");
 
         if (cameraStateManager != null)
         {
             var savedState = cameraStateManager.GetSavedState();
-            Debug.Log($"Saved State: {savedState}");
-            Debug.Log($"Has Valid State: {cameraStateManager.HasValidStateToRestore()}");
+            AppLogger.Log($"Saved State: {savedState}");
+            AppLogger.Log($"Has Valid State: {cameraStateManager.HasValidStateToRestore()}");
         }
 
         // Check TopDownCameraController
         var topDownCamera = TopDownCameraController.Instance;
-        Debug.Log($"TopDownCameraController: {(topDownCamera != null ? "FOUND" : "NOT FOUND")}");
+        AppLogger.Log($"TopDownCameraController: {(topDownCamera != null ? "FOUND" : "NOT FOUND")}");
 
         if (topDownCamera != null)
         {
             var currentFocus = topDownCamera.GetCurrentFocus();
-            Debug.Log($"Current Focus: {(currentFocus != null ? currentFocus.name : "NULL")}");
+            AppLogger.Log($"Current Focus: {(currentFocus != null ? currentFocus.name : "NULL")}");
         }
 
         // Check SceneTransitionManager
         var sceneTransitionManager = SceneTransitionManager.Instance;
-        Debug.Log($"SceneTransitionManager: {(sceneTransitionManager != null ? "FOUND" : "NOT FOUND")}");
+        AppLogger.Log($"SceneTransitionManager: {(sceneTransitionManager != null ? "FOUND" : "NOT FOUND")}");
 
         // Check GameModeManager
         var gameModeManager = GameModeManager.Instance;
-        Debug.Log($"GameModeManager: {(gameModeManager != null ? "FOUND" : "NOT FOUND")}");
+        AppLogger.Log($"GameModeManager: {(gameModeManager != null ? "FOUND" : "NOT FOUND")}");
         if (gameModeManager != null)
         {
-            Debug.Log($"Current Mode: {gameModeManager.GetCurrentMode()}");
+            AppLogger.Log($"Current Mode: {gameModeManager.GetCurrentMode()}");
         }
 
-        Debug.Log("🧪 === STATUS CHECK COMPLETED ===");
+        AppLogger.Log("🧪 === STATUS CHECK COMPLETED ===");
     }
 
     private void OnGUI()
@@ -239,3 +240,4 @@ public class CameraStateTest : MonoBehaviour
         GUI.EndGroup();
     }
 }
+
