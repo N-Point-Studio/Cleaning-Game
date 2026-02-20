@@ -273,8 +273,8 @@ public class SaveSystem : MonoBehaviour
 
         Debug.Log("All game progress and tutorials have been reset!");
 
-        ResetAllProgressAndReload();
-        // OnDataReset?.Invoke();
+        // ResetAllProgressAndReload();
+        OnDataReset?.Invoke();
     }
 
     private void WireResetButton()
