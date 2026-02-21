@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Modules;
 
 /// <summary>
 /// Detects double tap gestures and triggers appropriate actions
@@ -54,12 +55,12 @@ public class DoubleTapDetector : MonoBehaviour
             // Allow a quick exit from zoom even if we're still inside the global cooldown window.
             if (inZoomMode && timeSinceLastGesture >= zoomExitCooldownBypass)
             {
-                Debug.Log($"=== COOLDOWN BYPASS FOR ZOOM EXIT: {timeSinceLastGesture:F2}s since last gesture (bypass after {zoomExitCooldownBypass:F2}s) ===");
+                AppLogger.Log($"=== COOLDOWN BYPASS FOR ZOOM EXIT: {timeSinceLastGesture:F2}s since last gesture (bypass after {zoomExitCooldownBypass:F2}s) ===");
             }
             else
             {
-                Debug.Log($"=== GESTURE COOLDOWN - Time since last gesture: {timeSinceLastGesture:F2}s, Mode: {currentMode} ===");
-                Debug.Log("=== GESTURE BLOCKED - Too rapid, waiting for cooldown ===");
+                AppLogger.Log($"=== GESTURE COOLDOWN - Time since last gesture: {timeSinceLastGesture:F2}s, Mode: {currentMode} ===");
+                AppLogger.Log("=== GESTURE BLOCKED - Too rapid, waiting for cooldown ===");
                 return false;
             }
         }
@@ -67,7 +68,7 @@ public class DoubleTapDetector : MonoBehaviour
         // INSTANT SINGLE TAP RETURN: If in zoom mode and instant return is enabled, return immediately
         if (instantSingleTapReturn && currentMode == GameModeManager.GameMode.Zoom)
         {
-            Debug.Log("=== INSTANT SINGLE TAP RETURN - No delay ===");
+            AppLogger.Log("=== INSTANT SINGLE TAP RETURN - No delay ===");
             lastGestureTime = currentTime; // Record gesture time
             return true; // Treat single tap as immediate return gesture
         }
@@ -82,7 +83,7 @@ public class DoubleTapDetector : MonoBehaviour
                 float tapDistance = Vector2.Distance(currentTapPosition, lastTapPosition);
                 if (tapDistance <= doubleTapDistanceThreshold)
                 {
-                    Debug.Log($"=== DOUBLE TAP DETECTED: Time={currentTime - lastTapTime:F2}s, Distance={tapDistance:F1}px ===");
+                    AppLogger.Log($"=== DOUBLE TAP DETECTED: Time={currentTime - lastTapTime:F2}s, Distance={tapDistance:F1}px ===");
                     isWaitingForSecondTap = false;
                     lastGestureTime = currentTime; // Record gesture time
                     return true; // Valid double tap
@@ -96,7 +97,7 @@ public class DoubleTapDetector : MonoBehaviour
         lastTapTime = currentTime;
         lastTapPosition = currentTapPosition;
         isWaitingForSecondTap = true;
-        Debug.Log($"=== FIRST TAP DETECTED: Waiting for second tap within {doubleTapTimeWindow}s ===");
+        AppLogger.Log($"=== FIRST TAP DETECTED: Waiting for second tap within {doubleTapTimeWindow}s ===");
 
         return false; // Not a double tap (yet)
     }
@@ -105,7 +106,7 @@ public class DoubleTapDetector : MonoBehaviour
     {
         if (AdvancedInputManager.IsInTransition)
         {
-            Debug.Log("=== DOUBLE TAP IGNORED - Transition in progress ===");
+            AppLogger.Log("=== DOUBLE TAP IGNORED - Transition in progress ===");
             return;
         }
 
@@ -119,22 +120,22 @@ public class DoubleTapDetector : MonoBehaviour
                 AdvancedInputManager.Instance.BlockInputFor(0.3f);
         }
         
-        Debug.Log($"=== HANDLE DOUBLE TAP: Mode={currentMode}, Position={tapPosition} ===");
+        AppLogger.Log($"=== HANDLE DOUBLE TAP: Mode={currentMode}, Position={tapPosition} ===");
 
         switch (currentMode)
         {
             case GameModeManager.GameMode.Exploration:
-                Debug.Log("=== DOUBLE TAP IGNORED - Disabled in Exploration Mode ===");
+                AppLogger.Log("=== DOUBLE TAP IGNORED - Disabled in Exploration Mode ===");
                 break;
 
             case GameModeManager.GameMode.Zoom:
-                Debug.Log("=== DOUBLE TAP TO ZOOM OUT ===");
+                AppLogger.Log("=== DOUBLE TAP TO ZOOM OUT ===");
                 AdvancedInputManager.StartTransitionLock();
                 StartCoroutine(SynchronizedReturnToExploration());
                 break;
 
             case GameModeManager.GameMode.Initial:
-                Debug.Log("=== DOUBLE TAP IGNORED - Still in Initial mode ===");
+                AppLogger.Log("=== DOUBLE TAP IGNORED - Still in Initial mode ===");
                 break;
         }
     }
@@ -150,7 +151,7 @@ public class DoubleTapDetector : MonoBehaviour
         lastGestureTime = 0f;
         // Also reset double tap state to prevent false detections
         ResetDoubleTapState();
-        Debug.Log("=== GESTURE COOLDOWN AND DOUBLE TAP STATE RESET ===");
+        AppLogger.Log("=== GESTURE COOLDOWN AND DOUBLE TAP STATE RESET ===");
     }
 
     // Add complete gesture reset for mode transitions
@@ -160,7 +161,7 @@ public class DoubleTapDetector : MonoBehaviour
         lastTapTime = 0f;
         isWaitingForSecondTap = false;
         lastTapPosition = Vector2.zero;
-        Debug.Log("=== COMPLETE GESTURE RESET - All states cleared ===");
+        AppLogger.Log("=== COMPLETE GESTURE RESET - All states cleared ===");
     }
 
     // Synchronized enter zoom mode
@@ -169,7 +170,7 @@ public class DoubleTapDetector : MonoBehaviour
         var cameraController = TopDownCameraController.Instance;
         if (cameraController == null)
         {
-            Debug.LogError("TopDownCameraController.Instance is NULL!");
+            AppLogger.LogError("TopDownCameraController.Instance is NULL!");
             AdvancedInputManager.EndTransitionLock(); // Release lock on error
             yield break;
         }
@@ -182,7 +183,7 @@ public class DoubleTapDetector : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("No closest object found for double tap zoom. Using current camera position as focus.");
+            AppLogger.LogWarning("No closest object found for double tap zoom. Using current camera position as focus.");
         }
 
         // Temporarily set a faster transition duration for double tap zoom
@@ -196,7 +197,7 @@ public class DoubleTapDetector : MonoBehaviour
         // Reset duration after the transition is configured
         cameraController.ResetTransitionDuration();
 
-        Debug.Log($"=== MODE AFTER SYNCHRONIZED ZOOM: {GameModeManager.Instance?.GetCurrentMode()} ===");
+        AppLogger.Log($"=== MODE AFTER SYNCHRONIZED ZOOM: {GameModeManager.Instance?.GetCurrentMode()} ===");
         yield break; // Coroutine is done, the lock will be released by the camera tween's OnComplete
     }
 
@@ -209,7 +210,7 @@ public class DoubleTapDetector : MonoBehaviour
         var cameraController = TopDownCameraController.Instance;
         if (cameraController == null)
         {
-            Debug.LogError("TopDownCameraController.Instance is NULL!");
+            AppLogger.LogError("TopDownCameraController.Instance is NULL!");
             AdvancedInputManager.EndTransitionLock(); // Release lock on error
             yield break;
         }
@@ -225,8 +226,9 @@ public class DoubleTapDetector : MonoBehaviour
         // Reset duration after the transition is configured
         cameraController.ResetTransitionDuration();
 
-        Debug.Log($"=== MODE AFTER SYNCHRONIZED RETURN: {GameModeManager.Instance?.GetCurrentMode()} ===");
+        AppLogger.Log($"=== MODE AFTER SYNCHRONIZED RETURN: {GameModeManager.Instance?.GetCurrentMode()} ===");
         yield break; // Coroutine is done, the lock will be released by the camera tween's OnComplete
     }
     #endregion
 }
+

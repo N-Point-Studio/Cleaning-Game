@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -311,13 +312,13 @@ public class UnitySceneManager : MonoBehaviour
     private void Log(string message)
     {
         if (showDebugLogs)
-            Debug.Log($"[UnitySceneManager] {message}");
+            AppLogger.Log($"[UnitySceneManager] {message}");
     }
 
     private void LogWarning(string message)
     {
         if (showDebugLogs)
-            Debug.LogWarning($"[UnitySceneManager] {message}");
+            AppLogger.LogWarning($"[UnitySceneManager] {message}");
     }
 
     #endregion
@@ -384,3 +385,4 @@ public class GameSceneData
     [Tooltip("Scene description for documentation")]
     public string description;
 }
+

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Modules;
 
 /// <summary>
 /// Setup script to automatically create CameraStateManager in the scene
@@ -37,11 +38,11 @@ public class CameraStateSetup : MonoBehaviour
                 debugField.SetValue(manager, enableDebugMode);
             }
 
-            Debug.Log("✅ CameraStateManager created automatically by CameraStateSetup");
+            AppLogger.Log("✅ CameraStateManager created automatically by CameraStateSetup");
         }
         else
         {
-            Debug.Log("✅ CameraStateManager already exists in scene");
+            AppLogger.Log("✅ CameraStateManager already exists in scene");
         }
     }
 
@@ -58,11 +59,11 @@ public class CameraStateSetup : MonoBehaviour
         if (manager != null)
         {
             manager.SaveCurrentCameraState();
-            Debug.Log("🧪 Test: Camera state saved");
+            AppLogger.Log("🧪 Test: Camera state saved");
         }
         else
         {
-            Debug.LogError("❌ CameraStateManager not found for test");
+            AppLogger.LogError("❌ CameraStateManager not found for test");
         }
     }
 
@@ -73,11 +74,12 @@ public class CameraStateSetup : MonoBehaviour
         if (manager != null)
         {
             manager.RestoreCameraState();
-            Debug.Log("🧪 Test: Camera state restoration triggered");
+            AppLogger.Log("🧪 Test: Camera state restoration triggered");
         }
         else
         {
-            Debug.LogError("❌ CameraStateManager not found for test");
+            AppLogger.LogError("❌ CameraStateManager not found for test");
         }
     }
 }
+

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Modules;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -52,7 +54,7 @@ public class ArtefactGroupData : ScriptableObject
         Sort();
 
         EditorUtility.SetDirty(this);
-        Debug.Log($"[ArtefactGroupData] Setup '{name}' Complete. Found {artefactDatas.Count} items.");
+        AppLogger.Log($"[ArtefactGroupData] Setup '{name}' Complete. Found {artefactDatas.Count} items.");
     }
 
     private void Sort()
@@ -93,3 +95,4 @@ public class ArtefactGroupDataEditor : Editor
     }
 }
 #endif
+

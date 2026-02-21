@@ -1,4 +1,5 @@
 using UnityEngine;
+using Modules;
 
 /// <summary>
 /// Overview state - wide view of all objects
@@ -14,7 +15,7 @@ public class OverviewState : State
 
     public override void Enter()
     {
-        Debug.Log("Camera: OVERVIEW");
+        AppLogger.Log("Camera: OVERVIEW");
         cameraController.TransitionToOverview();
     }
 
@@ -59,7 +60,7 @@ public class FocusState : State
 
     public override void Enter()
     {
-        Debug.Log("Camera: FOCUS");
+        AppLogger.Log("Camera: FOCUS");
         cameraController.TransitionToFocus();
     }
 
@@ -113,7 +114,7 @@ public class NavigationState : State
 
     public override void Enter()
     {
-        Debug.Log("Camera: NAVIGATION");
+        AppLogger.Log("Camera: NAVIGATION");
         cameraController.TransitionToNavigation();
     }
 
@@ -163,3 +164,4 @@ public class NavigationState : State
         // User can release hold to go back to focus
     }
 }
+

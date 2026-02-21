@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 [RequireComponent(typeof(AudioSource))]
 public class ToolCleaningSurface : MonoBehaviour
@@ -42,11 +43,11 @@ public class ToolCleaningSurface : MonoBehaviour
         cleaningAudioSource = GetComponent<AudioSource>();
         if (surface == null)
         {
-            Debug.LogError("SurfaceDetection belum di-assign di ToolCleaningSurface!");
+            AppLogger.LogError("SurfaceDetection belum di-assign di ToolCleaningSurface!");
         }
         if (cleaningVFX == null)
         {
-            Debug.LogError("CleaningVFX belum di-assign di Inspector!");
+            AppLogger.LogError("CleaningVFX belum di-assign di Inspector!");
         }
         else
         {
@@ -100,7 +101,7 @@ public class ToolCleaningSurface : MonoBehaviour
                 if (surface.CleaningSurface != null)
                 {
                     isActivelyCleaning = TryClean(surface.CleaningSurface, surface.TextureSurface);
-                    Debug.Log("isActivelyCleaning: " + isActivelyCleaning);
+                    AppLogger.Log("isActivelyCleaning: " + isActivelyCleaning);
                 }
                 break;
         }
@@ -182,3 +183,4 @@ public class ToolCleaningSurface : MonoBehaviour
         cleaningAudioSource.volume = vol;
     }
 }
+

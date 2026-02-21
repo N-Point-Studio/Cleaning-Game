@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class TutorialManager : MonoBehaviour
 {
@@ -54,14 +55,14 @@ public class TutorialManager : MonoBehaviour
         // SAFETY CHECK: Pastikan steps tidak kosong
         if (PlayerPrefs.GetInt(TutorialCompletedKey, 0) == 1)
         {
-            Debug.Log("[Tutorial] Sudah selesai sebelumnya. Tutorial tidak akan ditampilkan.");
+            AppLogger.Log("[Tutorial] Sudah selesai sebelumnya. Tutorial tidak akan ditampilkan.");
             gameObject.SetActive(false); // Nonaktifkan tutorial manager
             return;
         }
 
         if (steps == null || steps.Count == 0)
         {
-            Debug.LogError("[TutorialManager] Error: List 'Steps' kosong! Isi di Inspector.");
+            AppLogger.LogError("[TutorialManager] Error: List 'Steps' kosong! Isi di Inspector.");
             return;
         }
         // Matikan semua UI saat awal
@@ -139,7 +140,7 @@ public class TutorialManager : MonoBehaviour
         if (index == currentStepIndex && !steps[index].isCompleted)
         {
             steps[index].isCompleted = true;
-            Debug.Log($"Tutorial: Langkah {steps[index].stepName} Selesai!");
+            AppLogger.Log($"Tutorial: Langkah {steps[index].stepName} Selesai!");
 
             if (steps[index].uiGuideline != null)
                 steps[index].uiGuideline.SetActive(false);
@@ -151,7 +152,7 @@ public class TutorialManager : MonoBehaviour
             // === CEK APABILA STEP TERAKHIR SUDAH SELESAI ===
             if (currentStepIndex >= steps.Count)
             {
-                Debug.Log("[Tutorial] Semua langkah selesai! Menandai sebagai completed.");
+                AppLogger.Log("[Tutorial] Semua langkah selesai! Menandai sebagai completed.");
                 PlayerPrefs.SetInt(TutorialCompletedKey, 1);
                 PlayerPrefs.Save();
                 return;
@@ -170,10 +171,11 @@ public class TutorialManager : MonoBehaviour
         // Cek kondisi: Masih di step yang sama DAN belum selesai?
         if (currentStepIndex == stepIndex && !steps[stepIndex].isCompleted)
         {
-            Debug.Log($"[Tutorial] Waktu habis! Menampilkan UI: {steps[stepIndex].stepName}");
+            AppLogger.Log($"[Tutorial] Waktu habis! Menampilkan UI: {steps[stepIndex].stepName}");
 
             if (steps[stepIndex].uiGuideline != null)
                 steps[stepIndex].uiGuideline.SetActive(true);
         }
     }
 }
+

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 
@@ -27,7 +28,7 @@ namespace EasyTransition
         public static TransitionManager Instance()
         {
             if (instance == null)
-                Debug.LogError("You tried to access the instance before it exists.");
+                AppLogger.LogError("You tried to access the instance before it exists.");
 
             return instance;
         }
@@ -41,7 +42,7 @@ namespace EasyTransition
         {
             if (transition == null || runningTransition)
             {
-                Debug.LogError("You have to assing a transition.");
+                AppLogger.LogError("You have to assing a transition.");
                 return;
             }
 
@@ -59,7 +60,7 @@ namespace EasyTransition
         {
             if (transition == null || runningTransition)
             {
-                Debug.LogError("You have to assing a transition.");
+                AppLogger.LogError("You have to assing a transition.");
                 return;
             }
 
@@ -77,7 +78,7 @@ namespace EasyTransition
         {
             if (transition == null || runningTransition)
             {
-                Debug.LogError("You have to assing a transition.");
+                AppLogger.LogError("You have to assing a transition.");
                 return;
             }
 
@@ -176,7 +177,7 @@ namespace EasyTransition
                 //Check for multiple instances of the Transition Manager component
                 var managerCount = GameObject.FindObjectsOfType<TransitionManager>(true).Length;
                 if (managerCount > 1)
-                    Debug.LogError($"There are {managerCount.ToString()} Transition Managers in your scene. Please ensure there is only one Transition Manager in your scene or overlapping transitions may occur.");
+                    AppLogger.LogError($"There are {managerCount.ToString()} Transition Managers in your scene. Please ensure there is only one Transition Manager in your scene or overlapping transitions may occur.");
             
                 yield return new WaitForSecondsRealtime(1f);
             }

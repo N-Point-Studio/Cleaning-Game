@@ -1,9 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using EasyTransition;
-using Unity.Mathematics;
+using Modules;
 
 public class GamePlayManager : MonoBehaviour
 {
@@ -79,7 +76,7 @@ public class GamePlayManager : MonoBehaviour
 
         if (enableDebugLogs && Time.time >= nextDebugLogTime)
         {
-            Debug.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
+            AppLogger.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
             nextDebugLogTime = Time.time + debugLogInterval;
         }
         FinishedGame();
@@ -91,12 +88,12 @@ public class GamePlayManager : MonoBehaviour
         {
             if (AssembleManager.Instance == null)
             {
-                Debug.LogWarning("AssembleManager missing when checking finish state.");
+                AppLogger.LogWarning("AssembleManager missing when checking finish state.");
                 return;
             }
             if (AssembleManager.Instance.assemblyTargets.Count > 0)
             {
-                Debug.Log("ASSEMBLE A - Cluster Mode");
+                AppLogger.Log("ASSEMBLE A - Cluster Mode");
                 TouchManager.Instance.DisableAllTouch(true);
                 UIManager.Instance.ShowFinishUI(true);
                 UIManager.Instance.ShowFinishBackground(true);
@@ -115,12 +112,12 @@ public class GamePlayManager : MonoBehaviour
                 // ✅ NULL CHECK: Ensure cluster is not null before accessing
                 if (cluster == null)
                 {
-                    Debug.LogError("❌ CurrentClusterInspected is NULL! Cannot finish cluster state.");
+                    AppLogger.LogError("❌ CurrentClusterInspected is NULL! Cannot finish cluster state.");
                     isGameFinished = true; // Still mark as finished to allow transition
                     return;
                 }
 
-                Debug.Log("Cluster Finished: " + cluster.name);
+                AppLogger.Log("Cluster Finished: " + cluster.name);
                 cluster.SwitchState(new ClusterFinishState(cluster));
                 cluster.transform.SetParent(ClearInspect, worldPositionStays: false);
 
@@ -140,7 +137,7 @@ public class GamePlayManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("ASSEMBLE B - Fragment Mode");
+                AppLogger.Log("ASSEMBLE B - Fragment Mode");
                 TouchManager.Instance.DisableAllTouch(true);
                 UIManager.Instance.ShowFinishUI(true);
                 UIManager.Instance.ShowFinishBackground(true);
@@ -159,16 +156,16 @@ public class GamePlayManager : MonoBehaviour
                 // ✅ NULL CHECK: Ensure fragment is not null before accessing
                 if (fragment == null)
                 {
-                    Debug.LogError("❌ CurrentFragmentInspected is NULL! Cannot finish fragment state.");
-                    Debug.LogWarning("⚠️ This might happen if:");
-                    Debug.LogWarning("   1. Scene setup is incorrect (no fragment assigned)");
-                    Debug.LogWarning("   2. AssembleManager not properly initialized");
-                    Debug.LogWarning("   3. Fragment was destroyed before finish");
+                    AppLogger.LogError("❌ CurrentFragmentInspected is NULL! Cannot finish fragment state.");
+                    AppLogger.LogWarning("⚠️ This might happen if:");
+                    AppLogger.LogWarning("   1. Scene setup is incorrect (no fragment assigned)");
+                    AppLogger.LogWarning("   2. AssembleManager not properly initialized");
+                    AppLogger.LogWarning("   3. Fragment was destroyed before finish");
                     isGameFinished = true; // Still mark as finished to allow transition
                     return;
                 }
 
-                Debug.Log("Fragment Finished: " + fragment.name);
+                AppLogger.Log("Fragment Finished: " + fragment.name);
                 fragment.SwitchState(new FragmentFinishState(fragment));
 
                 fragment.transform.SetParent(ClearInspect, worldPositionStays: false);
@@ -224,7 +221,7 @@ public class GamePlayManager : MonoBehaviour
             TouchManager.Instance.DisableAllTouch(false);
         }
 
-        Debug.Log("[GamePlayManager] Session reset.");
+        AppLogger.Log("[GamePlayManager] Session reset.");
     }
 
     /// <summary>
@@ -232,7 +229,7 @@ public class GamePlayManager : MonoBehaviour
     /// </summary>
     public void TriggerFinishButton()
     {
-        Debug.Log("=== FINISH BUTTON TRIGGERED FROM UI ===");
+        AppLogger.Log("=== FINISH BUTTON TRIGGERED FROM UI ===");
 
         // Pastikan state selesai di-set
         FinishedGame();
@@ -244,10 +241,10 @@ public class GamePlayManager : MonoBehaviour
         // ✅ VERIFICATION: Print save status to confirm save succeeded
         if (SaveSystem.Instance != null)
         {
-            Debug.Log("========================================");
-            Debug.Log("=== VERIFYING SAVE COMPLETION ===");
+            AppLogger.Log("========================================");
+            AppLogger.Log("=== VERIFYING SAVE COMPLETION ===");
             SaveSystem.Instance.PrintSaveDataInfo();
-            Debug.Log("========================================");
+            AppLogger.Log("========================================");
         }
 
         // Lanjutkan transition ke menu
@@ -259,7 +256,7 @@ public class GamePlayManager : MonoBehaviour
         // Pastikan SceneTransitionManager ada
         if (SceneTransitionManager.Instance == null)
         {
-            Debug.LogWarning("SceneTransitionManager not found, creating one...");
+            AppLogger.LogWarning("SceneTransitionManager not found, creating one...");
             var stmGO = new GameObject("SceneTransitionManager");
             stmGO.AddComponent<SceneTransitionManager>();
         }
@@ -269,14 +266,14 @@ public class GamePlayManager : MonoBehaviour
         ObjectType objectType = sessionObjectType;
         string targetScene = "NEW_StartGame"; // main menu default
 
-        Debug.Log($"Triggering transition to '{targetScene}' with ObjectType '{objectType}'");
+        AppLogger.Log($"Triggering transition to '{targetScene}' with ObjectType '{objectType}'");
 
         // Pastikan SceneTransitionManager tahu objectType yang benar untuk trigger ContentSwitcher
         SceneTransitionManager.Instance.SetObjectTypeForTransition(objectType);
 
         if (useStagedReturnTransition)
         {
-            Debug.Log($"Using staged return transition via '{returnIntermediaryScene}' (delay {returnIntermediaryDelay}s)");
+        AppLogger.Log($"Using staged return transition via '{returnIntermediaryScene}' (delay {returnIntermediaryDelay}s)");
             SceneTransitionManager.Instance.MarkReturningFromGameplay();
             SceneTransitionManager.Instance.StartStagedTransition(
                 returnIntermediaryScene,
@@ -361,7 +358,7 @@ public class GamePlayManager : MonoBehaviour
 
         if (SaveSystem.Instance == null)
         {
-            Debug.LogWarning("SaveSystem not available - cannot save object completion");
+            AppLogger.LogWarning("SaveSystem not available - cannot save object completion");
             return;
         }
 

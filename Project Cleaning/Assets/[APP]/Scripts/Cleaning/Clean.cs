@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class Clean : MonoBehaviour
 {
@@ -43,7 +43,7 @@ public class Clean : MonoBehaviour
         dirtAmount = dirtAmountTotal;
         CleanManager.Instance.Register(this);
 
-        Debug.Log($"{name} Dirt Total Selesai: {dirtAmountTotal}");
+        AppLogger.Log($"{name} Dirt Total Selesai: {dirtAmountTotal}");
     }
 
 
@@ -105,10 +105,10 @@ public class Clean : MonoBehaviour
         int pixelX = (int)(uv.x * _templateDirtMask.width);
         int pixelY = (int)(uv.y * _templateDirtMask.height);
 
-        Debug.Log("Cleaning at pixel: " + pixelX + ", " + pixelY);
+        AppLogger.Log("Cleaning at pixel: " + pixelX + ", " + pixelY);
 
         Vector2Int paintPixelPosition = new Vector2Int(pixelX, pixelY);
-        Debug.Log("Position pixel: " + paintPixelPosition);
+        AppLogger.Log("Position pixel: " + paintPixelPosition);
 
 
         int paintPixelDistance = Mathf.Abs(paintPixelPosition.x - lastPaintPixelPosition.x) + Mathf.Abs(paintPixelPosition.y - lastPaintPixelPosition.y);
@@ -116,7 +116,7 @@ public class Clean : MonoBehaviour
 
         if (paintPixelDistance < maxPaintDistance)
         {
-            Debug.Log("TisActivelyCleaning paint: " + paintPixelDistance);
+            AppLogger.Log("TisActivelyCleaning paint: " + paintPixelDistance);
             return false;
         }
 

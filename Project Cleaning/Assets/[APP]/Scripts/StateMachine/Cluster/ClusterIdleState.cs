@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class ClusterIdleState : ClusterBaseState
 {
@@ -14,7 +15,7 @@ public class ClusterIdleState : ClusterBaseState
     public override void Enter()
     {
         stateMachine.SetClusterState(ClusterState.Idle);
-        Debug.Log("Cluster state: Idle");
+        AppLogger.Log("Cluster state: Idle");
 
         stateMachine.Interaction.isTapAvailable = true;
         stateMachine.Interaction.isDragAvailable = true;
@@ -120,3 +121,4 @@ public class ClusterIdleState : ClusterBaseState
         }
     }
 }
+

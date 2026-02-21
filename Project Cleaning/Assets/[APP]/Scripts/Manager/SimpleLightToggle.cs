@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Modules;
 
 /// <summary>
 /// Super Simple Light Toggle - Just enables/disables the light GameObject
@@ -47,7 +48,7 @@ public class SimpleLightToggle : MonoBehaviour
         // Start listening for exploration mode
         StartCoroutine(WatchForExplorationMode());
 
-        Debug.Log($"SimpleLightToggle ready - Light starts: {(startLightOff ? "OFF" : "ON")}");
+        AppLogger.Log($"SimpleLightToggle ready - Light starts: {(startLightOff ? "OFF" : "ON")}");
     }
 
     /// <summary>
@@ -109,7 +110,7 @@ public class SimpleLightToggle : MonoBehaviour
             StartFlickering();
         }
 
-        Debug.Log("💡 Light ON - GameObject enabled with flickering");
+        AppLogger.Log("💡 Light ON - GameObject enabled with flickering");
     }
 
     /// <summary>
@@ -120,7 +121,7 @@ public class SimpleLightToggle : MonoBehaviour
         StopFlickering();
         gameObject.SetActive(false);
         isLightOn = false;
-        Debug.Log("💤 Light OFF - GameObject disabled");
+        AppLogger.Log("💤 Light OFF - GameObject disabled");
     }
 
     /// <summary>
@@ -183,7 +184,7 @@ public class SimpleLightToggle : MonoBehaviour
 
         StopFlickering(); // Stop any existing flicker
         flickerCoroutine = StartCoroutine(FlickerRoutine());
-        Debug.Log("🔥 Flickering started!");
+        AppLogger.Log("🔥 Flickering started!");
     }
 
     /// <summary>
@@ -204,21 +205,21 @@ public class SimpleLightToggle : MonoBehaviour
     /// </summary>
     private IEnumerator FlickerRoutine()
     {
-        Debug.Log("🔥 Flicker routine started - should flicker every few seconds");
+        AppLogger.Log("🔥 Flicker routine started - should flicker every few seconds");
 
         while (isLightOn && enableFlickering)
         {
             // Random chance to flicker
             if (Random.Range(0f, 1f) < flickerChance)
             {
-                Debug.Log("💫 FLICKER TRIGGERED!");
+                AppLogger.Log("💫 FLICKER TRIGGERED!");
                 StartCoroutine(PerformFlicker());
             }
 
             yield return new WaitForSeconds(flickerCheckRate);
         }
 
-        Debug.Log("🔥 Flicker routine stopped");
+        AppLogger.Log("🔥 Flicker routine stopped");
     }
 
     /// <summary>
@@ -229,15 +230,15 @@ public class SimpleLightToggle : MonoBehaviour
         if (isFlickering) yield break; // Prevent multiple flickers at once
 
         isFlickering = true;
-        Debug.Log("⚡ FLICKERING NOW - OFF then ON!");
+        AppLogger.Log("⚡ FLICKERING NOW - OFF then ON!");
 
         // Quick flicker: off -> on
         gameObject.SetActive(false);
-        Debug.Log("💡 Light OFF for flicker");
+        AppLogger.Log("💡 Light OFF for flicker");
         yield return new WaitForSeconds(flickerDuration * 0.4f); // Off period
 
         gameObject.SetActive(true);
-        Debug.Log("💡 Light ON after flicker");
+        AppLogger.Log("💡 Light ON after flicker");
         yield return new WaitForSeconds(flickerDuration * 0.6f); // On period
 
         isFlickering = false;
@@ -255,3 +256,5 @@ public class SimpleLightToggle : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 }
+
+

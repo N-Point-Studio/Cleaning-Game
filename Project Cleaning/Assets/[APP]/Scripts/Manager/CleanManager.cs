@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Modules;
 using UnityEngine;
 
 public class CleanManager : MonoBehaviour
@@ -111,7 +112,7 @@ public class CleanManager : MonoBehaviour
             cleanTotal += clean.GetDirtAmount();
         }
         progressClean = Mathf.Clamp01(cleanTotal / totalTexture);
-        Debug.Log($"progress clean harusnya: {progressClean}");
+        AppLogger.Log($"progress clean harusnya: {progressClean}");
         return progressClean;
     }
 
@@ -143,7 +144,7 @@ public class CleanManager : MonoBehaviour
         totalMud = 0;
         progressClean = 0f;
         progressCleanMud = 0f;
-        Debug.Log("[CleanManager] Reset state for new session.");
+        AppLogger.Log("[CleanManager] Reset state for new session.");
     }
 
     /// <summary>
@@ -162,7 +163,8 @@ public class CleanManager : MonoBehaviour
         progressClean = 0f;
         progressCleanMud = 0f;
 
-        Debug.Log($"[CleanManager] Rebuilt from scene. Texture={totalTexture}, Mud={totalMud}");
+        AppLogger.Log($"[CleanManager] Rebuilt from scene. Texture={totalTexture}, Mud={totalMud}");
     }
 
 }
+

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using Modules;
 
 public enum ButtonAnimationType
 {
@@ -296,7 +297,7 @@ public class ButtonScaleAnimation : MonoBehaviour, IPointerEnterHandler, IPointe
     private void Log(string message)
     {
         if (showDebugLogs)
-            Debug.Log($"[ButtonScaleAnimation] {gameObject.name}: {message}");
+            AppLogger.Log($"[ButtonScaleAnimation] {gameObject.name}: {message}");
     }
 
     #endregion
@@ -373,3 +374,4 @@ public class ButtonScaleAnimation : MonoBehaviour, IPointerEnterHandler, IPointe
 
     #endregion
 }
+

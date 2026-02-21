@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class FragmentInspectState : FragmentBaseState
 {
@@ -24,7 +25,7 @@ public class FragmentInspectState : FragmentBaseState
 
     public override void Tick(float dt)
     {
-        Debug.Log("inspect" + stateMachine.name + " containing: " + stateMachine.StateMachineConnected.Count);
+        AppLogger.Log("inspect" + stateMachine.name + " containing: " + stateMachine.StateMachineConnected.Count);
         if (stateMachine.Interaction.isHolding && !TouchManager.Instance.isInteracting)
         {
             Holding();
@@ -80,3 +81,4 @@ public class FragmentInspectState : FragmentBaseState
         stateMachine.StateMachineConnected.Clear();
     }
 }
+

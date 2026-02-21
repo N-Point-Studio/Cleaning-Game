@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 
 public class FragmentReturningState : FragmentBaseState
 {
@@ -21,7 +22,7 @@ public class FragmentReturningState : FragmentBaseState
 #if UNITY_ANDROID || UNITY_IOS
         HapticManager.Instance.Light();
 #endif
-        Debug.Log(stateMachine.name + "is returning");
+        AppLogger.Log(stateMachine.name + "is returning");
         stateMachine.Interaction.DisableAllInteraction();
         stateMachine.CurrentStatus = "Returning";
         stateMachine.transform.SetParent(null);
@@ -61,3 +62,4 @@ public class FragmentReturningState : FragmentBaseState
 
     public override void Exit() { }
 }
+

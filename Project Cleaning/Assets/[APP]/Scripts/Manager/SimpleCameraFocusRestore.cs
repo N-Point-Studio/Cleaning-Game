@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
+using Modules;
 /// <summary>
 /// SIMPLE APPROACH: Direct camera focus restoration without complex systems
 /// Integrates directly with existing SceneTransitionManager workflow
@@ -163,7 +164,7 @@ public class SimpleCameraFocusRestore : MonoBehaviour
 
         if (cameraController == null)
         {
-            Debug.LogError("[SimpleCameraFocusRestore] ABORT: TopDownCameraController not found after waiting. Cannot restore focus.");
+            AppLogger.LogError("[SimpleCameraFocusRestore] ABORT: TopDownCameraController not found after waiting. Cannot restore focus.");
             yield break;
         }
         LogDebug("✅ [Robust] TopDownCameraController is ready.");
@@ -175,7 +176,7 @@ public class SimpleCameraFocusRestore : MonoBehaviour
         if (targetObject == null)
         {
             // Log a clear error message for debugging.
-            Debug.LogError($"[SimpleCameraFocusRestore] RESTORATION FAILED: Could not find target object '{savedFocusData.objectName}' in the current scene. Defaulting to overview mode.");
+            AppLogger.LogError($"[SimpleCameraFocusRestore] RESTORATION FAILED: Could not find target object '{savedFocusData.objectName}' in the current scene. Defaulting to overview mode.");
             
             // Explicitly fall back to the overview state. This makes failure predictable.
             cameraController.TransitionToOverview();
@@ -201,7 +202,7 @@ public class SimpleCameraFocusRestore : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[SimpleCameraFocusRestore] An exception occurred during the focus restoration process for '{targetObject.name}': {ex.Message}");
+            AppLogger.LogError($"[SimpleCameraFocusRestore] An exception occurred during the focus restoration process for '{targetObject.name}': {ex.Message}");
             cameraController.TransitionToOverview(); // Fallback on error
         }
         
@@ -277,8 +278,10 @@ public class SimpleCameraFocusRestore : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"[SimpleCameraFocusRestore] {message}");
+            AppLogger.Log($"[SimpleCameraFocusRestore] {message}");
         }
     }
     #endregion
 }
+
+

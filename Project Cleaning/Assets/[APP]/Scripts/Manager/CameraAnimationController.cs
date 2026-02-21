@@ -1,4 +1,5 @@
 using System.Collections;
+using Modules;
 using UnityEngine;
 // Removed DG.Tweening - replaced with Lerp
 
@@ -40,17 +41,17 @@ public class CameraAnimationController : MonoBehaviour
     #region Unity Lifecycle
     private void Awake()
     {
-        Debug.Log($"🔍 CameraAnimationController.Awake() called on {gameObject.name}");
+        AppLogger.Log($"🔍 CameraAnimationController.Awake() called on {gameObject.name}");
 
         if (Instance == null)
         {
             Instance = this;
-            Debug.Log($"✅ Set as singleton instance: {gameObject.name}");
+            AppLogger.Log($"✅ Set as singleton instance: {gameObject.name}");
         }
         else
         {
-            Debug.LogWarning($"⚠️ DUPLICATE CameraAnimationController found on {gameObject.name}! Destroying...");
-            Debug.LogWarning($"   Existing instance: {Instance.gameObject.name}");
+            AppLogger.LogWarning($"⚠️ DUPLICATE CameraAnimationController found on {gameObject.name}! Destroying...");
+            AppLogger.LogWarning($"   Existing instance: {Instance.gameObject.name}");
             Destroy(gameObject);
         }
     }
@@ -97,11 +98,11 @@ public class CameraAnimationController : MonoBehaviour
 
         if (cameraController == null)
         {
-            Debug.LogWarning("⚠️ TopDownCameraController.Instance is null in Start(), will retry in Update()");
+            AppLogger.LogWarning("⚠️ TopDownCameraController.Instance is null in Start(), will retry in Update()");
         }
         else
         {
-            Debug.Log("✅ CameraAnimationController successfully linked to TopDownCameraController in Start()");
+            AppLogger.Log("✅ CameraAnimationController successfully linked to TopDownCameraController in Start()");
         }
     }
 
@@ -110,7 +111,7 @@ public class CameraAnimationController : MonoBehaviour
         // AUTO-REINITIALIZE: If cameraController becomes null, try to get it again
         if (cameraController == null && TopDownCameraController.Instance != null)
         {
-            Debug.Log("🔄 Auto-reinitializing cameraController in Update()");
+            AppLogger.Log("🔄 Auto-reinitializing cameraController in Update()");
             cameraController = TopDownCameraController.Instance;
         }
     }
@@ -122,7 +123,7 @@ public class CameraAnimationController : MonoBehaviour
         originalCameraPosition = cameraController.transform.position;
         originalCameraRotation = cameraController.transform.rotation.eulerAngles;
 
-        Debug.Log("=== EXPLORATION MODE STARTED - Camera animation ready ===");
+        AppLogger.Log("=== EXPLORATION MODE STARTED - Camera animation ready ===");
 
         StartCoroutine(ElegantCameraTransitionToExploration());
     }
@@ -179,12 +180,12 @@ public class CameraAnimationController : MonoBehaviour
 
     public void EnterZoomModeAtScreenPosition(Vector2 screenPosition)
     {
-        Debug.Log($"=== ENTERING ZOOM MODE - Screen: {screenPosition}, CameraController: {(cameraController != null ? "Ready" : "NULL")} ===");
+        AppLogger.Log($"=== ENTERING ZOOM MODE - Screen: {screenPosition}, CameraController: {(cameraController != null ? "Ready" : "NULL")} ===");
 
         // Safeguard: Ensure camera controller is ready
         if (cameraController == null)
         {
-            Debug.LogWarning("=== CAMERA CONTROLLER NOT READY - Cannot enter zoom mode ===");
+            AppLogger.LogWarning("=== CAMERA CONTROLLER NOT READY - Cannot enter zoom mode ===");
             return;
         }
 
@@ -198,7 +199,7 @@ public class CameraAnimationController : MonoBehaviour
 
         StartCoroutine(CleanupTempFocusTarget(tempFocus, 0.1f));
 
-        Debug.Log($"=== ZOOM TO SCREEN POSITION: {screenPosition} -> WORLD: {focusPosition} ===");
+        AppLogger.Log($"=== ZOOM TO SCREEN POSITION: {screenPosition} -> WORLD: {focusPosition} ===");
     }
 
     private IEnumerator CleanupTempFocusTarget(GameObject tempTarget, float delay)
@@ -227,14 +228,14 @@ public class CameraAnimationController : MonoBehaviour
         {
             StopCoroutine(currentSwipeAnimation);
             currentSwipeAnimation = null;
-            Debug.Log("🛑 Stopped existing swipe animation for return to exploration");
+            AppLogger.Log("🛑 Stopped existing swipe animation for return to exploration");
         }
 
         if (currentTransitionAnimation != null)
         {
             StopCoroutine(currentTransitionAnimation);
             currentTransitionAnimation = null;
-            Debug.Log("🛑 Stopped existing transition animation for return to exploration");
+            AppLogger.Log("🛑 Stopped existing transition animation for return to exploration");
         }
 
         // Use fast or normal transition
@@ -245,9 +246,9 @@ public class CameraAnimationController : MonoBehaviour
     private void ExitToInitialMode()
     {
         float timestamp = Time.time;
-        Debug.Log($"=== EXITTOINITIALMODE CALLED at {timestamp} ===");
-        Debug.Log($"Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
-        Debug.Log($"Instance check - CameraAnimationController.Instance: {(Instance == this ? "THIS" : "OTHER")}");
+        AppLogger.Log($"=== EXITTOINITIALMODE CALLED at {timestamp} ===");
+        AppLogger.Log($"Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
+        AppLogger.Log($"Instance check - CameraAnimationController.Instance: {(Instance == this ? "THIS" : "OTHER")}");
 
         // Disable all inspectable objects when exiting to initial mode
         ObjectInteractionHandler.Instance?.ResetAllObjectStates();
@@ -260,11 +261,11 @@ public class CameraAnimationController : MonoBehaviour
         if (cameraStateManager != null && cameraStateManager.HasValidStateToRestore())
         {
             letCameraStateManagerHandle = true;
-            Debug.Log("✅ CameraStateManager has valid state - letting it handle camera restoration instead of AnimateToOriginalPosition");
+            AppLogger.Log("✅ CameraStateManager has valid state - letting it handle camera restoration instead of AnimateToOriginalPosition");
         }
         else
         {
-            Debug.Log("📝 No valid camera state to restore - using default AnimateToOriginalPosition");
+            AppLogger.Log("📝 No valid camera state to restore - using default AnimateToOriginalPosition");
         }
 
         // Only animate to original position if CameraStateManager isn't handling it
@@ -275,29 +276,29 @@ public class CameraAnimationController : MonoBehaviour
 
         // FIXED: Use SaveSystem to check if intro transition should be shown
         bool shouldShowIntroTransition = !hasShownStartupUI && !isReturningFromGameplay;
-        Debug.Log($"🔄 Intro decision - hasShownStartupUI={hasShownStartupUI}, isReturningFromGameplay={isReturningFromGameplay}, shouldShowIntroTransition={shouldShowIntroTransition}");
+        AppLogger.Log($"🔄 Intro decision - hasShownStartupUI={hasShownStartupUI}, isReturningFromGameplay={isReturningFromGameplay}, shouldShowIntroTransition={shouldShowIntroTransition}");
 
         if (shouldShowIntroTransition)
         {
-            Debug.Log($"🎬 Showing startup UI for first time at {timestamp}");
+            AppLogger.Log($"🎬 Showing startup UI for first time at {timestamp}");
             hasShownStartupUI = true;
             StartCoroutine(ShowStartButtonElegantly());
         }
         else
         {
-            Debug.Log($"🔄 Skipping startup UI - already shown or returning from gameplay at {timestamp}");
+            AppLogger.Log($"🔄 Skipping startup UI - already shown or returning from gameplay at {timestamp}");
             isReturningFromGameplay = false; // Reset the flag for next time
         }
-        Debug.Log($"=== EXITTOINITIALMODE FINISHED at {timestamp} ===");
+        AppLogger.Log($"=== EXITTOINITIALMODE FINISHED at {timestamp} ===");
     }
 
     private IEnumerator ShowStartButtonElegantly()
     {
         float timestamp = Time.time;
-        Debug.Log($"🚨 ShowStartButtonElegantly COROUTINE STARTED at {timestamp}");
-        Debug.Log($"🚨 About to call UITransitionController.ShowStartButtonElegantly...");
+        AppLogger.Log($"🚨 ShowStartButtonElegantly COROUTINE STARTED at {timestamp}");
+        AppLogger.Log($"🚨 About to call UITransitionController.ShowStartButtonElegantly...");
         yield return UITransitionController.Instance?.ShowStartButtonElegantly(returnTransitionDuration);
-        Debug.Log($"🚨 ShowStartButtonElegantly COROUTINE FINISHED at {Time.time}");
+        AppLogger.Log($"🚨 ShowStartButtonElegantly COROUTINE FINISHED at {Time.time}");
     }
     #endregion
 
@@ -311,24 +312,24 @@ public class CameraAnimationController : MonoBehaviour
     {
         if (cameraController == null)
         {
-            Debug.LogError("❌ cameraController is null in AnimateToPositionWithDuration");
+            AppLogger.LogError("❌ cameraController is null in AnimateToPositionWithDuration");
             return;
         }
 
         var targetPosition = new Vector3(xPosition, explorationPosition.y, explorationPosition.z);
         var currentPosition = cameraController.transform.position;
 
-        Debug.Log($"🎯 AnimateToPositionWithDuration (Lerp):");
-        Debug.Log($"   Current Position: {currentPosition}");
-        Debug.Log($"   Target Position: {targetPosition}");
-        Debug.Log($"   Duration: {duration}s");
-        Debug.Log($"   Distance: {Vector3.Distance(currentPosition, targetPosition):F2}");
+        AppLogger.Log($"🎯 AnimateToPositionWithDuration (Lerp):");
+        AppLogger.Log($"   Current Position: {currentPosition}");
+        AppLogger.Log($"   Target Position: {targetPosition}");
+        AppLogger.Log($"   Duration: {duration}s");
+        AppLogger.Log($"   Distance: {Vector3.Distance(currentPosition, targetPosition):F2}");
 
         // Stop any existing swipe animation
         if (currentSwipeAnimation != null)
         {
             StopCoroutine(currentSwipeAnimation);
-            Debug.Log("🛑 Stopped existing swipe animation");
+            AppLogger.Log("🛑 Stopped existing swipe animation");
         }
 
         // Start new Lerp-based animation
@@ -341,7 +342,7 @@ public class CameraAnimationController : MonoBehaviour
     /// </summary>
     private IEnumerator LerpCameraPosition(Vector3 startPos, Vector3 targetPos, float duration)
     {
-        Debug.Log($"🎬 Lerp animation STARTED - moving to {targetPos}");
+        AppLogger.Log($"🎬 Lerp animation STARTED - moving to {targetPos}");
 
         float elapsedTime = 0f;
 
@@ -350,7 +351,7 @@ public class CameraAnimationController : MonoBehaviour
             // Check if cameraController still exists
             if (cameraController == null)
             {
-                Debug.LogError("❌ cameraController became null during Lerp animation");
+                AppLogger.LogError("❌ cameraController became null during Lerp animation");
                 break;
             }
 
@@ -370,7 +371,7 @@ public class CameraAnimationController : MonoBehaviour
         if (cameraController != null)
         {
             cameraController.transform.position = targetPos;
-            Debug.Log($"✅ Lerp animation COMPLETED - final position: {cameraController.transform.position}");
+            AppLogger.Log($"✅ Lerp animation COMPLETED - final position: {cameraController.transform.position}");
         }
 
         isAnimating = false;
@@ -382,7 +383,7 @@ public class CameraAnimationController : MonoBehaviour
     /// </summary>
     private IEnumerator LerpCameraTransition(Vector3 startPos, Vector3 startRot, Vector3 targetPos, Vector3 targetRot, float duration)
     {
-        Debug.Log($"🎬 Lerp transition STARTED - moving to {targetPos}, rotating to {targetRot}");
+        AppLogger.Log($"🎬 Lerp transition STARTED - moving to {targetPos}, rotating to {targetRot}");
 
         float elapsedTime = 0f;
 
@@ -391,7 +392,7 @@ public class CameraAnimationController : MonoBehaviour
             // Check if cameraController still exists
             if (cameraController == null)
             {
-                Debug.LogError("❌ cameraController became null during Lerp transition");
+                AppLogger.LogError("❌ cameraController became null during Lerp transition");
                 break;
             }
 
@@ -424,7 +425,7 @@ public class CameraAnimationController : MonoBehaviour
         {
             cameraController.transform.position = targetPos;
             cameraController.transform.rotation = Quaternion.Euler(targetRot);
-            Debug.Log($"✅ Lerp transition COMPLETED - final position: {cameraController.transform.position}, rotation: {targetRot}");
+            AppLogger.Log($"✅ Lerp transition COMPLETED - final position: {cameraController.transform.position}, rotation: {targetRot}");
         }
 
         isAnimating = false;
@@ -453,63 +454,63 @@ public class CameraAnimationController : MonoBehaviour
 
     public void PerformSwipeRight()
     {
-        Debug.Log($"🎯 PerformSwipeRight called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
+        AppLogger.Log($"🎯 PerformSwipeRight called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
 
         // ENHANCED DEFENSIVE: Ensure cameraController is valid with gentle reinitialization
         if (cameraController == null)
         {
-            Debug.Log("🔄 cameraController is null in PerformSwipeRight, reinitializing...");
+            AppLogger.Log("🔄 cameraController is null in PerformSwipeRight, reinitializing...");
             cameraController = TopDownCameraController.Instance;
 
             if (cameraController == null)
             {
-                Debug.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
+                AppLogger.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
                 return;
             }
-            Debug.Log("✅ cameraController reinitialized successfully for swipe");
+            AppLogger.Log("✅ cameraController reinitialized successfully for swipe");
         }
 
         if (currentPositionIndex < cameraXPositions.Length - 1)
         {
             currentPositionIndex++;
             MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
-            Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
+            AppLogger.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
         }
         else
         {
-            Debug.Log("🚫 Already at rightmost position, cannot swipe right further");
+            AppLogger.Log("🚫 Already at rightmost position, cannot swipe right further");
         }
     }
 
     public void PerformSwipeLeft()
     {
-        Debug.Log($"🎯 PerformSwipeLeft called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
+        AppLogger.Log($"🎯 PerformSwipeLeft called - currentPositionIndex: {currentPositionIndex}/{cameraXPositions.Length - 1}");
 
         // ENHANCED DEFENSIVE: Ensure cameraController is valid with gentle reinitialization
         if (cameraController == null)
         {
-            Debug.Log("🔄 cameraController is null in PerformSwipeLeft, reinitializing...");
+            AppLogger.Log("🔄 cameraController is null in PerformSwipeLeft, reinitializing...");
             cameraController = TopDownCameraController.Instance;
 
             if (cameraController == null)
             {
-                Debug.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
+                AppLogger.LogError("❌ TopDownCameraController.Instance is also null - cannot perform swipe");
                 return;
             }
-            Debug.Log("✅ cameraController reinitialized successfully for swipe");
+            AppLogger.Log("✅ cameraController reinitialized successfully for swipe");
         }
 
         if (currentPositionIndex > 0)
         {
             currentPositionIndex--;
             MainMenuEvents.OnPageChanged?.Invoke(currentPositionIndex);
-            Debug.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
+            AppLogger.Log($"🎯 Moving to position index {currentPositionIndex} (X: {cameraXPositions[currentPositionIndex]})");
             AnimateToPosition(cameraXPositions[currentPositionIndex]);
         }
         else
         {
-            Debug.Log("🚫 Already at leftmost position, cannot swipe left further");
+            AppLogger.Log("🚫 Already at leftmost position, cannot swipe left further");
         }
     }
 
@@ -544,9 +545,9 @@ public class CameraAnimationController : MonoBehaviour
     {
         float timestamp = Time.time;
         isReturningFromGameplay = true;
-        Debug.Log($"🔄 CameraAnimationController notified: returning from gameplay at {timestamp}");
-        Debug.Log($"🔄 Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
-        Debug.Log($"🔄 This is instance: {(Instance == this ? "SINGLETON" : "NOT_SINGLETON")}");
+        AppLogger.Log($"🔄 CameraAnimationController notified: returning from gameplay at {timestamp}");
+        AppLogger.Log($"🔄 Current state - hasShownStartupUI: {hasShownStartupUI}, isReturningFromGameplay: {isReturningFromGameplay}");
+        AppLogger.Log($"🔄 This is instance: {(Instance == this ? "SINGLETON" : "NOT_SINGLETON")}");
     }
 
     /// <summary>
@@ -557,7 +558,7 @@ public class CameraAnimationController : MonoBehaviour
     {
         hasShownStartupUI = false;
         isReturningFromGameplay = false;
-        Debug.Log("🔄 Startup UI state reset - will show again on next ExitToInitialMode");
+        AppLogger.Log("🔄 Startup UI state reset - will show again on next ExitToInitialMode");
     }
 
     /// <summary>
@@ -569,28 +570,28 @@ public class CameraAnimationController : MonoBehaviour
     #region Unity Lifecycle Cleanup
     private void OnDestroy()
     {
-        Debug.Log($"🔍 CameraAnimationController.OnDestroy() called on {gameObject.name}");
+        AppLogger.Log($"🔍 CameraAnimationController.OnDestroy() called on {gameObject.name}");
 
         // Stop all running animations
         if (currentSwipeAnimation != null)
         {
             StopCoroutine(currentSwipeAnimation);
             currentSwipeAnimation = null;
-            Debug.Log("🛑 Stopped swipe animation in OnDestroy");
+            AppLogger.Log("🛑 Stopped swipe animation in OnDestroy");
         }
 
         if (currentTransitionAnimation != null)
         {
             StopCoroutine(currentTransitionAnimation);
             currentTransitionAnimation = null;
-            Debug.Log("🛑 Stopped transition animation in OnDestroy");
+            AppLogger.Log("🛑 Stopped transition animation in OnDestroy");
         }
 
         // Clear singleton instance if this is the current instance
         if (Instance == this)
         {
             Instance = null;
-            Debug.Log("✅ CameraAnimationController singleton instance cleared");
+            AppLogger.Log("✅ CameraAnimationController singleton instance cleared");
         }
 
         MainMenuEvents.OnNextPage -= PerformSwipeRight;
@@ -601,3 +602,4 @@ public class CameraAnimationController : MonoBehaviour
 
     public int GetTotalPages() => cameraXPositions.Length;
 }
+

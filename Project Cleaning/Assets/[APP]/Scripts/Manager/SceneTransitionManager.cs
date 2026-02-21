@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modules;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -80,7 +81,7 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log("=== SceneTransitionManager initialized and persisted ===");
+                AppLogger.Log("=== SceneTransitionManager initialized and persisted ===");
             }
         }
         else
@@ -106,18 +107,18 @@ public class SceneTransitionManager : MonoBehaviour
         currentChapterType = GetChapterFromObjectType(objectType);
         shouldTriggerContentSwitcher = true;
 
-        Debug.Log($"🔧 SetObjectTypeForTransition called:");
-        Debug.Log($"   Object Type Set: {objectType}");
-        Debug.Log($"   Chapter Type: {currentChapterType}");
-        Debug.Log($"   shouldTriggerContentSwitcher SET TO: {shouldTriggerContentSwitcher}");
+        AppLogger.Log($"🔧 SetObjectTypeForTransition called:");
+        AppLogger.Log($"   Object Type Set: {objectType}");
+        AppLogger.Log($"   Chapter Type: {currentChapterType}");
+        AppLogger.Log($"   shouldTriggerContentSwitcher SET TO: {shouldTriggerContentSwitcher}");
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== SCENE TRANSITION MANAGER ===");
-            Debug.Log($"Object Type Set: {objectType}");
-            Debug.Log($"Chapter Type: {currentChapterType}");
-            Debug.Log($"Will trigger ContentSwitcher: {shouldTriggerContentSwitcher}");
-            Debug.Log($"===============================");
+            AppLogger.Log($"=== SCENE TRANSITION MANAGER ===");
+            AppLogger.Log($"Object Type Set: {objectType}");
+            AppLogger.Log($"Chapter Type: {currentChapterType}");
+            AppLogger.Log($"Will trigger ContentSwitcher: {shouldTriggerContentSwitcher}");
+            AppLogger.Log($"===============================");
         }
 
         // Notify listeners
@@ -139,13 +140,13 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== SCENE TRANSITION MANAGER (WITH CLICKED OBJECT) ===");
-            Debug.Log($"Object Type Set: {objectType}");
-            Debug.Log($"Chapter Type: {currentChapterType}");
-            Debug.Log($"Clicked Object Name: {objectName}");
-            Debug.Log($"Clicked Object Position: {objectPosition}");
-            Debug.Log($"Will trigger ContentSwitcher + Update clicked object");
-            Debug.Log($"==================================================");
+            AppLogger.Log($"=== SCENE TRANSITION MANAGER (WITH CLICKED OBJECT) ===");
+            AppLogger.Log($"Object Type Set: {objectType}");
+            AppLogger.Log($"Chapter Type: {currentChapterType}");
+            AppLogger.Log($"Clicked Object Name: {objectName}");
+            AppLogger.Log($"Clicked Object Position: {objectPosition}");
+            AppLogger.Log($"Will trigger ContentSwitcher + Update clicked object");
+            AppLogger.Log($"==================================================");
         }
 
         OnObjectTypeSet?.Invoke(objectType);
@@ -159,14 +160,14 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (isTransitionInProgress)
         {
-            Debug.LogWarning("Scene transition already in progress!");
+            AppLogger.LogWarning("Scene transition already in progress!");
             return;
         }
 
         // Validate scene name
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError($"❌ Scene name is empty! Cannot transition. Make sure ClickableObject has targetSceneName set.");
+            AppLogger.LogError($"❌ Scene name is empty! Cannot transition. Make sure ClickableObject has targetSceneName set.");
             return;
         }
 
@@ -177,11 +178,11 @@ public class SceneTransitionManager : MonoBehaviour
 
         SetObjectTypeForTransition(objectType);
 
-        Debug.Log($"=== SCENE TRANSITION STARTED ===");
-        Debug.Log($"Clicked Object: {objectName}");
-        Debug.Log($"Object Type: {objectType}");
-        Debug.Log($"Target Scene: {sceneName}");
-        Debug.Log($"==============================");
+        AppLogger.Log($"=== SCENE TRANSITION STARTED ===");
+        AppLogger.Log($"Clicked Object: {objectName}");
+        AppLogger.Log($"Object Type: {objectType}");
+        AppLogger.Log($"Target Scene: {sceneName}");
+        AppLogger.Log($"==============================");
 
         // CRITICAL: Save camera state IMMEDIATELY before any transition begins
         // This must happen while TopDownCameraController is still valid
@@ -197,7 +198,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (isTransitionInProgress)
         {
-            Debug.LogWarning("Staged scene transition already in progress!");
+            AppLogger.LogWarning("Staged scene transition already in progress!");
             return;
         }
 
@@ -217,7 +218,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== STAGED TRANSITION STARTED ===\nIntermediary: {intermediaryScene}\nFinal: {finalDestinationScene}");
+            AppLogger.Log($"=== STAGED TRANSITION STARTED ===\nIntermediary: {intermediaryScene}\nFinal: {finalDestinationScene}");
         }
 
         if (saveCameraState)
@@ -242,7 +243,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private void SaveCameraStateForRestore()
     {
-        Debug.Log("=== SIMPLE CAMERA STATE SAVING ===");
+        AppLogger.Log("=== SIMPLE CAMERA STATE SAVING ===");
 
         try
         {
@@ -251,12 +252,12 @@ public class SceneTransitionManager : MonoBehaviour
             if (simpleCameraRestore != null)
             {
                 simpleCameraRestore.SaveCurrentFocus();
-                Debug.Log("✅ Camera state saved via SimpleCameraFocusRestore");
+                AppLogger.Log("✅ Camera state saved via SimpleCameraFocusRestore");
                 return;
             }
             else
             {
-                Debug.LogWarning("⚠️ SimpleCameraFocusRestore not found - creating instance");
+                AppLogger.LogWarning("⚠️ SimpleCameraFocusRestore not found - creating instance");
 
                 // Create SimpleCameraFocusRestore if not found
                 GameObject simpleCameraGO = new GameObject("SimpleCameraFocusRestore");
@@ -266,14 +267,14 @@ public class SceneTransitionManager : MonoBehaviour
                 if (simpleCameraRestore != null)
                 {
                     simpleCameraRestore.SaveCurrentFocus();
-                    Debug.Log("✅ Camera state saved via newly created SimpleCameraFocusRestore");
+                    AppLogger.Log("✅ Camera state saved via newly created SimpleCameraFocusRestore");
                     return;
                 }
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"❌ SimpleCameraFocusRestore save failed: {ex.Message}");
+            AppLogger.LogError($"❌ SimpleCameraFocusRestore save failed: {ex.Message}");
         }
 
         // SIMPLE BACKUP: Direct state capture without complex systems
@@ -287,20 +288,20 @@ public class SceneTransitionManager : MonoBehaviour
                 {
                     clickedObjectName = currentFocus.name;
                     clickedObjectPosition = currentFocus.position;
-                    Debug.Log($"✅ Backup save: {clickedObjectName} at {clickedObjectPosition}");
+                    AppLogger.Log($"✅ Backup save: {clickedObjectName} at {clickedObjectPosition}");
                 }
                 else
                 {
-                    Debug.Log("📝 No focus target to save");
+                    AppLogger.Log("📝 No focus target to save");
                 }
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"❌ Backup save failed: {ex.Message}");
+            AppLogger.LogError($"❌ Backup save failed: {ex.Message}");
         }
 
-        Debug.Log("=== SIMPLE SAVE COMPLETED ===");
+        AppLogger.Log("=== SIMPLE SAVE COMPLETED ===");
     }
 
     /// <summary>
@@ -312,7 +313,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"Starting scene transition to: {targetSceneName}");
+            AppLogger.Log($"Starting scene transition to: {targetSceneName}");
         }
 
         if (sceneTransitionDelay > 0)
@@ -324,7 +325,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (!TryEasyTransition(settings))
             {
-                if (enableDebugLogs) Debug.Log("EasyTransition failed, using standard scene loading");
+                if (enableDebugLogs) AppLogger.Log("EasyTransition failed, using standard scene loading");
                 CleanupCurrentSceneForTransition();
                 SceneManager.LoadScene(targetSceneName);
             }
@@ -334,10 +335,10 @@ public class SceneTransitionManager : MonoBehaviour
             // ✅ NEW SYSTEM: Using TransitionScreenController instead of EasyTransition
             if (enableDebugLogs)
             {
-                Debug.Log("=== USING NEW TRANSITION SYSTEM ===");
-                Debug.Log($"Loading scene: {targetSceneName}");
-                Debug.Log($"TransitionScreen will automatically detect direction via TransitionScreenController");
-                Debug.Log("====================================");
+                AppLogger.Log("=== USING NEW TRANSITION SYSTEM ===");
+                AppLogger.Log($"Loading scene: {targetSceneName}");
+                AppLogger.Log($"TransitionScreen will automatically detect direction via TransitionScreenController");
+                AppLogger.Log("====================================");
             }
 
             CleanupCurrentSceneForTransition();
@@ -349,7 +350,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"...continuing staged transition, waiting {stagedDelay}s...");
+            AppLogger.Log($"...continuing staged transition, waiting {stagedDelay}s...");
         }
 
         if (stagedDelay > 0)
@@ -370,7 +371,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"...wait over, transitioning to final scene: {targetSceneName}");
+            AppLogger.Log($"...wait over, transitioning to final scene: {targetSceneName}");
         }
         StartCoroutine(PerformSceneTransition(finalSettings));
     }
@@ -383,7 +384,7 @@ public class SceneTransitionManager : MonoBehaviour
             var transitionManager = FindObjectOfType<EasyTransition.TransitionManager>();
             if (transitionManager == null)
             {
-                if (enableDebugLogs) Debug.LogWarning("EasyTransition.TransitionManager not found. Using standard scene loading.");
+                if (enableDebugLogs) AppLogger.LogWarning("EasyTransition.TransitionManager not found. Using standard scene loading.");
                 return false;
             }
 
@@ -395,16 +396,16 @@ public class SceneTransitionManager : MonoBehaviour
                 bool wasRunning = (bool)runningTransitionField.GetValue(transitionManager);
                 if (wasRunning)
                 {
-                    if (enableDebugLogs) Debug.LogWarning("⚠️ Found stuck runningTransition=true flag! Resetting...");
+                    if (enableDebugLogs) AppLogger.LogWarning("⚠️ Found stuck runningTransition=true flag! Resetting...");
                 }
                 runningTransitionField.SetValue(transitionManager, false);
-                if (enableDebugLogs) Debug.Log("✅ Reset runningTransition flag to false");
+                if (enableDebugLogs) AppLogger.Log("✅ Reset runningTransition flag to false");
             }
 
             if (enableDebugLogs)
             {
-                Debug.Log("=== USING EASY TRANSITION ANIMATION ===");
-                Debug.Log($"Found TransitionManager: {transitionManager.name}");
+                AppLogger.Log("=== USING EASY TRANSITION ANIMATION ===");
+                AppLogger.Log($"Found TransitionManager: {transitionManager.name}");
             }
 
             EasyTransition.TransitionSettings transitionToUse = settings;
@@ -412,7 +413,7 @@ public class SceneTransitionManager : MonoBehaviour
             // If no settings are provided via parameters, try to find them from the specific clicked object
             if (transitionToUse == null && !string.IsNullOrEmpty(clickedObjectName))
             {
-                Debug.Log($"Attempting to find settings from clicked object: {clickedObjectName}");
+                AppLogger.Log($"Attempting to find settings from clicked object: {clickedObjectName}");
                 GameObject clickedGO = GameObject.Find(clickedObjectName);
                 if (clickedGO != null)
                 {
@@ -422,24 +423,24 @@ public class SceneTransitionManager : MonoBehaviour
                         transitionToUse = clickable.GetTransitionSettings();
                         if (transitionToUse != null)
                         {
-                            Debug.Log($"✅ Found TransitionSettings '{transitionToUse.name}' on clicked object '{clickedObjectName}'.");
+                            AppLogger.Log($"✅ Found TransitionSettings '{transitionToUse.name}' on clicked object '{clickedObjectName}'.");
                         }
                         else
                         {
-                            Debug.LogWarning($"⚠️ Clicked object '{clickedObjectName}' found, but it has no TransitionSettings assigned.");
+                            AppLogger.LogWarning($"⚠️ Clicked object '{clickedObjectName}' found, but it has no TransitionSettings assigned.");
                         }
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"⚠️ Could not find GameObject for clicked object name: '{clickedObjectName}'.");
+                    AppLogger.LogWarning($"⚠️ Could not find GameObject for clicked object name: '{clickedObjectName}'.");
                 }
             }
 
             // If still no settings, use the broader search fallbacks
             if (transitionToUse == null)
             {
-                if (enableDebugLogs) Debug.Log("No specific transition settings found, searching for fallbacks in scene...");
+                if (enableDebugLogs) AppLogger.Log("No specific transition settings found, searching for fallbacks in scene...");
                 transitionToUse = FindTransitionSettingsInScene(); // Broader search in scene
             }
 
@@ -448,7 +449,7 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (fallbackTransitionSettings != null)
                 {
-                    if (enableDebugLogs) Debug.LogWarning("Using fallback transition settings assigned directly on SceneTransitionManager.");
+                    if (enableDebugLogs) AppLogger.LogWarning("Using fallback transition settings assigned directly on SceneTransitionManager.");
                     transitionToUse = fallbackTransitionSettings;
                 }
             }
@@ -460,7 +461,7 @@ public class SceneTransitionManager : MonoBehaviour
                 if (allTransitionSettings.Length > 0)
                 {
                     transitionToUse = allTransitionSettings[0];
-                    if (enableDebugLogs) Debug.LogWarning($"Using first available TransitionSettings found in project assets: {transitionToUse.name}");
+                    if (enableDebugLogs) AppLogger.LogWarning($"Using first available TransitionSettings found in project assets: {transitionToUse.name}");
                 }
             }
 
@@ -474,7 +475,7 @@ public class SceneTransitionManager : MonoBehaviour
                     if (transitionTimeField != null)
                     {
                         transitionTime = (float)transitionTimeField.GetValue(transitionToUse);
-                        if (enableDebugLogs) Debug.Log($"Using TransitionSettings transitionTime: {transitionTime}s");
+                        if (enableDebugLogs) AppLogger.Log($"Using TransitionSettings transitionTime: {transitionTime}s");
                     }
 
                     // Call EasyTransition with proper duration from settings
@@ -482,37 +483,37 @@ public class SceneTransitionManager : MonoBehaviour
 
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"✅ EasyTransition called successfully with proper settings: Scene '{targetSceneName}', Transition '{transitionToUse.name}', Duration '{transitionTime}s'");
+                        AppLogger.Log($"✅ EasyTransition called successfully with proper settings: Scene '{targetSceneName}', Transition '{transitionToUse.name}', Duration '{transitionTime}s'");
                     }
 
                     return true;
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogError($"❌ EasyTransition direct call FAILED: {ex.Message}. Stack Trace: {ex.StackTrace}");
-                    Debug.LogWarning("Trying reflection fallback methods...");
+                    AppLogger.LogError($"❌ EasyTransition direct call FAILED: {ex.Message}. Stack Trace: {ex.StackTrace}");
+                    AppLogger.LogWarning("Trying reflection fallback methods...");
                 }
             }
             else
             {
-                Debug.LogError("❌ No TransitionSettings found anywhere! Cannot perform animated transition. Trying reflection fallback...");
+                AppLogger.LogError("❌ No TransitionSettings found anywhere! Cannot perform animated transition. Trying reflection fallback...");
             }
 
             // Fallback to reflection if settings-based approach failed or wasn't possible
             if (TryReflectionTransition(transitionManager))
             {
-                if (enableDebugLogs) Debug.Log("✅ Reflection fallback for transition succeeded!");
+                if (enableDebugLogs) AppLogger.Log("✅ Reflection fallback for transition succeeded!");
                 return true;
             }
 
-            Debug.LogError("❌ All EasyTransition methods failed!");
+            AppLogger.LogError("❌ All EasyTransition methods failed!");
             return false;
         }
         catch (System.Exception ex)
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"EasyTransition attempt failed globally: {ex.Message}");
+                AppLogger.LogWarning($"EasyTransition attempt failed globally: {ex.Message}");
             }
             return false;
         }
@@ -523,7 +524,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private EasyTransition.TransitionSettings FindTransitionSettingsInScene()
     {
-        Debug.Log("Searching for TransitionSettings in scene...");
+        AppLogger.Log("Searching for TransitionSettings in scene...");
 
         // Method 1: Check all ClickableObjects for TransitionSettings
         ClickableObject[] clickableObjects = FindObjectsOfType<ClickableObject>();
@@ -532,7 +533,7 @@ public class SceneTransitionManager : MonoBehaviour
             var transitionSettings = clickable.GetTransitionSettings();
             if (transitionSettings != null)
             {
-                Debug.Log($"Found TransitionSettings in ClickableObject: {clickable.name}");
+                AppLogger.Log($"Found TransitionSettings in ClickableObject: {clickable.name}");
                 return transitionSettings;
             }
         }
@@ -541,11 +542,11 @@ public class SceneTransitionManager : MonoBehaviour
         EasyTransition.TransitionSettings[] allSettings = FindObjectsOfType<EasyTransition.TransitionSettings>();
         if (allSettings.Length > 0)
         {
-            Debug.Log($"Found TransitionSettings asset in scene: {allSettings[0].name}");
+            AppLogger.Log($"Found TransitionSettings asset in scene: {allSettings[0].name}");
             return allSettings[0];
         }
 
-        Debug.LogWarning("No TransitionSettings found in scene");
+        AppLogger.LogWarning("No TransitionSettings found in scene");
         return null;
     }
 
@@ -562,7 +563,7 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs)
                 {
-                    Debug.Log("Using reflection: Transition(string)");
+                    AppLogger.Log("Using reflection: Transition(string)");
                 }
                 stringMethod.Invoke(transitionManager, new object[] { targetSceneName });
                 return true;
@@ -574,7 +575,7 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs)
                 {
-                    Debug.Log("Using reflection: LoadLevel(string)");
+                    AppLogger.Log("Using reflection: LoadLevel(string)");
                 }
                 loadLevelMethod.Invoke(transitionManager, new object[] { targetSceneName });
                 return true;
@@ -590,7 +591,7 @@ public class SceneTransitionManager : MonoBehaviour
                 {
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"Using reflection: {method.Name}(string)");
+                        AppLogger.Log($"Using reflection: {method.Name}(string)");
                     }
                     method.Invoke(transitionManager, new object[] { targetSceneName });
                     return true;
@@ -601,7 +602,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"Reflection transition failed: {ex.Message}");
+                AppLogger.LogWarning($"Reflection transition failed: {ex.Message}");
             }
         }
 
@@ -616,10 +617,10 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== FINDING CLICKED OBJECT IN SCENE ===");
-            Debug.Log($"Looking for: {clickedObjectName}");
-            Debug.Log($"ObjectType: {currentObjectType}");
-            Debug.Log($"Position: {clickedObjectPosition}");
+            AppLogger.Log("=== FINDING CLICKED OBJECT IN SCENE ===");
+            AppLogger.Log($"Looking for: {clickedObjectName}");
+            AppLogger.Log($"ObjectType: {currentObjectType}");
+            AppLogger.Log($"Position: {clickedObjectPosition}");
         }
 
         // Method 1: Find by exact name match
@@ -627,7 +628,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log($"=== METHOD 1: Searching by exact name '{clickedObjectName}' ===");
+                AppLogger.Log($"=== METHOD 1: Searching by exact name '{clickedObjectName}' ===");
             }
 
             GameObject foundObj = GameObject.Find(clickedObjectName);
@@ -638,7 +639,7 @@ public class SceneTransitionManager : MonoBehaviour
                 {
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"✅ METHOD 1 SUCCESS: Found exact match '{clickable.name}'");
+                        AppLogger.Log($"✅ METHOD 1 SUCCESS: Found exact match '{clickable.name}'");
                     }
                     return clickable;
                 }
@@ -646,7 +647,7 @@ public class SceneTransitionManager : MonoBehaviour
                 {
                     if (enableDebugLogs)
                     {
-                        Debug.LogWarning($"⚠️ Found object '{foundObj.name}' but no ClickableObject component");
+                        AppLogger.LogWarning($"⚠️ Found object '{foundObj.name}' but no ClickableObject component");
                     }
                 }
             }
@@ -654,7 +655,7 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs)
                 {
-                    Debug.LogWarning($"⚠️ METHOD 1 FAILED: No object named '{clickedObjectName}' found");
+                    AppLogger.LogWarning($"⚠️ METHOD 1 FAILED: No object named '{clickedObjectName}' found");
                 }
             }
         }
@@ -662,18 +663,18 @@ public class SceneTransitionManager : MonoBehaviour
         // Method 2: Find by ObjectType match
         if (enableDebugLogs)
         {
-            Debug.Log($"=== METHOD 2: Searching by ObjectType '{currentObjectType}' ===");
+            AppLogger.Log($"=== METHOD 2: Searching by ObjectType '{currentObjectType}' ===");
         }
 
         ClickableObject[] allClickables = FindObjectsOfType<ClickableObject>();
 
         if (enableDebugLogs)
         {
-            Debug.Log($"Found {allClickables.Length} ClickableObjects in scene:");
+            AppLogger.Log($"Found {allClickables.Length} ClickableObjects in scene:");
             for (int i = 0; i < allClickables.Length; i++)
             {
                 ClickableObject obj = allClickables[i];
-                Debug.Log($"  {i + 1}. {obj.name} - ObjectType: {obj.GetObjectType()} - HasValidContentSwitcher: {obj.HasValidContentSwitcher()}");
+                AppLogger.Log($"  {i + 1}. {obj.name} - ObjectType: {obj.GetObjectType()} - HasValidContentSwitcher: {obj.HasValidContentSwitcher()}");
             }
         }
 
@@ -683,9 +684,9 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"✅ METHOD 2 SUCCESS: Found ObjectType match '{clickable.name}'");
-                    Debug.Log($"   ObjectType: {clickable.GetObjectType()}");
-                    Debug.Log($"   HasValidContentSwitcher: {clickable.HasValidContentSwitcher()}");
+                    AppLogger.Log($"✅ METHOD 2 SUCCESS: Found ObjectType match '{clickable.name}'");
+                    AppLogger.Log($"   ObjectType: {clickable.GetObjectType()}");
+                    AppLogger.Log($"   HasValidContentSwitcher: {clickable.HasValidContentSwitcher()}");
                 }
                 return clickable;
             }
@@ -693,7 +694,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.LogWarning($"⚠️ METHOD 2 FAILED: No object with ObjectType '{currentObjectType}' found");
+            AppLogger.LogWarning($"⚠️ METHOD 2 FAILED: No object with ObjectType '{currentObjectType}' found");
         }
 
         // Method 3: Find by position (if close enough)
@@ -701,7 +702,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log($"=== METHOD 3: Searching by position {clickedObjectPosition} ===");
+                AppLogger.Log($"=== METHOD 3: Searching by position {clickedObjectPosition} ===");
             }
 
             foreach (ClickableObject clickable in allClickables)
@@ -709,14 +710,14 @@ public class SceneTransitionManager : MonoBehaviour
                 float distance = Vector3.Distance(clickable.transform.position, clickedObjectPosition);
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"  {clickable.name}: distance = {distance:F2}");
+                    AppLogger.Log($"  {clickable.name}: distance = {distance:F2}");
                 }
 
                 if (distance < 2f) // Within 2 units
                 {
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"✅ METHOD 3 SUCCESS: Found position match '{clickable.name}' (distance: {distance:F2})");
+                        AppLogger.Log($"✅ METHOD 3 SUCCESS: Found position match '{clickable.name}' (distance: {distance:F2})");
                     }
                     return clickable;
                 }
@@ -724,21 +725,21 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"⚠️ METHOD 3 FAILED: No object within 2 units of position {clickedObjectPosition}");
+                AppLogger.LogWarning($"⚠️ METHOD 3 FAILED: No object within 2 units of position {clickedObjectPosition}");
             }
         }
         else
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning("⚠️ METHOD 3 SKIPPED: clickedObjectPosition is zero");
+                AppLogger.LogWarning("⚠️ METHOD 3 SKIPPED: clickedObjectPosition is zero");
             }
         }
 
         // Method 4: Ultimate fallback - find ANY object with valid ContentSwitcher for same Chapter
         if (enableDebugLogs)
         {
-            Debug.Log($"=== METHOD 4: Ultimate fallback - searching by ChapterType '{currentChapterType}' ===");
+            AppLogger.Log($"=== METHOD 4: Ultimate fallback - searching by ChapterType '{currentChapterType}' ===");
         }
 
         foreach (ClickableObject clickable in allClickables)
@@ -750,10 +751,10 @@ public class SceneTransitionManager : MonoBehaviour
                 {
                     if (enableDebugLogs)
                     {
-                        Debug.LogWarning($"⚠️ METHOD 4 SUCCESS: Using fallback object '{clickable.name}' with matching chapter");
-                        Debug.Log($"   Object ObjectType: {clickable.GetObjectType()}");
-                        Debug.Log($"   Target ObjectType: {currentObjectType}");
-                        Debug.Log($"   ContentSwitcher Chapter: {linkedCS.GetChapterType()}");
+                        AppLogger.LogWarning($"⚠️ METHOD 4 SUCCESS: Using fallback object '{clickable.name}' with matching chapter");
+                        AppLogger.Log($"   Object ObjectType: {clickable.GetObjectType()}");
+                        AppLogger.Log($"   Target ObjectType: {currentObjectType}");
+                        AppLogger.Log($"   ContentSwitcher Chapter: {linkedCS.GetChapterType()}");
                     }
 
                     // Auto-configure the ContentSwitcher to match our requirements
@@ -762,7 +763,7 @@ public class SceneTransitionManager : MonoBehaviour
 
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"🔧 Auto-configured ContentSwitcher to match ObjectType: {currentObjectType}");
+                        AppLogger.Log($"🔧 Auto-configured ContentSwitcher to match ObjectType: {currentObjectType}");
                     }
 
                     return clickable;
@@ -773,7 +774,7 @@ public class SceneTransitionManager : MonoBehaviour
         // Method 5: Last resort - find ANY object that can be auto-configured
         if (enableDebugLogs)
         {
-            Debug.Log("=== METHOD 5: Last resort - find any ClickableObject to auto-configure ===");
+            AppLogger.Log("=== METHOD 5: Last resort - find any ClickableObject to auto-configure ===");
         }
 
         foreach (ClickableObject clickable in allClickables)
@@ -788,7 +789,7 @@ public class SceneTransitionManager : MonoBehaviour
                     {
                         if (enableDebugLogs)
                         {
-                            Debug.LogWarning($"⚠️ METHOD 5: Auto-assigning ContentSwitcher '{cs.name}' to '{clickable.name}'");
+                            AppLogger.LogWarning($"⚠️ METHOD 5: Auto-assigning ContentSwitcher '{cs.name}' to '{clickable.name}'");
                         }
 
                         // Auto-assign ContentSwitcher
@@ -800,7 +801,7 @@ public class SceneTransitionManager : MonoBehaviour
 
                         if (enableDebugLogs)
                         {
-                            Debug.Log($"🔧 Auto-configured new ContentSwitcher assignment");
+                            AppLogger.Log($"🔧 Auto-configured new ContentSwitcher assignment");
                         }
 
                         return clickable;
@@ -811,11 +812,11 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.LogError("❌ ALL METHODS FAILED: Could not find or configure any suitable object");
-            Debug.LogError("🔧 POSSIBLE SOLUTIONS:");
-            Debug.LogError("   1. Ensure 'JarUndoneImage' object has a ContentSwitcher assigned in Inspector");
-            Debug.LogError("   2. Ensure 'JarUndoneImage' ObjectType is set to 'China Jar'");
-            Debug.LogError("   3. Ensure ContentSwitcher in scene is configured for 'China' chapter");
+            AppLogger.LogError("❌ ALL METHODS FAILED: Could not find or configure any suitable object");
+            AppLogger.LogError("🔧 POSSIBLE SOLUTIONS:");
+            AppLogger.LogError("   1. Ensure 'JarUndoneImage' object has a ContentSwitcher assigned in Inspector");
+            AppLogger.LogError("   2. Ensure 'JarUndoneImage' ObjectType is set to 'China Jar'");
+            AppLogger.LogError("   3. Ensure ContentSwitcher in scene is configured for 'China' chapter");
         }
 
         return null;
@@ -830,7 +831,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"Updating object to completed state: {targetObject.name}");
+            AppLogger.Log($"Updating object to completed state: {targetObject.name}");
         }
 
         // Method 1: Add a visual completion effect (particle, glow, etc.)
@@ -858,7 +859,7 @@ public class SceneTransitionManager : MonoBehaviour
             particles.Play();
             if (enableDebugLogs)
             {
-                Debug.Log($"Playing particle effect on {targetObject.name}");
+                AppLogger.Log($"Playing particle effect on {targetObject.name}");
             }
         }
 
@@ -892,7 +893,7 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log($"Changed appearance of {targetObject.name}");
+                AppLogger.Log($"Changed appearance of {targetObject.name}");
             }
         }
     }
@@ -909,7 +910,7 @@ public class SceneTransitionManager : MonoBehaviour
             indicator.gameObject.SetActive(true);
             if (enableDebugLogs)
             {
-                Debug.Log($"Activated completion indicator on {targetObject.name}");
+                AppLogger.Log($"Activated completion indicator on {targetObject.name}");
             }
         }
     }
@@ -926,7 +927,7 @@ public class SceneTransitionManager : MonoBehaviour
             animator.SetTrigger("Completed");
             if (enableDebugLogs)
             {
-                Debug.Log($"Triggered completion animation on {targetObject.name}");
+                AppLogger.Log($"Triggered completion animation on {targetObject.name}");
             }
         }
 
@@ -978,7 +979,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log($"Scene loaded: {scene.name}");
+            AppLogger.Log($"Scene loaded: {scene.name}");
         }
 
         isTransitionInProgress = false;
@@ -992,7 +993,7 @@ public class SceneTransitionManager : MonoBehaviour
             if (runningTransitionField != null)
             {
                 runningTransitionField.SetValue(transitionManager, false);
-                if (enableDebugLogs) Debug.Log("✅ OnSceneLoaded: Reset EasyTransition runningTransition flag");
+                if (enableDebugLogs) AppLogger.Log("✅ OnSceneLoaded: Reset EasyTransition runningTransition flag");
             }
         }
 
@@ -1025,7 +1026,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             CameraAnimationController.Instance?.NotifyReturningFromGameplay();
             isReturningFromGameplay = false;
-            Debug.Log("🔄 Returned from gameplay - intro UI will stay hidden.");
+            AppLogger.Log("🔄 Returned from gameplay - intro UI will stay hidden.");
         }
 
         // Re-enable touch input and load progress
@@ -1045,12 +1046,12 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void SetupInstantFocus()
     {
-        Debug.Log("[InstantFocus] Setting up camera position synchronously in OnSceneLoaded.");
+        AppLogger.Log("[InstantFocus] Setting up camera position synchronously in OnSceneLoaded.");
 
         var cameraController = TopDownCameraController.Instance;
         if (cameraController == null)
         {
-            Debug.LogError("[InstantFocus] Camera controller not found! Cannot perform instant focus.");
+            AppLogger.LogError("[InstantFocus] Camera controller not found! Cannot perform instant focus.");
             return;
         }
 
@@ -1067,7 +1068,7 @@ public class SceneTransitionManager : MonoBehaviour
             cameraController.FocusOnObjectImmediate(targetObject.transform);
 
             cameraController.enabled = true;
-            Debug.Log("[InstantFocus] Camera setup complete. Controller re-enabled.");
+            AppLogger.Log("[InstantFocus] Camera setup complete. Controller re-enabled.");
 
             shouldTriggerContentSwitcher = true;
             StartCoroutine(TriggerContentSwitcherAfterDelay());
@@ -1077,7 +1078,7 @@ public class SceneTransitionManager : MonoBehaviour
         else
         {
             cameraController.enabled = true; // Always re-enable
-            Debug.LogWarning("[InstantFocus] Could not find the last clicked object. Defaulting to hardcoded view.");
+            AppLogger.LogWarning("[InstantFocus] Could not find the last clicked object. Defaulting to hardcoded view.");
             StartCoroutine(ForceHardcodedCameraView());
         }
     }
@@ -1087,7 +1088,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private IEnumerator ForceHardcodedCameraView()
     {
-        Debug.Log("🎯 [HARDCODE] Starting ForceHardcodedCameraView coroutine.");
+        AppLogger.Log("🎯 [HARDCODE] Starting ForceHardcodedCameraView coroutine.");
 
         // Try to grab the camera controller immediately so the camera is already in place on the first frame after the transition.
         TopDownCameraController controller = TopDownCameraController.Instance;
@@ -1101,11 +1102,11 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (controller == null)
         {
-            Debug.LogError("[HARDCODE] Failed to find TopDownCameraController instance. Aborting.");
+            AppLogger.LogError("[HARDCODE] Failed to find TopDownCameraController instance. Aborting.");
             yield break;
         }
 
-        Debug.Log("📷 [HARDCODE] STEP 1: Forcing camera position.");
+        AppLogger.Log("📷 [HARDCODE] STEP 1: Forcing camera position.");
 
         // 2. Define the hardcoded position and rotation.
         Vector3 hardcodedPosition = new Vector3(-4.634338f, 2f, -0.2877529f);
@@ -1118,15 +1119,15 @@ public class SceneTransitionManager : MonoBehaviour
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.ForceEnterZoomMode();
-            Debug.Log("[HARDCODE] GameMode set to Zoom to match forced camera view.");
+            AppLogger.Log("[HARDCODE] GameMode set to Zoom to match forced camera view.");
         }
 
         // 4. Wait for the camera to settle.
         yield return new WaitForSeconds(0.5f); // Wait for half a second after forcing position.
-        Debug.Log("✅ [HARDCODE] Camera position has been set.");
+        AppLogger.Log("✅ [HARDCODE] Camera position has been set.");
 
         // 5. NOW TRIGGER CONTENT SWITCHER
-        Debug.Log("🎨 [HARDCODE] STEP 2: Now triggering ContentSwitcher.");
+        AppLogger.Log("🎨 [HARDCODE] STEP 2: Now triggering ContentSwitcher.");
         shouldTriggerContentSwitcher = true;
         StartCoroutine(EnsureZoomInputReadyAfterAutoFocus());
         StartCoroutine(EnsureZoomInputReadyAfterAutoFocus()); // double guarantee
@@ -1134,15 +1135,15 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (contentSwitcherSuccess)
         {
-            Debug.Log("✅ [HARDCODE] ContentSwitcher triggered successfully after forcing camera view.");
+            AppLogger.Log("✅ [HARDCODE] ContentSwitcher triggered successfully after forcing camera view.");
             OnContentSwitcherTriggered?.Invoke();
         }
         else
         {
-            Debug.LogError("❌ [HARDCODE] ContentSwitcher failed after forcing camera view.");
+            AppLogger.LogError("❌ [HARDCODE] ContentSwitcher failed after forcing camera view.");
         }
 
-        Debug.Log("🎯 [HARDCODE] Coroutine completed.");
+        AppLogger.Log("🎯 [HARDCODE] Coroutine completed.");
     }
 
 
@@ -1160,8 +1161,8 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== TRIGGERING CONTENT SWITCHER ===");
-            Debug.Log($"Looking for ContentSwitcher with ObjectType: {currentObjectType}");
+            AppLogger.Log("=== TRIGGERING CONTENT SWITCHER ===");
+            AppLogger.Log($"Looking for ContentSwitcher with ObjectType: {currentObjectType}");
         }
 
         // Find and trigger the appropriate ContentSwitcher
@@ -1179,11 +1180,11 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 // Reset only for gameplay scenes
                 shouldTriggerContentSwitcher = false;
-                Debug.Log("🔄 Reset shouldTriggerContentSwitcher for gameplay scene");
+                AppLogger.Log("🔄 Reset shouldTriggerContentSwitcher for gameplay scene");
             }
             else
             {
-                Debug.Log("🔧 Keeping shouldTriggerContentSwitcher TRUE for menu scene");
+                AppLogger.Log("🔧 Keeping shouldTriggerContentSwitcher TRUE for menu scene");
 
                 // Make sure auto-zoom leaves controls unlocked and in zoom mode
                 StartCoroutine(EnsureZoomInputReadyAfterTransition());
@@ -1191,16 +1192,16 @@ public class SceneTransitionManager : MonoBehaviour
 
             OnContentSwitcherTriggered?.Invoke();
 
-            Debug.Log("✅ ContentSwitcher triggered successfully!");
+            AppLogger.Log("✅ ContentSwitcher triggered successfully!");
 
             if (enableDebugLogs)
             {
-                Debug.Log("=== CONTENT SWITCHER TRIGGERED SUCCESSFULLY ===");
+                AppLogger.Log("=== CONTENT SWITCHER TRIGGERED SUCCESSFULLY ===");
             }
         }
         else
         {
-            Debug.LogWarning("Failed to find or trigger ContentSwitcher!");
+            AppLogger.LogWarning("Failed to find or trigger ContentSwitcher!");
         }
     }
 
@@ -1263,10 +1264,10 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== SMART CONTENT SWITCHER TRIGGER ===");
-            Debug.Log($"Current ObjectType: {currentObjectType}");
-            Debug.Log($"Current ChapterType: {currentChapterType}");
-            Debug.Log($"Clicked Object Name: {clickedObjectName}");
+            AppLogger.Log("=== SMART CONTENT SWITCHER TRIGGER ===");
+            AppLogger.Log($"Current ObjectType: {currentObjectType}");
+            AppLogger.Log($"Current ChapterType: {currentChapterType}");
+            AppLogger.Log($"Clicked Object Name: {clickedObjectName}");
         }
 
         // Find ALL ClickableObjects in scene
@@ -1281,7 +1282,7 @@ public class SceneTransitionManager : MonoBehaviour
                 targetClickableObject = clickable;
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"✅ Found matching ClickableObject: {clickable.name} (ObjectType: {clickable.GetObjectType()})");
+                    AppLogger.Log($"✅ Found matching ClickableObject: {clickable.name} (ObjectType: {clickable.GetObjectType()})");
                 }
                 break;
             }
@@ -1298,7 +1299,7 @@ public class SceneTransitionManager : MonoBehaviour
                     targetClickableObject = clickable;
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"✅ Found similar name ClickableObject: {clickable.name} (for clicked: {clickedObjectName})");
+                        AppLogger.Log($"✅ Found similar name ClickableObject: {clickable.name} (for clicked: {clickedObjectName})");
                     }
                     break;
                 }
@@ -1307,7 +1308,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (targetClickableObject == null)
         {
-            Debug.LogWarning($"⚠️ Could not find ClickableObject for ObjectType {currentObjectType}, using fallback ContentSwitcher trigger");
+            AppLogger.LogWarning($"⚠️ Could not find ClickableObject for ObjectType {currentObjectType}, using fallback ContentSwitcher trigger");
             return TriggerFallbackContentSwitcher();
         }
 
@@ -1318,8 +1319,8 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log($"🎯 Using ASSIGNED ContentSwitcher from {targetClickableObject.name}");
-                Debug.Log($"   ContentSwitcher: {assignedContentSwitcher.name}");
+                AppLogger.Log($"🎯 Using ASSIGNED ContentSwitcher from {targetClickableObject.name}");
+                AppLogger.Log($"   ContentSwitcher: {assignedContentSwitcher.name}");
             }
 
             // Configure and trigger the assigned ContentSwitcher
@@ -1329,9 +1330,9 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log($"🚀 TRIGGERED ASSIGNED CONTENT SWITCHER: {assignedContentSwitcher.name}");
-                Debug.Log($"   For Object: {targetClickableObject.name}");
-                Debug.Log($"   ObjectType: {currentObjectType}");
+                AppLogger.Log($"🚀 TRIGGERED ASSIGNED CONTENT SWITCHER: {assignedContentSwitcher.name}");
+                AppLogger.Log($"   For Object: {targetClickableObject.name}");
+                AppLogger.Log($"   ObjectType: {currentObjectType}");
             }
             return true;
         }
@@ -1339,7 +1340,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.LogWarning($"⚠️ Target object {targetClickableObject.name} has no ContentSwitcher assigned, using fallback");
+                AppLogger.LogWarning($"⚠️ Target object {targetClickableObject.name} has no ContentSwitcher assigned, using fallback");
             }
             return TriggerFallbackContentSwitcher();
         }
@@ -1352,7 +1353,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== FALLBACK CONTENT SWITCHER TRIGGER ===");
+            AppLogger.Log("=== FALLBACK CONTENT SWITCHER TRIGGER ===");
         }
 
         // Find ANY ContentSwitcher in the scene
@@ -1360,7 +1361,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (contentSwitchers.Length == 0)
         {
-            Debug.LogWarning("⚠️ No ContentSwitcher found in scene - skipping content switch.");
+            AppLogger.LogWarning("⚠️ No ContentSwitcher found in scene - skipping content switch.");
             return false;
         }
 
@@ -1369,7 +1370,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"✅ Using fallback ContentSwitcher: {targetSwitcher.name}");
+            AppLogger.Log($"✅ Using fallback ContentSwitcher: {targetSwitcher.name}");
         }
 
         // Configure the ContentSwitcher to match our requirements
@@ -1379,7 +1380,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"🚀 TRIGGERED FALLBACK CONTENT SWITCHER: {targetSwitcher.name}");
+            AppLogger.Log($"🚀 TRIGGERED FALLBACK CONTENT SWITCHER: {targetSwitcher.name}");
         }
 
         return true;
@@ -1435,13 +1436,13 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (isTransitionInProgress)
         {
-            Debug.LogWarning("Scene transition already in progress!");
+            AppLogger.LogWarning("Scene transition already in progress!");
             return;
         }
 
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError("❌ Scene name is empty! Cannot transition.");
+            AppLogger.LogError("❌ Scene name is empty! Cannot transition.");
             return;
         }
 
@@ -1467,7 +1468,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogError("❌ Scene name is empty! Cannot force transition.");
+            AppLogger.LogError("❌ Scene name is empty! Cannot force transition.");
             return;
         }
 
@@ -1481,7 +1482,7 @@ public class SceneTransitionManager : MonoBehaviour
         stagedFinalDestinationScene = null;
         stagedFinalTransitionSettings = null;
 
-        Debug.LogWarning($"[SceneTransitionManager] Force loading scene immediately: {sceneName}");
+        AppLogger.LogWarning($"[SceneTransitionManager] Force loading scene immediately: {sceneName}");
         SceneManager.LoadScene(sceneName);
     }
 
@@ -1523,7 +1524,7 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log("SaveSystem not found, skipping saved progress loading");
+                AppLogger.Log("SaveSystem not found, skipping saved progress loading");
             }
             yield break;
         }
@@ -1533,15 +1534,15 @@ public class SceneTransitionManager : MonoBehaviour
         {
             if (enableDebugLogs)
             {
-                Debug.Log("No saved progress found");
+                AppLogger.Log("No saved progress found");
             }
             yield break;
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== LOADING SAVED PROGRESS ===");
-            Debug.Log($"Found {saveData.completedObjects.Count} completed objects");
+            AppLogger.Log($"=== LOADING SAVED PROGRESS ===");
+            AppLogger.Log($"Found {saveData.completedObjects.Count} completed objects");
         }
 
         // Find all ClickableObjects in scene
@@ -1562,7 +1563,7 @@ public class SceneTransitionManager : MonoBehaviour
 
                     if (enableDebugLogs)
                     {
-                        Debug.Log($"Found completed object: {clickableObj.name} - letting ContentSwitcher handle state");
+                        AppLogger.Log($"Found completed object: {clickableObj.name} - letting ContentSwitcher handle state");
                     }
 
                     // ✅ COMMENTED OUT: This line was causing the reset issue
@@ -1575,7 +1576,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== SAVED PROGRESS LOADED ===");
+            AppLogger.Log("=== SAVED PROGRESS LOADED ===");
         }
     }
 
@@ -1601,7 +1602,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("SceneTransitionManager data reset");
+            AppLogger.Log("SceneTransitionManager data reset");
         }
     }
 
@@ -1613,7 +1614,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== GENTLE CLEANUP FOR TRANSITION ===");
+            AppLogger.Log("=== GENTLE CLEANUP FOR TRANSITION ===");
         }
 
         try
@@ -1624,7 +1625,7 @@ public class SceneTransitionManager : MonoBehaviour
                 TouchManager.Instance.DisableAllTouch(true);
                 if (enableDebugLogs)
                 {
-                    Debug.Log("TouchManager disabled for transition");
+                    AppLogger.Log("TouchManager disabled for transition");
                 }
             }
 
@@ -1637,12 +1638,12 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log("Gentle scene cleanup for transition completed successfully");
+                AppLogger.Log("Gentle scene cleanup for transition completed successfully");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"Error during scene cleanup: {ex.Message}");
+            AppLogger.LogError($"Error during scene cleanup: {ex.Message}");
         }
     }
 
@@ -1680,7 +1681,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("Scene managers gently prepared for transition");
+            AppLogger.Log("Scene managers gently prepared for transition");
         }
     }
 
@@ -1712,7 +1713,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("Non-transition coroutines cleaned up");
+            AppLogger.Log("Non-transition coroutines cleaned up");
         }
     }
 
@@ -1723,17 +1724,17 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private void RestoreToExplorationModeFallback(TopDownCameraController cameraController)
     {
-        Debug.Log("🔧 FALLBACK: Restoring to exploration mode");
+        AppLogger.Log("🔧 FALLBACK: Restoring to exploration mode");
 
         // Set GameModeManager to exploration mode
         if (GameModeManager.Instance != null)
         {
-            Debug.Log("🔄 Setting GameModeManager to exploration mode");
+            AppLogger.Log("🔄 Setting GameModeManager to exploration mode");
             GameModeManager.Instance.ReturnToExplorationMode();
         }
 
         // Transition camera to overview/exploration state
-        Debug.Log("🔄 Transitioning camera to exploration overview state");
+        AppLogger.Log("🔄 Transitioning camera to exploration overview state");
         cameraController.TransitionToOverview();
     }
 
@@ -1763,7 +1764,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("Scene managers cleaned up");
+            AppLogger.Log("Scene managers cleaned up");
         }
     }
 
@@ -1795,7 +1796,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("UI elements cleaned up");
+            AppLogger.Log("UI elements cleaned up");
         }
     }
 
@@ -1807,7 +1808,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (enableDebugLogs)
         {
-            Debug.Log("=== WAITING FOR UI SYSTEM TO BE READY ===");
+            AppLogger.Log("=== WAITING FOR UI SYSTEM TO BE READY ===");
         }
 
         // Wait for at least 2 frames to ensure Unity's UI system is initialized
@@ -1826,7 +1827,7 @@ public class SceneTransitionManager : MonoBehaviour
             {
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"✅ EventSystem ready after {frameCount} frames");
+                    AppLogger.Log($"✅ EventSystem ready after {frameCount} frames");
                 }
                 break;
             }
@@ -1837,7 +1838,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (frameCount >= maxWaitFrames)
         {
-            Debug.LogWarning("⚠️ EventSystem not found after maximum wait time - proceeding anyway");
+            AppLogger.LogWarning("⚠️ EventSystem not found after maximum wait time - proceeding anyway");
         }
 
         // Additional small delay to ensure Canvas and GraphicRaycaster components are ready
@@ -1854,13 +1855,13 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (enableDebugLogs)
             {
-                Debug.Log("✅ TouchManager re-enabled after UI system ready");
-                Debug.Log("✅ UI STUCK ISSUE SHOULD BE FIXED");
+                AppLogger.Log("✅ TouchManager re-enabled after UI system ready");
+                AppLogger.Log("✅ UI STUCK ISSUE SHOULD BE FIXED");
             }
         }
         else
         {
-            Debug.LogWarning("TouchManager.Instance is null - cannot re-enable touch input");
+            AppLogger.LogWarning("TouchManager.Instance is null - cannot re-enable touch input");
         }
 
         // Verify UI components are responsive and fix if necessary
@@ -1876,7 +1877,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== COMPREHENSIVE UI DIAGNOSIS & FIX ===");
+            AppLogger.Log("=== COMPREHENSIVE UI DIAGNOSIS & FIX ===");
         }
 
         bool foundIssue = false;
@@ -1885,7 +1886,7 @@ public class SceneTransitionManager : MonoBehaviour
         var eventSystem = EventSystem.current;
         if (eventSystem == null)
         {
-            Debug.LogError("❌ CRITICAL: No EventSystem found! Creating one...");
+            AppLogger.LogError("❌ CRITICAL: No EventSystem found! Creating one...");
             CreateEventSystem();
             foundIssue = true;
             yield return null; // Wait one frame for EventSystem to initialize
@@ -1894,12 +1895,12 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (eventSystem != null)
         {
-            Debug.Log($"✅ EventSystem active: {eventSystem.name}");
+            AppLogger.Log($"✅ EventSystem active: {eventSystem.name}");
 
             // Check if EventSystem is enabled
             if (!eventSystem.enabled)
             {
-                Debug.LogWarning("❌ EventSystem is disabled! Enabling...");
+                AppLogger.LogWarning("❌ EventSystem is disabled! Enabling...");
                 eventSystem.enabled = true;
                 foundIssue = true;
             }
@@ -1907,8 +1908,8 @@ public class SceneTransitionManager : MonoBehaviour
             // Check current selected object
             if (eventSystem.currentSelectedGameObject != null)
             {
-                Debug.Log($"⚠️ EventSystem has selected object: {eventSystem.currentSelectedGameObject.name}");
-                Debug.Log("Clearing selected object to prevent UI blocking...");
+                AppLogger.Log($"⚠️ EventSystem has selected object: {eventSystem.currentSelectedGameObject.name}");
+                AppLogger.Log("Clearing selected object to prevent UI blocking...");
                 eventSystem.SetSelectedGameObject(null);
                 foundIssue = true;
             }
@@ -1934,7 +1935,7 @@ public class SceneTransitionManager : MonoBehaviour
 
                     if (!raycaster.enabled)
                     {
-                        Debug.LogWarning($"❌ GraphicRaycaster disabled on {canvas.name}! Enabling...");
+                        AppLogger.LogWarning($"❌ GraphicRaycaster disabled on {canvas.name}! Enabling...");
                         raycaster.enabled = true;
                         foundIssue = true;
                     }
@@ -1945,12 +1946,12 @@ public class SceneTransitionManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning($"❌ No GraphicRaycaster on Canvas: {canvas.name}");
+                    AppLogger.LogWarning($"❌ No GraphicRaycaster on Canvas: {canvas.name}");
                     // Add GraphicRaycaster if missing on active Canvas
                     if (canvas.isRootCanvas)
                     {
                         raycaster = canvas.gameObject.AddComponent<GraphicRaycaster>();
-                        Debug.Log($"✅ Added GraphicRaycaster to {canvas.name}");
+                        AppLogger.Log($"✅ Added GraphicRaycaster to {canvas.name}");
                         raycasterCount++;
                         enabledRaycasterCount++;
                         foundIssue = true;
@@ -1960,13 +1961,13 @@ public class SceneTransitionManager : MonoBehaviour
                 // Check Canvas properties
                 if (canvas.enabled == false)
                 {
-                    Debug.LogWarning($"❌ Canvas disabled: {canvas.name}");
+                    AppLogger.LogWarning($"❌ Canvas disabled: {canvas.name}");
                     foundIssue = true;
                 }
             }
         }
 
-        Debug.Log($"Canvas Report: {activeCanvasCount} active, {raycasterCount} total raycasters, {enabledRaycasterCount} enabled");
+        AppLogger.Log($"Canvas Report: {activeCanvasCount} active, {raycasterCount} total raycasters, {enabledRaycasterCount} enabled");
 
         // 3. Test UI Raycast functionality
         yield return StartCoroutine(TestUIRaycast());
@@ -1974,13 +1975,13 @@ public class SceneTransitionManager : MonoBehaviour
         // 4. If issues found, force refresh UI system
         if (foundIssue)
         {
-            Debug.LogWarning("🔧 UI issues detected - forcing system refresh...");
+            AppLogger.LogWarning("🔧 UI issues detected - forcing system refresh...");
             yield return StartCoroutine(ForceRefreshUISystem());
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log($"=== UI DIAGNOSIS COMPLETE - Issues Found: {foundIssue} ===");
+            AppLogger.Log($"=== UI DIAGNOSIS COMPLETE - Issues Found: {foundIssue} ===");
 
             // Final status
             bool uiSystemHealthy = (EventSystem.current != null &&
@@ -1989,11 +1990,11 @@ public class SceneTransitionManager : MonoBehaviour
 
             if (uiSystemHealthy)
             {
-                Debug.Log("🎉 UI SYSTEM IS NOW HEALTHY AND RESPONSIVE!");
+                AppLogger.Log("🎉 UI SYSTEM IS NOW HEALTHY AND RESPONSIVE!");
             }
             else
             {
-                Debug.LogError("❌ UI SYSTEM STILL HAS ISSUES - Manual intervention needed");
+                AppLogger.LogError("❌ UI SYSTEM STILL HAS ISSUES - Manual intervention needed");
             }
         }
     }
@@ -2006,7 +2007,7 @@ public class SceneTransitionManager : MonoBehaviour
         GameObject eventSystemGO = new GameObject("EventSystem");
         eventSystemGO.AddComponent<EventSystem>();
         eventSystemGO.AddComponent<StandaloneInputModule>();
-        Debug.Log("✅ Created new EventSystem");
+        AppLogger.Log("✅ Created new EventSystem");
     }
 
     /// <summary>
@@ -2018,7 +2019,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== TESTING UI RAYCAST ===");
+            AppLogger.Log("=== TESTING UI RAYCAST ===");
         }
 
         // Get screen center position for testing
@@ -2037,19 +2038,19 @@ public class SceneTransitionManager : MonoBehaviour
             List<RaycastResult> results = new List<RaycastResult>();
             eventSystem.RaycastAll(pointerData, results);
 
-            Debug.Log($"UI Raycast Test at screen center ({screenCenter.x}, {screenCenter.y}):");
-            Debug.Log($"Found {results.Count} UI elements");
+            AppLogger.Log($"UI Raycast Test at screen center ({screenCenter.x}, {screenCenter.y}):");
+            AppLogger.Log($"Found {results.Count} UI elements");
 
             if (results.Count > 0)
             {
                 foreach (var result in results)
                 {
-                    Debug.Log($"  - {result.gameObject.name} (Canvas: {result.module?.transform.name})");
+                    AppLogger.Log($"  - {result.gameObject.name} (Canvas: {result.module?.transform.name})");
                 }
             }
             else
             {
-                Debug.LogWarning("⚠️ No UI elements found in raycast - this could indicate the problem");
+                AppLogger.LogWarning("⚠️ No UI elements found in raycast - this could indicate the problem");
             }
         }
     }
@@ -2059,7 +2060,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     private IEnumerator ForceRefreshUISystem()
     {
-        Debug.Log("🔧 FORCING UI SYSTEM REFRESH...");
+        AppLogger.Log("🔧 FORCING UI SYSTEM REFRESH...");
 
         // 1. Disable all Canvas briefly
         Canvas[] allCanvases = FindObjectsOfType<Canvas>();
@@ -2097,7 +2098,7 @@ public class SceneTransitionManager : MonoBehaviour
             TouchManager.Instance.DisableAllTouch(false);
         }
 
-        Debug.Log("✅ UI System force refresh completed");
+        AppLogger.Log("✅ UI System force refresh completed");
     }
 
     /// <summary>
@@ -2111,7 +2112,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== REFRESHING UNLOCK VISUALS ===");
+            AppLogger.Log("=== REFRESHING UNLOCK VISUALS ===");
         }
 
         // Find all ClickableObjects in scene
@@ -2119,7 +2120,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
-            Debug.Log($"Found {allClickableObjects.Length} ClickableObjects to refresh");
+            AppLogger.Log($"Found {allClickableObjects.Length} ClickableObjects to refresh");
         }
 
         // Force each object to update its lock/unlock visual
@@ -2134,14 +2135,14 @@ public class SceneTransitionManager : MonoBehaviour
 
                 if (enableDebugLogs)
                 {
-                    Debug.Log($"Refreshed: {clickable.name}");
+                    AppLogger.Log($"Refreshed: {clickable.name}");
                 }
             }
         }
 
         if (enableDebugLogs)
         {
-            Debug.Log("=== UNLOCK VISUALS REFRESH COMPLETE ===");
+            AppLogger.Log("=== UNLOCK VISUALS REFRESH COMPLETE ===");
         }
     }
 
@@ -2154,14 +2155,16 @@ public class SceneTransitionManager : MonoBehaviour
         if (SaveSystem.Instance != null)
         {
             SaveSystem.Instance.ResetAllProgress();
-            Debug.Log("All saved progress has been reset!");
+            AppLogger.Log("All saved progress has been reset!");
 
             // Reload scene to refresh object states
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
         else
         {
-            Debug.LogWarning("SaveSystem not found!");
+            AppLogger.LogWarning("SaveSystem not found!");
         }
     }
 }
+
+

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Modules;
 
 /// <summary>
 /// Handles object interaction and clickable object management
@@ -42,7 +43,7 @@ public class ObjectInteractionHandler : MonoBehaviour
             {
                 var stmGO = new GameObject("SceneTransitionManager");
                 stmGO.AddComponent<SceneTransitionManager>();
-                Debug.Log("[ObjectInteractionHandler] Bootstrap SceneTransitionManager at startup");
+                AppLogger.Log("[ObjectInteractionHandler] Bootstrap SceneTransitionManager at startup");
             }
         }
         else
@@ -62,19 +63,19 @@ public class ObjectInteractionHandler : MonoBehaviour
             GameModeManager.Instance.OnEnterZoomMode += () =>
             {
                 lastModeChangeTime = Time.time;
-                Debug.Log("=== OBJECT HANDLER - Zoom mode entered ===");
+                AppLogger.Log("=== OBJECT HANDLER - Zoom mode entered ===");
             };
             GameModeManager.Instance.OnEnterExplorationMode += () =>
             {
                 lastModeChangeTime = Time.time;
                  ArtefactDetailController detailUI = FindObjectOfType<ArtefactDetailController>(true);
                 if (detailUI != null && detailUI.gameObject.activeSelf) detailUI.CloseDetail();
-                Debug.Log("=== OBJECT HANDLER - Exploration mode entered ===");
+                AppLogger.Log("=== OBJECT HANDLER - Exploration mode entered ===");
             };
             GameModeManager.Instance.OnEnterInitialMode += () =>
             {
                 lastModeChangeTime = Time.time;
-                Debug.Log("=== OBJECT HANDLER - Initial mode entered ===");
+                AppLogger.Log("=== OBJECT HANDLER - Initial mode entered ===");
             };
         }
 
@@ -109,12 +110,12 @@ public class ObjectInteractionHandler : MonoBehaviour
         // NULL CHECK: Ensure camera is valid before using it
         if (playerCamera == null)
         {
-            Debug.LogError("=== CAMERA NULL - Finding new camera ===");
+            AppLogger.LogError("=== CAMERA NULL - Finding new camera ===");
             playerCamera = Camera.main;
 
             if (playerCamera == null)
             {
-                Debug.LogError("=== NO MAIN CAMERA FOUND - Cannot process click ===");
+                AppLogger.LogError("=== NO MAIN CAMERA FOUND - Cannot process click ===");
                 return false;
             }
         }
@@ -171,7 +172,7 @@ public class ObjectInteractionHandler : MonoBehaviour
 
         if (GameModeManager.Instance == null)
         {
-            Debug.LogError("=== ERROR: GameModeManager.Instance is NULL! ===");
+            AppLogger.LogError("=== ERROR: GameModeManager.Instance is NULL! ===");
             AdvancedInputManager.EndTransitionLock(); // Release lock on error
             return;
         }
@@ -199,7 +200,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[Integrasi UI] ArtefactData belum di-assign di {clickable.name}!");
+            AppLogger.LogWarning($"[Integrasi UI] ArtefactData belum di-assign di {clickable.name}!");
         }
     }
 
@@ -208,7 +209,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Wait a frame to ensure GameModeManager state change is fully processed
         yield return null;
 
-        Debug.Log($"=== STEP 2: Setting camera focus to: {target.name} ===");
+        AppLogger.Log($"=== STEP 2: Setting camera focus to: {target.name} ===");
 
         // Verify we're actually in zoom mode now
         var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
@@ -232,7 +233,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogError("=== CameraAnimationController is null! ===");
+            AppLogger.LogError("=== CameraAnimationController is null! ===");
         }
     }
 
@@ -268,7 +269,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         // If a staged transition is needed, use the self-contained runner.
         if (clickableObject.UseStagedTransition())
         {
-            Debug.Log("=== Starting Staged Scene Transition (Standalone) ===");
+            AppLogger.Log("=== Starting Staged Scene Transition (Standalone) ===");
             GameObject transitionerGO = new GameObject("StagedTransitionRunner");
             DontDestroyOnLoad(transitionerGO);
             var runner = transitionerGO.AddComponent<StagedTransitionRunner>();
@@ -285,7 +286,7 @@ public class ObjectInteractionHandler : MonoBehaviour
             // Prefer global SceneTransitionManager with TransitionScreen intermediary when available
             if (SceneTransitionManager.Instance != null)
             {
-                Debug.Log("=== Using TransitionScreen via SceneTransitionManager ===");
+                AppLogger.Log("=== Using TransitionScreen via SceneTransitionManager ===");
                 SceneTransitionManager.Instance.SetTransitionDirectionToGameplay();
                 SceneTransitionManager.Instance.SetObjectTypeForTransition(clickableObject.GetObjectType());
                 SceneTransitionManager.Instance.StartStagedTransition(
@@ -297,7 +298,7 @@ public class ObjectInteractionHandler : MonoBehaviour
             }
             else
             {
-                Debug.Log("=== Using Direct Scene Transition (Standalone) ===");
+                AppLogger.Log("=== Using Direct Scene Transition (Standalone) ===");
                 StartCoroutine(ChangeSceneCoroutine(finalSceneName));
             }
         }
@@ -313,7 +314,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Ensure SceneTransitionManager exists so data is available in gameplay scene
         if (SceneTransitionManager.Instance == null)
         {
-            Debug.LogWarning("SceneTransitionManager not found, creating one to store clicked object info...");
+            AppLogger.LogWarning("SceneTransitionManager not found, creating one to store clicked object info...");
             var stmGO = new GameObject("SceneTransitionManager");
             stmGO.AddComponent<SceneTransitionManager>();
         }
@@ -323,10 +324,10 @@ public class ObjectInteractionHandler : MonoBehaviour
         Vector3 objectPosition = clickedObject.transform.position;
         ObjectType objectType = clickedObject.GetObjectType();
 
-        Debug.Log($"=== STORING CLICKED OBJECT INFO ===");
-        Debug.Log($"Object Name: {objectName}");
-        Debug.Log($"Object Position: {objectPosition}");
-        Debug.Log($"Object Type: {objectType}");
+        AppLogger.Log($"=== STORING CLICKED OBJECT INFO ===");
+        AppLogger.Log($"Object Name: {objectName}");
+        AppLogger.Log($"Object Position: {objectPosition}");
+        AppLogger.Log($"Object Type: {objectType}");
 
         // Store in SceneTransitionManager
         if (SceneTransitionManager.Instance != null)
@@ -339,7 +340,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogError("SceneTransitionManager creation failed - clicked object info not stored!");
+            AppLogger.LogError("SceneTransitionManager creation failed - clicked object info not stored!");
         }
     }
 
@@ -353,15 +354,15 @@ public class ObjectInteractionHandler : MonoBehaviour
 
     private void PlayClickFeedback(ClickableObject clickable)
     {
-        Debug.Log("=== PlayClickFeedback called ===");
+        AppLogger.Log("=== PlayClickFeedback called ===");
 
         if (clickable == null)
         {
-            Debug.Log("Clickable is null!");
+            AppLogger.Log("Clickable is null!");
             return;
         }
 
-        Debug.Log($"PlayClickFeedback for: {clickable.name}");
+        AppLogger.Log($"PlayClickFeedback for: {clickable.name}");
 
         // Play audio feedback (global click + object-specific if any)
         MenuSfxManager.Instance?.PlayClick();
@@ -383,7 +384,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         clickable.OnObjectClicked?.Invoke();
 
         // Call the OnClick method to trigger popup image
-        Debug.Log("Calling clickable.OnClick()");
+        AppLogger.Log("Calling clickable.OnClick()");
         clickable.OnClick();
 
         // DISABLED: Don't trigger ContentSwitcher on click - only trigger after finish game
@@ -408,7 +409,7 @@ public class ObjectInteractionHandler : MonoBehaviour
             playerCamera = Camera.main;
             if (playerCamera == null)
             {
-                Debug.LogError("No camera available for position calculation");
+                AppLogger.LogError("No camera available for position calculation");
                 return explorationPosition;
             }
         }
@@ -443,7 +444,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Check if ContentSwitcher trigger is enabled
         if (!enableContentSwitcherTrigger)
         {
-            Debug.Log("ContentSwitcher trigger disabled");
+            AppLogger.Log("ContentSwitcher trigger disabled");
             return;
         }
 
@@ -453,7 +454,7 @@ public class ObjectInteractionHandler : MonoBehaviour
             var currentMode = GameModeManager.Instance?.GetCurrentMode() ?? GameModeManager.GameMode.Initial;
             if (currentMode != GameModeManager.GameMode.Zoom)
             {
-                Debug.Log($"ContentSwitcher trigger skipped - not in zoom mode (current: {currentMode})");
+                AppLogger.Log($"ContentSwitcher trigger skipped - not in zoom mode (current: {currentMode})");
                 return;
             }
         }
@@ -462,17 +463,17 @@ public class ObjectInteractionHandler : MonoBehaviour
         ObjectType objectType = clickableObject.GetObjectType();
         ChapterType chapterType = clickableObject.GetChapterFromObjectType();
 
-        Debug.Log($"=== TRIGGERING CONTENT SWITCHER ===");
-        Debug.Log($"Object: {clickableObject.name}");
-        Debug.Log($"ObjectType: {objectType}");
-        Debug.Log($"ChapterType: {chapterType}");
+        AppLogger.Log($"=== TRIGGERING CONTENT SWITCHER ===");
+        AppLogger.Log($"Object: {clickableObject.name}");
+        AppLogger.Log($"ObjectType: {objectType}");
+        AppLogger.Log($"ChapterType: {chapterType}");
 
         // Find ContentSwitcher in scene
         ContentSwitcher[] contentSwitchers = FindObjectsOfType<ContentSwitcher>();
 
         if (contentSwitchers.Length == 0)
         {
-            Debug.LogWarning("No ContentSwitcher found in scene!");
+            AppLogger.LogWarning("No ContentSwitcher found in scene!");
             return;
         }
 
@@ -491,7 +492,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (targetSwitcher == null)
         {
             targetSwitcher = contentSwitchers[0];
-            Debug.Log($"No exact ChapterType match, using first ContentSwitcher: {targetSwitcher.name}");
+            AppLogger.Log($"No exact ChapterType match, using first ContentSwitcher: {targetSwitcher.name}");
 
             // Set the ChapterType and ObjectType to match our clicked object
             targetSwitcher.SetChapterType(chapterType);
@@ -500,13 +501,13 @@ public class ObjectInteractionHandler : MonoBehaviour
         // Set ObjectType and trigger ContentSwitcher
         targetSwitcher.SetObjectType(objectType);
 
-        Debug.Log($"Triggering ContentSwitcher: {targetSwitcher.name}");
-        Debug.Log($"Set to ChapterType: {chapterType}, ObjectType: {objectType}");
+        AppLogger.Log($"Triggering ContentSwitcher: {targetSwitcher.name}");
+        AppLogger.Log($"Set to ChapterType: {chapterType}, ObjectType: {objectType}");
 
         // Trigger the ContentSwitcher
         targetSwitcher.OnButtonClicked();
 
-        Debug.Log("=== CONTENT SWITCHER TRIGGERED ===");
+        AppLogger.Log("=== CONTENT SWITCHER TRIGGERED ===");
     }
 
     /// <summary>
@@ -514,8 +515,8 @@ public class ObjectInteractionHandler : MonoBehaviour
     /// </summary>
     public void ManualTriggerContentSwitcher(ObjectType objectType)
     {
-        Debug.Log($"=== MANUAL TRIGGER CONTENT SWITCHER ===");
-        Debug.Log($"Requested ObjectType: {objectType}");
+        AppLogger.Log($"=== MANUAL TRIGGER CONTENT SWITCHER ===");
+        AppLogger.Log($"Requested ObjectType: {objectType}");
 
         // Create a temporary object info for the trigger
         ChapterType chapterType = GetChapterFromObjectType(objectType);
@@ -525,7 +526,7 @@ public class ObjectInteractionHandler : MonoBehaviour
 
         if (contentSwitchers.Length == 0)
         {
-            Debug.LogWarning("No ContentSwitcher found in scene for manual trigger!");
+            AppLogger.LogWarning("No ContentSwitcher found in scene for manual trigger!");
             return;
         }
 
@@ -548,7 +549,7 @@ public class ObjectInteractionHandler : MonoBehaviour
         targetSwitcher.SetObjectType(objectType);
         targetSwitcher.OnButtonClicked();
 
-        Debug.Log($"Manual trigger completed for ObjectType: {objectType}");
+        AppLogger.Log($"Manual trigger completed for ObjectType: {objectType}");
     }
 
     /// <summary>
@@ -560,11 +561,11 @@ public class ObjectInteractionHandler : MonoBehaviour
         if (newCamera != null)
         {
             playerCamera = newCamera;
-            Debug.Log($"Camera reference updated to: {playerCamera.name}");
+            AppLogger.Log($"Camera reference updated to: {playerCamera.name}");
         }
         else
         {
-            Debug.LogWarning("No main camera found for refresh");
+            AppLogger.LogWarning("No main camera found for refresh");
         }
     }
 
@@ -575,7 +576,7 @@ public class ObjectInteractionHandler : MonoBehaviour
     public void SetCameraToMain()
     {
         playerCamera = Camera.main;
-        Debug.Log($"Camera manually set to: {(playerCamera != null ? playerCamera.name : "NULL")}");
+        AppLogger.Log($"Camera manually set to: {(playerCamera != null ? playerCamera.name : "NULL")}");
     }
 
     /// <summary>
@@ -584,20 +585,20 @@ public class ObjectInteractionHandler : MonoBehaviour
     [ContextMenu("Check Camera Status")]
     public void CheckCameraStatus()
     {
-        Debug.Log("=== CAMERA STATUS ===");
-        Debug.Log($"Player Camera: {(playerCamera != null ? playerCamera.name : "NULL")}");
-        Debug.Log($"Camera.main: {(Camera.main != null ? Camera.main.name : "NULL")}");
-        Debug.Log($"Cameras in scene: {Camera.allCamerasCount}");
+        AppLogger.Log("=== CAMERA STATUS ===");
+        AppLogger.Log($"Player Camera: {(playerCamera != null ? playerCamera.name : "NULL")}");
+        AppLogger.Log($"Camera.main: {(Camera.main != null ? Camera.main.name : "NULL")}");
+        AppLogger.Log($"Cameras in scene: {Camera.allCamerasCount}");
 
         if (Camera.allCamerasCount > 0)
         {
-            Debug.Log("Available cameras:");
+            AppLogger.Log("Available cameras:");
             foreach (Camera cam in Camera.allCameras)
             {
-                Debug.Log($"  - {cam.name} (Active: {cam.gameObject.activeInHierarchy})");
+                AppLogger.Log($"  - {cam.name} (Active: {cam.gameObject.activeInHierarchy})");
             }
         }
-        Debug.Log("====================");
+        AppLogger.Log("====================");
     }
 
     /// <summary>
@@ -626,7 +627,7 @@ public class ObjectInteractionHandler : MonoBehaviour
     public void SetContentSwitcherTriggerEnabled(bool enabled)
     {
         enableContentSwitcherTrigger = enabled;
-        Debug.Log($"ContentSwitcher trigger {(enabled ? "enabled" : "disabled")}");
+        AppLogger.Log($"ContentSwitcher trigger {(enabled ? "enabled" : "disabled")}");
     }
 
     /// <summary>
@@ -636,15 +637,15 @@ public class ObjectInteractionHandler : MonoBehaviour
     public void DebugListContentSwitchers()
     {
         ContentSwitcher[] contentSwitchers = FindObjectsOfType<ContentSwitcher>();
-        Debug.Log($"=== CONTENT SWITCHER DEBUG ===");
-        Debug.Log($"Found {contentSwitchers.Length} ContentSwitcher(s) in scene:");
+        AppLogger.Log($"=== CONTENT SWITCHER DEBUG ===");
+        AppLogger.Log($"Found {contentSwitchers.Length} ContentSwitcher(s) in scene:");
 
         for (int i = 0; i < contentSwitchers.Length; i++)
         {
             var switcher = contentSwitchers[i];
-            Debug.Log($"{i + 1}. Name: {switcher.name}");
-            Debug.Log($"   ChapterType: {switcher.GetChapterType()}");
-            Debug.Log($"   ObjectType: {switcher.GetObjectType()}");
+            AppLogger.Log($"{i + 1}. Name: {switcher.name}");
+            AppLogger.Log($"   ChapterType: {switcher.GetChapterType()}");
+            AppLogger.Log($"   ObjectType: {switcher.GetObjectType()}");
         }
     }
 
@@ -678,3 +679,4 @@ public class ObjectInteractionHandler : MonoBehaviour
     }
     #endregion
 }
+

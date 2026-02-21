@@ -1,3 +1,4 @@
+using Modules;
 using UnityEngine;
 
 /// <summary>
@@ -30,7 +31,7 @@ public class ObjectDetectionExample : MonoBehaviour
             clickable.OnObjectClicked.AddListener(() => OnAnyObjectClicked(clickable));
         }
 
-        Debug.Log($"[ObjectDetectionExample] Subscribed to {clickableObjects.Length} clickable objects.");
+        AppLogger.Log($"[ObjectDetectionExample] Subscribed to {clickableObjects.Length} clickable objects.");
     }
 
     /// <summary>
@@ -46,7 +47,7 @@ public class ObjectDetectionExample : MonoBehaviour
         ChapterType chapter = clickedObject.GetChapterFromObjectType();
 
         // Log a single, clear message as requested.
-        Debug.Log($"[ObjectDetectionExample] Object Clicked! Name: '{clickedObject.name}', Type: '{objType}', Chapter: '{chapter}'");
+        AppLogger.Log($"[ObjectDetectionExample] Object Clicked! Name: '{clickedObject.name}', Type: '{objType}', Chapter: '{chapter}'");
 
         // All specific logic (like for 'ChinaCoin' or 'China' chapter) has been removed
         // to make this system general. You can add your own generalized logic here.

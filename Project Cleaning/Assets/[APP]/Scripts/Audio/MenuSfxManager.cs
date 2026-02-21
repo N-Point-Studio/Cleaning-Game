@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using Modules;
 
 /// <summary>
 /// Global UI SFX for the menu: auto-hooks all Buttons and EventTriggers to play click SFX.
@@ -49,7 +50,7 @@ public class MenuSfxManager : MonoBehaviour
     private void Start()
     {
         StartCoroutine(DelayedHook());
-        if (debugLogs) Debug.Log("[MenuSfxManager] Start() running, beginning delayed hook");
+        if (debugLogs) AppLogger.Log("[MenuSfxManager] Start() running, beginning delayed hook");
     }
 
     private void OnDestroy()
@@ -81,7 +82,7 @@ public class MenuSfxManager : MonoBehaviour
     {
         // Wait a frame so dynamically-built UI is present
         yield return null;
-        if (debugLogs) Debug.Log("[MenuSfxManager] DelayedHook executing");
+        if (debugLogs) AppLogger.Log("[MenuSfxManager] DelayedHook executing");
 
         // Clean stale references from previous scenes and rehook everything fresh
         hookedObjects.Clear();
@@ -102,7 +103,7 @@ public class MenuSfxManager : MonoBehaviour
     {
         if (audioSource == null)
         {
-            Debug.LogWarning("[MenuSfxManager] AudioSource is null, cannot hook UI.");
+            AppLogger.LogWarning("[MenuSfxManager] AudioSource is null, cannot hook UI.");
             return;
         }
 
@@ -133,7 +134,7 @@ public class MenuSfxManager : MonoBehaviour
 
         if (debugLogs)
         {
-            Debug.Log($"[MenuSfxManager] Hooked {hookedButtons} Buttons, {hookedTriggers} EventTriggers (total tracked: {hookedObjects.Count}).");
+            AppLogger.Log($"[MenuSfxManager] Hooked {hookedButtons} Buttons, {hookedTriggers} EventTriggers (total tracked: {hookedObjects.Count}).");
         }
     }
 
@@ -159,3 +160,4 @@ public class MenuSfxManager : MonoBehaviour
         if (audioSource != null) audioSource.volume = value;
     }
 }
+

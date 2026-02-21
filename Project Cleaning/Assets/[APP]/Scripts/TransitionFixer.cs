@@ -1,3 +1,4 @@
+using Modules;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -46,7 +47,7 @@ public class TransitionFixer : MonoBehaviour
             {
                 if (IsTransitionCanvas(scaler) && NeedsScalingFix(scaler))
                 {
-                    Debug.Log($"Detected NEW transition canvas: {scaler.name} - Fixing immediately!");
+                    AppLogger.Log($"Detected NEW transition canvas: {scaler.name} - Fixing immediately!");
                     FixSingleCanvas(scaler);
                 }
             }
@@ -83,7 +84,7 @@ public class TransitionFixer : MonoBehaviour
         scaler.matchWidthOrHeight = 0f; // Favor width scaling
         scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
 
-        Debug.Log($"FIXED CANVAS: {scaler.name} - Changed from {oldResolution} to {targetResolution}");
+        AppLogger.Log($"FIXED CANVAS: {scaler.name} - Changed from {oldResolution} to {targetResolution}");
 
         // Force canvas update
         Canvas.ForceUpdateCanvases();
@@ -105,9 +106,9 @@ public class TransitionFixer : MonoBehaviour
             targetResolution = new Vector2(Screen.width, Screen.height);
         }
 
-        Debug.Log($"Fixing transition scaling...");
-        Debug.Log($"Screen Resolution: {Screen.width}x{Screen.height}");
-        Debug.Log($"Target Resolution: {targetResolution.x}x{targetResolution.y}");
+        AppLogger.Log($"Fixing transition scaling...");
+        AppLogger.Log($"Screen Resolution: {Screen.width}x{Screen.height}");
+        AppLogger.Log($"Target Resolution: {targetResolution.x}x{targetResolution.y}");
 
         // Find all CanvasScaler components in the scene
         CanvasScaler[] allScalers = FindObjectsOfType<CanvasScaler>();
@@ -118,11 +119,11 @@ public class TransitionFixer : MonoBehaviour
             Canvas canvas = scaler.GetComponent<Canvas>();
 
             // Debug each canvas we find
-            Debug.Log($"Found canvas: {scaler.name} - SortOrder: {canvas?.sortingOrder}, RenderMode: {canvas?.renderMode}, CurrentResolution: {scaler.referenceResolution}");
+            AppLogger.Log($"Found canvas: {scaler.name} - SortOrder: {canvas?.sortingOrder}, RenderMode: {canvas?.renderMode}, CurrentResolution: {scaler.referenceResolution}");
 
             if (IsTransitionCanvas(scaler))
             {
-                Debug.Log($"Identified as TRANSITION canvas: {scaler.name}");
+                AppLogger.Log($"Identified as TRANSITION canvas: {scaler.name}");
 
                 // Store old settings
                 Vector2 oldResolution = scaler.referenceResolution;
@@ -133,7 +134,7 @@ public class TransitionFixer : MonoBehaviour
             }
         }
 
-        Debug.Log($"=== SUMMARY: Fixed {fixedCount} transition canvases ===");
+        AppLogger.Log($"=== SUMMARY: Fixed {fixedCount} transition canvases ===");
     }
 
     /// <summary>
@@ -181,12 +182,12 @@ public class TransitionFixer : MonoBehaviour
             if (EasyTransition.TransitionManager.Instance() != null)
             {
                 EasyTransition.TransitionManager.Instance().onTransitionBegin += OnTransitionStart;
-                Debug.Log("Subscribed to Easy Transitions events");
+                AppLogger.Log("Subscribed to Easy Transitions events");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"Could not subscribe to transition events: {e.Message}");
+            AppLogger.LogWarning($"Could not subscribe to transition events: {e.Message}");
         }
     }
 
@@ -214,18 +215,18 @@ public class TransitionFixer : MonoBehaviour
     [ContextMenu("Show Debug Info")]
     public void ShowDebugInfo()
     {
-        Debug.Log($"=== TRANSITION FIXER DEBUG ===");
-        Debug.Log($"Screen Resolution: {Screen.width}x{Screen.height}");
+        AppLogger.Log($"=== TRANSITION FIXER DEBUG ===");
+        AppLogger.Log($"Screen Resolution: {Screen.width}x{Screen.height}");
 
         CanvasScaler[] scalers = FindObjectsOfType<CanvasScaler>();
-        Debug.Log($"Found {scalers.Length} CanvasScalers in scene:");
+        AppLogger.Log($"Found {scalers.Length} CanvasScalers in scene:");
 
         foreach (CanvasScaler scaler in scalers)
         {
             Canvas canvas = scaler.GetComponent<Canvas>();
             bool isTransition = IsTransitionCanvas(scaler);
 
-            Debug.Log($"- {scaler.name}: " +
+            AppLogger.Log($"- {scaler.name}: " +
                      $"Resolution={scaler.referenceResolution}, " +
                      $"SortOrder={canvas?.sortingOrder}, " +
                      $"RenderMode={canvas?.renderMode}, " +
@@ -249,3 +250,4 @@ public class TransitionFixer : MonoBehaviour
         }
     }
 }
+

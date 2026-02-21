@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Modules;
 using UnityEngine;
 
 public class InteractedObject : MonoBehaviour
@@ -17,7 +18,6 @@ public class InteractedObject : MonoBehaviour
 
     void Update()
     {
-        //Debug.Log("Snack");
         if (TouchManager.Instance.isDragging || TouchManager.Instance.isInteracting || TouchManager.Instance.isZooming || TouchManager.Instance.isRotating || !TouchManager.Instance.isClickedOn) return;
         Clicked();
     }
@@ -27,8 +27,9 @@ public class InteractedObject : MonoBehaviour
         Ray ray = cam.ScreenPointToRay(TouchManager.Instance.tapPosition);
         if (Physics.Raycast(ray, out RaycastHit hit) && hit.transform == transform)
         {
-            Debug.Log("Clicked on Snack Object");
+            AppLogger.Log("Clicked on Snack Object");
             UIManager.Instance.ShowSetting(true);
         }
     }
 }
+

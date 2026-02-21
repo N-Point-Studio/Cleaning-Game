@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-// Removed DG.Tweening - replaced with Lerp
+using Modules;
 
 public class TopDownCameraController : StateMachine
 {
@@ -106,13 +106,13 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void SetFocusTarget(Transform target)
     {
-        Debug.Log($"=== SetFocusTarget called ===");
-        Debug.Log($"Previous target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
-        Debug.Log($"New target: {(target != null ? target.name : "NULL")}");
+        AppLogger.Log($"=== SetFocusTarget called ===");
+        AppLogger.Log($"Previous target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        AppLogger.Log($"New target: {(target != null ? target.name : "NULL")}");
 
         currentFocusTarget = target;
 
-        Debug.Log($"✅ Focus target set to: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        AppLogger.Log($"✅ Focus target set to: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
 
         // REMOVED AUTO-SAVE: This was causing "destroyed object" errors during scene transitions
         // CameraStateManager will save state at appropriate times (before scene transitions)
@@ -124,12 +124,12 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToOverview()
     {
-        Debug.Log("🔧 TransitionToOverview called - ensuring exploration mode is properly initialized");
+        AppLogger.Log("🔧 TransitionToOverview called - ensuring exploration mode is properly initialized");
 
         // CRITICAL FIX: Ensure exploration mode is properly set up first
         if (GameModeManager.Instance != null && !GameModeManager.Instance.IsInExplorationMode())
         {
-            Debug.Log("🔄 Setting GameModeManager to exploration mode");
+            AppLogger.Log("🔄 Setting GameModeManager to exploration mode");
             GameModeManager.Instance.ReturnToExplorationMode();
         }
 
@@ -142,7 +142,7 @@ public class TopDownCameraController : StateMachine
             Vector3 targetRotFallback = overviewRotation;
             float targetFOVFallback = overviewFOV;
 
-            Debug.Log("⚠️ CameraAnimationController not found, using fallback overview position");
+            AppLogger.LogWarning("⚠️ CameraAnimationController not found, using fallback overview position");
             StartTransition(targetPosFallback, targetRotFallback, targetFOVFallback);
             return;
         }
@@ -156,7 +156,7 @@ public class TopDownCameraController : StateMachine
         Vector3 targetRot = new Vector3(90f, 0f, 0f);
         float targetFOV = overviewFOV;
 
-        Debug.Log($"✅ Transitioning to overview - X: {targetX}, Position: {targetPos}");
+        AppLogger.Log($"✅ Transitioning to overview - X: {targetX}, Position: {targetPos}");
         StartTransition(targetPos, targetRot, targetFOV);
     }
 
@@ -166,12 +166,12 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToStoredState()
     {
-        Debug.Log($"TransitionToStoredState called - currentFocusTarget: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        AppLogger.Log($"TransitionToStoredState called - currentFocusTarget: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
 
         // If we have a focus target, return to focus mode
         if (currentFocusTarget != null)
         {
-            Debug.Log($"Restoring focus on target: {currentFocusTarget.name}");
+            AppLogger.Log($"Restoring focus on target: {currentFocusTarget.name}");
             TransitionToFocus();
 
             // Notify the target object that it's focused again
@@ -183,7 +183,7 @@ public class TopDownCameraController : StateMachine
         }
         else
         {
-            Debug.Log("No focus target stored, transitioning to overview");
+            AppLogger.Log("No focus target stored, transitioning to overview");
             TransitionToOverview();
         }
     }
@@ -195,11 +195,11 @@ public class TopDownCameraController : StateMachine
     {
         if (currentFocusTarget == null)
         {
-            Debug.LogWarning("❌ TransitionToFocus called but currentFocusTarget is null");
+            AppLogger.LogWarning("❌ TransitionToFocus called but currentFocusTarget is null");
             return;
         }
 
-        Debug.Log($"🎯 TransitionToFocus called for target: {currentFocusTarget.name}");
+        AppLogger.Log($"🎯 TransitionToFocus called for target: {currentFocusTarget.name}");
 
         Vector3 targetPos = CalculateFocusPosition(currentFocusTarget);
         Vector3 targetRot = new Vector3(90f, 0f, 0f); // FOCUS MODE specific rotation (top-down)
@@ -209,7 +209,7 @@ public class TopDownCameraController : StateMachine
         ClickableObject clickable = currentFocusTarget.GetComponent<ClickableObject>();
         if (clickable != null)
         {
-            Debug.Log($"📍 Setting focus state on target object: {currentFocusTarget.name}");
+            AppLogger.Log($"📍 Setting focus state on target object: {currentFocusTarget.name}");
             clickable.SetFocusState(true);
         }
 
@@ -221,10 +221,10 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void TransitionToNavigation()
     {
-        Debug.Log("TransitionToNavigation called");
+        AppLogger.Log("TransitionToNavigation called");
         if (currentFocusTarget == null)
         {
-            Debug.Log("No focus target - going to overview");
+            AppLogger.Log("No focus target - going to overview");
             TransitionToOverview();
             return;
         }
@@ -232,7 +232,7 @@ public class TopDownCameraController : StateMachine
         Vector3 targetPos = CalculateNavigationPosition(currentFocusTarget);
         Vector3 targetRot = overviewRotation;
         float targetFOV = navigationFOV;
-        Debug.Log($"Navigation transition: pos={targetPos}, FOV={targetFOV}");
+        AppLogger.Log($"Navigation transition: pos={targetPos}, FOV={targetFOV}");
         StartTransition(targetPos, targetRot, targetFOV);
     }
 
@@ -296,7 +296,7 @@ public class TopDownCameraController : StateMachine
         if (currentTransition != null)
         {
             StopCoroutine(currentTransition);
-            Debug.Log("🛑 Stopped existing transition");
+            AppLogger.Log("🛑 Stopped existing transition");
         }
 
         // Set transitioning state
@@ -322,7 +322,7 @@ public class TopDownCameraController : StateMachine
                                            Vector3 targetPos, Vector3 targetRot, float targetFOV,
                                            float duration)
     {
-        Debug.Log($"🎬 TopDown Lerp transition STARTED - pos: {targetPos}, rot: {targetRot}, FOV: {targetFOV}");
+        AppLogger.Log($"🎬 TopDown Lerp transition STARTED - pos: {targetPos}, rot: {targetRot}, FOV: {targetFOV}");
 
         float elapsedTime = 0f;
 
@@ -360,7 +360,7 @@ public class TopDownCameraController : StateMachine
         // Release the global transition lock
         AdvancedInputManager.EndTransitionLock();
 
-        Debug.Log($"✅ TopDown Lerp transition COMPLETED - final pos: {transform.position}, rot: {targetRot}, FOV: {cam.fieldOfView}");
+        AppLogger.Log($"✅ TopDown Lerp transition COMPLETED - final pos: {transform.position}, rot: {targetRot}, FOV: {cam.fieldOfView}");
     }
 
     /// <summary>
@@ -376,11 +376,11 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public Transform GetCurrentFocus()
     {
-        Debug.Log($"=== GetCurrentFocus called ===");
-        Debug.Log($"Current focus target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
+        AppLogger.Log($"=== GetCurrentFocus called ===");
+        AppLogger.Log($"Current focus target: {(currentFocusTarget != null ? currentFocusTarget.name : "NULL")}");
         if (currentFocusTarget != null && currentFocusTarget.gameObject != null)
         {
-            Debug.Log($"Target is valid and active: {currentFocusTarget.gameObject.activeInHierarchy}");
+            AppLogger.Log($"Target is valid and active: {currentFocusTarget.gameObject.activeInHierarchy}");
         }
         return currentFocusTarget;
     }
@@ -405,7 +405,7 @@ public class TopDownCameraController : StateMachine
         {
             StopCoroutine(currentTransition);
             currentTransition = null;
-            Debug.Log("🛑 Stopped transition for immediate focus");
+            AppLogger.Log("🛑 Stopped transition for immediate focus");
         }
 
         Vector3 targetPosition = CalculateFocusPosition(target);
@@ -421,7 +421,7 @@ public class TopDownCameraController : StateMachine
 
         // CRITICAL FIX: Switch the state machine to focusState to prevent other states from overriding the position.
         SwitchState(focusState);
-        Debug.Log($"[ImmediateFocus] Switched camera state to FocusState for target {target.name}");
+        AppLogger.Log($"[ImmediateFocus] Switched camera state to FocusState for target {target.name}");
     }
 
     /// <summary>
@@ -446,7 +446,7 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     public void SetHardcodedFocusPosition(Vector3 position, Quaternion rotation)
     {
-        Debug.Log($"[HARDCODE] Forcing camera to Pos: {position}, Rot: {rotation.eulerAngles}");
+        AppLogger.Log($"[HARDCODE] Forcing camera to Pos: {position}, Rot: {rotation.eulerAngles}");
 
         // Stop any existing transitions to prevent conflicts
         if (currentTransition != null)
@@ -470,7 +470,7 @@ public class TopDownCameraController : StateMachine
         isTransitioningLerp = false;
         AdvancedInputManager.EndTransitionLock();
 
-        Debug.Log("[HARDCODE] Camera position forced and switched to focus state.");
+        AppLogger.Log("[HARDCODE] Camera position forced and switched to focus state.");
     }
 
     /// <summary>
@@ -508,21 +508,22 @@ public class TopDownCameraController : StateMachine
     /// </summary>
     private void OnDestroy()
     {
-        Debug.Log($"🔍 TopDownCameraController.OnDestroy() called");
+        AppLogger.Log($"🔍 TopDownCameraController.OnDestroy() called");
 
         // Stop any running transitions
         if (currentTransition != null)
         {
             StopCoroutine(currentTransition);
             currentTransition = null;
-            Debug.Log("🛑 Stopped transition in OnDestroy");
+            AppLogger.Log("🛑 Stopped transition in OnDestroy");
         }
 
         // Clear singleton instance if this is the current instance
         if (Instance == this)
         {
             Instance = null;
-            Debug.Log("✅ TopDownCameraController singleton instance cleared");
+            AppLogger.Log("✅ TopDownCameraController singleton instance cleared");
         }
     }
 }
+
