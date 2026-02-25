@@ -173,6 +173,12 @@ public class AssembleManager : MonoBehaviour
 
     private void AssembleProgress()
     {
+        if (TotalFragments <= 0) 
+        {
+            progressAttach = 0f;
+            return;
+        }
+
         float progressAttachment = 0;
         foreach (var cluster in clusters)
         {
@@ -206,9 +212,14 @@ public class AssembleManager : MonoBehaviour
     {
         AppLogger.Log("Showing Assemble Progress " + assemblyTargets.Count);
         TotalFragments = assemblyTargets.Count;
-        if (assemblyTargets.Count == 0)
+        
+        if (TotalFragments <= 0)
         {
             UIManager.Instance.ShowProgress(UIManager.ProgressType.Assemble, false);
+        }
+        else
+        {
+            UIManager.Instance.ShowProgress(UIManager.ProgressType.Assemble, true);
         }
     }
 }
