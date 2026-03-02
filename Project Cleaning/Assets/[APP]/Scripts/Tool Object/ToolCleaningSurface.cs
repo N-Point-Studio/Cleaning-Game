@@ -183,4 +183,3 @@ public class ToolCleaningSurface : MonoBehaviour
         cleaningAudioSource.volume = vol;
     }
 }
-
