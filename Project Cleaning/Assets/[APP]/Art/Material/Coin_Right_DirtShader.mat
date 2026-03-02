@@ -31,11 +31,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DirtTexture:
-        m_Texture: {fileID: 2800000, guid: e8c0c848b2a4940a1aa0fb4dcae3c4d5, type: 3}
+        m_Texture: {fileID: 2800000, guid: 59dc882844fb34c18b474afe80c77716, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexture:
-        m_Texture: {fileID: 2800000, guid: 96872f1298d784c1c83ad2408b790ceb, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6bc9693c7143e4e059219677fd55d8f4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetalicTexture:

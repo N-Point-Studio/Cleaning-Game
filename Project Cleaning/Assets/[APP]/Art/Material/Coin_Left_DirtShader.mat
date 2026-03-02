@@ -31,23 +31,23 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DirtTexture:
-        m_Texture: {fileID: 2800000, guid: 6347dcd4bedc34e44bc172f39af5f726, type: 3}
+        m_Texture: {fileID: 2800000, guid: 01032aee848024516a84d332569cc0cd, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexture:
-        m_Texture: {fileID: 2800000, guid: 89805d839d84642b49607f77e4dded4c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6bc9693c7143e4e059219677fd55d8f4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetalicTexture:
-        m_Texture: {fileID: 2800000, guid: 1f82052024d2b45419cf10ec2d6b0f49, type: 3}
+        m_Texture: {fileID: 2800000, guid: aa1c9e246eea24b17a63bbdfe51d7fca, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalTexture:
-        m_Texture: {fileID: 2800000, guid: 7fe2a4466b7294c54a40a2febee0e09c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2732fe8e60a6f41d0962854fd4606223, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoughnessTexture:
-        m_Texture: {fileID: 2800000, guid: 352e0b3e7fe79473f8acac5c2b861128, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2d43be336af6c4dca8c396eec229e656, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
