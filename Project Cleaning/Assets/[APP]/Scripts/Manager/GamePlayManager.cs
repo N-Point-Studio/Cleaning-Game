@@ -35,7 +35,7 @@ public class GamePlayManager : MonoBehaviour
     private bool resolvedFromSceneDetection = false;
 
     [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = false;
+    [SerializeField] private bool enableDebugLogs = true;
     [SerializeField] private float debugLogInterval = 1f;
     private float nextDebugLogTime = 0f;
 
@@ -64,6 +64,8 @@ public class GamePlayManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // AppLogger.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
+
         if (!IsGameplayScene())
         {
             return; // Ensure gameplay logic only runs in gameplay scenes
@@ -76,7 +78,7 @@ public class GamePlayManager : MonoBehaviour
 
         if (enableDebugLogs && Time.time >= nextDebugLogTime)
         {
-            AppLogger.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
+            // AppLogger.Log($"[GamePlayManager] Progress value: {UIManager.Instance.GetAllProgressValue()}");
             nextDebugLogTime = Time.time + debugLogInterval;
         }
         FinishedGame();
@@ -273,7 +275,7 @@ public class GamePlayManager : MonoBehaviour
 
         if (useStagedReturnTransition)
         {
-        AppLogger.Log($"Using staged return transition via '{returnIntermediaryScene}' (delay {returnIntermediaryDelay}s)");
+            AppLogger.Log($"Using staged return transition via '{returnIntermediaryScene}' (delay {returnIntermediaryDelay}s)");
             SceneTransitionManager.Instance.MarkReturningFromGameplay();
             SceneTransitionManager.Instance.StartStagedTransition(
                 returnIntermediaryScene,

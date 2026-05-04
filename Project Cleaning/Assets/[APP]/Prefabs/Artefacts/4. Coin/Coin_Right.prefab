@@ -2661,7 +2661,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4550482846961505019, guid: da96ec81288794b679b44adf3838269b, type: 3}
+  m_Mesh: {fileID: 4550482846961505019, guid: c360ed894cdf14829ba7c02d666baff7, type: 3}
 --- !u!114 &1148802866637245398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2674,7 +2674,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 923f26d69b5d74dc384a8e9d0a8c0c92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dirtMaskBase: {fileID: 2800000, guid: d2435617bb3a74d87ba31d8f682fe643, type: 3}
+  _dirtMaskBase: {fileID: 2800000, guid: 922cf11e9d1b74385aaa06c5b8c1674b, type: 3}
   _material: {fileID: 2100000, guid: 26f0ff99a84fb40f78735e613d8e61b8, type: 2}
   progress: 0
 --- !u!114 &5128836227469436344

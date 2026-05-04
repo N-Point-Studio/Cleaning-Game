@@ -370,13 +370,16 @@ public class UIManager : MonoBehaviour
     {
         if (progressDirts == null || progressAssemble == null || progressDusts == null)
         {
-            AppLogger.LogWarning("Progress bars not assigned on UIManager.");
+            // AppLogger.LogWarning("[UImanager] ke-1.");/
+
             return 0f;
         }
 
         // ✅ SAFETY CHECK: Return 0 if managers are not ready yet
         if (CleanManager.Instance == null || AssembleManager.Instance == null)
         {
+            // AppLogger.LogWarning("[UImanager] ke-2.");/
+
             return 0f;
         }
 
@@ -384,12 +387,21 @@ public class UIManager : MonoBehaviour
         // This prevents false 100% readings from uninitialized state
         if (Time.timeSinceLevelLoad < 0.5f)
         {
+            // AppLogger.LogWarning("[UImanager] ke-3.");
             return 0f;
         }
 
         // Prevent divide-by-zero/negative which can prematurely finish gameplay
-        int denominator = Mathf.Max(1, 3 + minusFactor);
-        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / denominator;
+        // int denominator = Mathf.Max(1, 3 + minusFactor);
+
+        int totalProgress = 0;
+        if (progressAssembleGO.activeSelf) totalProgress += 1;
+        if (progressDirtsGO.activeSelf) totalProgress += 1;
+        if (progressDustsGO.activeSelf) totalProgress += 1;
+
+        // Debug.Log("Denominator: " + totalProgress);
+
+        return (progressDirts.GetValue() + progressAssemble.GetValue() + progressDusts.GetValue()) / totalProgress;
     }
 
     /// <summary>
